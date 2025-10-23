@@ -1,0 +1,105 @@
+<!doctype html>
+{% load static %}
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Andromeda — Second Brain</title>
+
+    <!-- Tailwind CDN (dev) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+    <script src="https://unpkg.com/alpinejs@3.12.0" defer></script>
+
+    <style>
+      :root {
+        --page-bg: #efe0d0;
+        --accent-hover: #f28a2e;
+        --button-bg: var(--page-bg);
+        --text-color: #000;
+        --halo-opacity: 0.35;
+        --base-font-size: 18px;
+      }
+
+      html { font-size: var(--base-font-size); }
+      body {
+        background: var(--page-bg) !important;
+        color: var(--text-color) !important;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
+        -webkit-font-smoothing:antialiased;
+        -moz-osx-font-smoothing:grayscale;
+      }
+
+      /* basic typography size increases */
+      p, li, label, input, textarea, button, a { font-size: 1.125rem; color: var(--text-color) !important; }
+      h1 { font-size: 3rem; color: var(--text-color) !important; }
+      h2 { font-size: 2.25rem; color: var(--text-color) !important; }
+
+      /* button style: block-level, no rounded corners */
+      .btn, .btn-login, .btn-primary, button {
+        display: block !important;
+        width: 100%;
+        background: var(--button-bg) !important;
+        color: var(--text-color) !important;
+        border-radius: 0 !important;
+        border: none !important;
+        padding: 0.75rem 1rem !important;
+        text-align: center;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .btn:hover, .btn:focus, button:hover {
+        background: var(--accent-hover) !important;
+        color: #ffffff !important;
+      }
+
+      /* white block for Quick-capture and any intentional white UI */
+      .white-block { background: #ffffff; }
+
+      /* global panels: remove rounding */
+      .panel-border { border-radius: 0; border: 2px solid #2b2b2b; }
+
+      /* halo & fallback */
+      #haloSvg, #haloLayerCSS { opacity: var(--halo-opacity); transition: opacity .22s ease, transform .25s ease; pointer-events:none; }
+      #haloSvg.pop, #haloLayerCSS.pop { transform: scale(1.04); }
+
+      /* ensure inputs readable */
+      input, textarea { font-size: 1.125rem; color: var(--text-color); font-family: inherit; }
+    </style>
+  </head>
+
+    <body x-data="{ isLoggedIn: false }" class="antialiased text-sm">
+    {% include 'core/nav.html' %}
+    <div class="max-w-[1200px] mx-auto p-4">
+
+      <!-- Page content block (hero, landing, notes grid, etc.) -->
+      <main>
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="mt-8 text-center text-xs muted">Version 0.1.0</footer>
+    </div>
+
+    <!-- Minimal script: keep halo updates and hero reveal safe if hero exists -->
+    <script>
+      (function () {
+        // reveal hero elements if present
+        function revealHero() { document.querySelectorAll('.hero-animate').forEach(el=>el.classList.add('visible')); }
+        window.addEventListener('load', revealHero);
+
+        // safe scroll -> halo update if avatar exists
+        const avatar = document.getElementById('avatarWrap');
+        if (avatar) {
+          function onScroll() {
+            const max = 200; const y = Math.min(window.scrollY, max); const ratio = y / max; const val = 0.35 + (0.65 * ratio);
+            document.documentElement.style.setProperty('--halo-opacity', val.toFixed(2));
+          }
+          window.addEventListener('scroll', onScroll, { passive: true });
+
+          // pulse on clicks to CTAs
+          document.addEventListener('click', function(e){ if (e.target.matches('a[href="#"], button')){ avatar.classList.add('pop'); setTimeout(()=>avatar.classList.remove('pop'),480); } });
+        }
+      })();
+    </script>
+  </body>
+</html>

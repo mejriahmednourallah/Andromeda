@@ -1,0 +1,387 @@
+<!doctype html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Sign Up — Andromeda</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static 'css/carousel.css' %}">
+    <style>
+      :root {
+        --page-bg: #f5ebe0;
+        --panel-bg: #faf6f1;
+        --border-color: #2b2b2b;
+        --accent-orange: #ff6b35;
+        --text-dark: #2b2b2b;
+        --text-gray: #6b7280;
+        --separator-color: #d4c5b9;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        font-size: 16px;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: var(--page-bg) !important;
+        color: var(--text-dark) !important;
+        font-family: 'Courier New', monospace;
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 1100px;
+        background: var(--panel-bg);
+        border: 3px solid var(--border-color);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 650px;
+      }
+
+      .left-section {
+        padding: 3rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border-right: 3px solid var(--border-color);
+      }
+
+      .carousel-container {
+        width: 100%;
+        max-width: 450px;
+        position: relative;
+        margin-bottom: 2rem;
+      }
+
+      .carousel-wrapper {
+        width: 100%;
+        display: flex;
+        transition: transform 0.5s ease;
+        will-change: transform;
+      }
+
+      .carousel-slide {
+        min-width: 100%;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .carousel-slide img {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .carousel-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 1.5rem;
+        color: var(--text-dark);
+        line-height: 1.4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+      }
+
+      .logo-image {
+        width: 60px;
+        height: 60px;
+        object-fit: contain;
+      }
+
+      .carousel-caption {
+        text-align: center;
+        color: var(--text-gray);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        max-width: 450px;
+        margin-bottom: 1.5rem;
+        min-height: 3rem;
+        transition: opacity 0.25s ease;
+      }
+
+      .carousel-caption.fade-out {
+        opacity: 0;
+      }
+
+      .carousel-indicators {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        max-width: 450px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .carousel-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #d1d5db;
+        cursor: pointer;
+        transition: background 0.3s ease;
+      }
+
+      .carousel-indicator.active {
+        background: var(--text-dark);
+      }
+
+      .carousel-controls {
+        display: none;
+      }
+
+      .right-section {
+        padding: 3rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .header-text h1 {
+        font-size: 1.75rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        color: var(--text-dark);
+      }
+
+      .header-text p {
+        font-size: 0.9rem;
+        color: var(--text-gray);
+        margin-bottom: 2rem;
+      }
+
+      .social-btn {
+        width: 100%;
+        padding: 0.85rem;
+        border: 2px solid var(--border-color);
+        background: white;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-family: 'Courier New', monospace;
+        font-size: 0.95rem;
+        transition: background 0.2s ease;
+        position: relative;
+      }
+
+      .social-btn:hover {
+        background: #f9f9f9;
+      }
+
+      .social-btn img {
+        width: 20px;
+        height: 20px;
+        margin-right: 0.75rem;
+        position: absolute;
+        left: 1rem;
+      }
+
+      .separator {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        margin: 1.5rem 0;
+        color: var(--text-gray);
+        font-size: 0.85rem;
+      }
+
+      .separator::before,
+      .separator::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid var(--separator-color);
+      }
+
+      .separator::before {
+        margin-right: 1rem;
+      }
+
+      .separator::after {
+        margin-left: 1rem;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 0.85rem;
+        border: 2px solid var(--border-color);
+        background: white;
+        margin-bottom: 0.75rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.95rem;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: var(--accent-orange);
+      }
+
+      .password-container {
+        position: relative;
+        margin-bottom: 0.75rem;
+      }
+
+      .password-toggle {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        padding: 0.25rem;
+      }
+
+      .continue-btn {
+        width: 100%;
+        padding: 0.85rem;
+        background: var(--accent-orange);
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        font-family: 'Courier New', monospace;
+        font-size: 1rem;
+        transition: opacity 0.2s ease;
+      }
+
+      .continue-btn:hover {
+        opacity: 0.9;
+      }
+
+      .footer-links {
+        text-align: center;
+        margin-top: 1.5rem;
+        font-size: 0.9rem;
+      }
+
+      .footer-links a {
+        color: #3b82f6;
+        text-decoration: underline;
+      }
+
+      .footer-links a.orange {
+        color: var(--accent-orange);
+      }
+
+      @media (max-width: 968px) {
+        .container {
+          grid-template-columns: 1fr;
+        }
+
+        .left-section {
+          border-right: none;
+          border-bottom: 3px solid var(--border-color);
+          padding: 2rem;
+        }
+
+        .right-section {
+          padding: 2rem;
+        }
+      }
+    </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Left Section: Carousel -->
+    <div class="left-section">
+      <h2 class="carousel-title">
+        <img src="{% static 'assets/logo.png' %}" alt="Andromeda Logo" class="logo-image">
+        Join Andromeda
+      </h2>
+      
+      <div class="carousel-container" role="region" aria-label="Signup illustrations carousel" data-autoplay="true" data-captions='["Join the Andromeda community of thinkers. Start your journey of connected ideas.", "Create your personal knowledge galaxy. Transform scattered thoughts into constellations."]'>
+        <div class="carousel-wrapper">
+          <div class="carousel-slide">
+            <img src="{% static 'images/login1.png' %}" alt="Signup illustration 1" onerror="this.style.display='none';" />
+          </div>
+          <div class="carousel-slide">
+            <img src="{% static 'images/login2.png' %}" alt="Signup illustration 2" onerror="this.style.display='none';" />
+          </div>
+        </div>
+        <button class="carousel-controls carousel-prev" aria-label="Previous slide" type="button">&lt;</button>
+        <button class="carousel-controls carousel-next" aria-label="Next slide" type="button">&gt;</button>
+      </div>
+
+      <div class="carousel-indicators">
+        <div class="carousel-indicator active" data-slide="0" aria-label="Go to slide 1"></div>
+        <div class="carousel-indicator" data-slide="1" aria-label="Go to slide 2"></div>
+      </div>
+
+      <div class="carousel-caption" id="carousel-caption">
+        Join the Andromeda community of thinkers. Start your journey of connected ideas.
+      </div>
+    </div>
+
+    <!-- Right Section: Form -->
+    <div class="right-section">
+      <div class="header-text">
+        <h1>Create an account</h1>
+        <p>One subscription for Litverse, Recognotes, and Sparks.</p>
+      </div>
+
+      <button class="social-btn">
+        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google">
+        Continue with Google
+      </button>
+      <button class="social-btn">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook">
+        Continue with Facebook
+      </button>
+      <button class="social-btn">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple">
+        Continue with Apple
+      </button>
+
+      <div class="separator">or sign up with</div>
+
+      <form method="post">
+        {% csrf_token %}
+        <input type="email" name="username" placeholder="Email address" class="form-input" required>
+        
+        <div class="password-container">
+          <input type="password" id="password1" name="password1" placeholder="Password" class="form-input" required>
+          <button type="button" class="password-toggle" onclick="togglePassword()">👁️</button>
+        </div>
+
+        <input type="password" name="password2" placeholder="Confirm Password" class="form-input" required>
+
+        <button type="submit" class="continue-btn">Continue</button>
+      </form>
+
+      <div class="footer-links">
+        <a href="{% url 'login' %}">Already have an account? Log in</a>
+      </div>
+    </div>
+  </div>
+
+    <script>
+        function togglePassword() {
+            const input = document.querySelector('input[name="password1"]');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+    </script>
+    <script src="{% static 'js/carousel.js' %}"></script>
+</body>
+</html></content>
