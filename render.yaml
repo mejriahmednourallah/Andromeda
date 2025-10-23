@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: andromeda
+    runtime: python3
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn andromeda.wsgi:application
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: false
+      - key: ALLOWED_HOSTS
+        fromService:
+          type: web
+          name: andromeda
+          property: host
+    databases:
+      - name: andromeda-db
+        databaseName: andromeda
+        user: andromeda
