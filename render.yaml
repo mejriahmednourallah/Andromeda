@@ -2,7 +2,7 @@ services:
   - type: web
     name: andromeda
     runtime: python3
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
     startCommand: gunicorn andromeda.wsgi:application
     envVars:
       - key: SECRET_KEY
