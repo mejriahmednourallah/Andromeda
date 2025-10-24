@@ -1,0 +1,206 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<style>
+ul.errorlist {
+    display: none;
+}
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.stat-card {
+    background: var(--panel-bg);
+    border: 3px solid var(--border-color);
+    padding: 1.5rem;
+    text-align: center;
+    border-radius: 8px;
+}
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--accent-orange);
+    margin-bottom: 0.5rem;
+}
+.stat-label {
+    color: var(--text-gray);
+    font-size: 0.9rem;
+}
+.activity-item {
+    background: var(--panel-bg);
+    border: 2px solid var(--border-color);
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+}
+.activity-type {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+.activity-memory { background: #dbeafe; color: #1e40af; }
+.activity-capsule { background: #fef3c7; color: #92400e; }
+.activity-date {
+    color: var(--text-gray);
+    font-size: 0.85rem;
+}
+</style>
+
+<div style="max-width: 1000px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">My Profile</h1>
+        <p style="color: #6b7280; font-size: 1rem;">Manage your account information and view your activity</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 2rem;">
+        <!-- Profile Form -->
+        <div>
+            <div class="card">
+                <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1.5rem;">Account Information</h2>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 0.375rem;">
+                            {% for error in form.non_field_errors %}
+                                <p style="color: #dc2626; font-size: 0.9rem; margin: 0;">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Username -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="{{ form.username.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                            {{ form.username.label }} <span style="color: #dc2626;">*</span>
+                        </label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            {% for error in form.username.errors %}
+                                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Email -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="{{ form.email.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                            {{ form.email.label }} <span style="color: #dc2626;">*</span>
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            {% for error in form.email.errors %}
+                                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- First Name -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="{{ form.first_name.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                            {{ form.first_name.label }}
+                        </label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                            {% for error in form.first_name.errors %}
+                                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Last Name -->
+                    <div style="margin-bottom: 2rem;">
+                        <label for="{{ form.last_name.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                            {{ form.last_name.label }}
+                        </label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                            {% for error in form.last_name.errors %}
+                                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn-primary" style="width: 100%;">Update Profile</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Statistics and Activity -->
+        <div>
+            <!-- Statistics -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;">Your Statistics</h3>
+
+                <div class="profile-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ user_stats.total_memories }}</div>
+                        <div class="stat-label">Total Memories</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ user_stats.favorite_memories }}</div>
+                        <div class="stat-label">Favorites</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ user_stats.analyzed_memories }}</div>
+                        <div class="stat-label">AI Analyzed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ user_stats.albums_count }}</div>
+                        <div class="stat-label">Albums</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ user_stats.capsules_count }}</div>
+                        <div class="stat-label">Time Capsules</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ user_stats.notes_count }}</div>
+                        <div class="stat-label">Notes</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 2px solid var(--separator-color);">
+                    <p style="color: var(--text-gray); font-size: 0.9rem; margin: 0;">
+                        Member since {{ user_stats.member_since }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card">
+                <h3 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;">Recent Activity</h3>
+
+                {% if recent_activity %}
+                    {% for activity in recent_activity %}
+                        <div class="activity-item">
+                            <span class="activity-type activity-{{ activity.type }}">
+                                {{ activity.type|title }}
+                            </span>
+                            <div style="margin-bottom: 0.5rem;">
+                                <a href="{{ activity.url }}" style="color: var(--text-dark); text-decoration: none; font-weight: 500;">
+                                    {{ activity.title }}
+                                </a>
+                            </div>
+                            <div class="activity-date">
+                                {{ activity.date|date:"M j, Y g:i A" }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: var(--text-gray); font-style: italic; text-align: center; padding: 2rem;">
+                        No recent activity yet. Start creating memories!
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

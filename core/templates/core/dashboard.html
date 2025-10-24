@@ -23,11 +23,11 @@
     <!-- Souvenirs Card -->
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-            <h3 style="font-size: 1.25rem; font-weight: bold;">Souvenirs</h3>
+            <h3 style="font-size: 1.25rem; font-weight: bold;">Memories</h3>
         </div>
         <p style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ souvenirs_count }}</p>
         <p style="color: var(--text-gray); font-size: 0.9rem;">Precious memories stored</p>
-        <a href="{% url 'core:liste_souvenirs' %}" class="btn-secondary" style="margin-top: 1rem; text-align: center;">View Souvenirs</a>
+        <a href="{% url 'core:liste_souvenirs' %}" class="btn-secondary" style="margin-top: 1rem; text-align: center;">View All Memories</a>
     </div>
 
     <!-- Quick Actions Card -->
@@ -36,7 +36,7 @@
             <h3 style="font-size: 1.25rem; font-weight: bold;">Quick Actions</h3>
         </div>
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary" style="text-align: center;">Add Souvenir</a>
+            <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary" style="text-align: center;">Add Memory</a>
             <a href="{% url 'core:memories_dashboard' %}" class="btn-secondary" style="text-align: center;">My Memories</a>
             <a href="{% url 'core:liste_capsules' %}" class="btn-secondary" style="text-align: center;">Time Capsules</a>
             <a href="{% url 'core:liste_albums' %}" class="btn-secondary" style="text-align: center;">Albums</a>
@@ -47,7 +47,7 @@
 
 <!-- Recent Activity -->
 <div class="card">
-    <h2 class="card-title">Recent Souvenirs</h2>
+    <h2 class="card-title">Recent Memories</h2>
     {% if recent_souvenirs %}
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem;">
             {% for souvenir in recent_souvenirs %}
@@ -67,8 +67,8 @@
         </div>
     {% else %}
         <div style="text-align: center; padding: 3rem; color: var(--text-gray);">
-            <p style="font-size: 1.1rem; margin-bottom: 1rem;">No souvenirs yet</p>
-            <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary" style="display: inline-block;">Create your first souvenir</a>
+            <p style="font-size: 1.1rem; margin-bottom: 1rem;">No memories yet</p>
+            <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary" style="display: inline-block;">Create your first memory</a>
         </div>
     {% endif %}
 </div>

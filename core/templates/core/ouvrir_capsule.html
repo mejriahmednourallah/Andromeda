@@ -1,41 +1,41 @@
 {% extends "core/dashboard_base.html" %}
 
-{% block title %}Ouvrir la capsule temporelle{% endblock %}
+{% block title %}Open Time Capsule{% endblock %}
 
 {% block content %}
 <div style="max-width: 800px; margin: 0 auto;">
     <div style="margin-bottom: 2rem;">
-    <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Ouvrir la Capsule Temporelle</h1>
-    <p style="color: var(--text-gray); font-size: 1rem;">Le moment est venu de revisiter ce souvenir du passé</p>
+    <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Open Time Capsule</h1>
+    <p style="color: var(--text-gray); font-size: 1rem;">The time has come to revisit this memory from the past</p>
     </div>
 
     <div class="card">
-        <!-- Informations de la capsule -->
+        <!-- Capsule Information -->
         <div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-light); border-radius: 8px;">
-            <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Informations de la capsule</h3>
+            <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Capsule Information</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div>
-                    <strong>Date de création:</strong><br>
-                    {{ capsule.souvenir.date_evenement|date:"d F Y" }}
+                    <strong>Creation Date:</strong><br>
+                    {{ capsule.souvenir.date_evenement|date:"F d, Y" }}
                 </div>
                 <div>
-                    <strong>Date d'ouverture prévue:</strong><br>
-                    {{ capsule.date_ouverture|date:"d F Y" }}
+                    <strong>Scheduled Opening Date:</strong><br>
+                    {{ capsule.date_ouverture|date:"F d, Y" }}
                 </div>
                 <div>
-                    <strong>Émotion prédite par l'IA:</strong><br>
+                    <strong>AI Predicted Emotion:</strong><br>
                     {% if capsule.emotion_predite_par_ia %}
                         <span class="emotion-badge">{{ capsule.get_emotion_predite_par_ia_display }}</span>
                     {% else %}
-                        <em>Non disponible</em>
+                        <em>Not available</em>
                     {% endif %}
                 </div>
                 <div>
-                    <strong>Message futur:</strong><br>
+                    <strong>Future Message:</strong><br>
                     {% if capsule.message_futur %}
                         <em>"{{ capsule.message_futur }}"</em>
                     {% else %}
-                        <em>Aucun message</em>
+                        <em>No message</em>
                     {% endif %}
                 </div>
             </div>
@@ -43,14 +43,14 @@
 
         <!-- Souvenir contenu dans la capsule -->
         <div style="margin-bottom: 2rem;">
-            <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Le souvenir scellé</h3>
+            <h3 style="margin-bottom: 1rem; color: var(--primary-color);">The Sealed Memory</h3>
             <div style="border: 1px solid var(--separator-color); border-radius: 8px; padding: 1.5rem; background: var(--bg-light);">
                 <h4 style="margin-bottom: 0.5rem; color: var(--text-dark);">{{ capsule.souvenir.titre }}</h4>
                 <p style="color: var(--text-gray); margin-bottom: 1rem;">{{ capsule.souvenir.description }}</p>
 
                 {% if capsule.souvenir.photo %}
                 <div style="margin-bottom: 1rem;">
-                    <img src="{{ capsule.souvenir.photo.url }}" alt="Photo du souvenir" style="max-width: 300px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <img src="{{ capsule.souvenir.photo.url }}" alt="Memory photo" style="max-width: 300px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                 </div>
                 {% endif %}
 
@@ -58,14 +58,14 @@
                 <div style="margin-bottom: 1rem;">
                     <video controls style="max-width: 300px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                         <source src="{{ capsule.souvenir.video.url }}" type="video/mp4">
-                        Votre navigateur ne supporte pas la lecture vidéo.
+                        Your browser does not support video playback.
                     </video>
                 </div>
                 {% endif %}
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem; color: var(--text-gray);">
-                    <div><strong>Lieu:</strong> {{ capsule.souvenir.lieu|default:"Non spécifié" }}</div>
-                    <div><strong>Émotion ressentie:</strong> {{ capsule.souvenir.get_emotion_display|default:"Non spécifiée" }}</div>
+                    <div><strong>Location:</strong> {{ capsule.souvenir.lieu|default:"Not specified" }}</div>
+                    <div><strong>Felt Emotion:</strong> {{ capsule.souvenir.get_emotion_display|default:"Not specified" }}</div>
                 </div>
             </div>
         </div>
@@ -74,45 +74,118 @@
         <form method="post" style="border-top: 2px solid var(--separator-color); padding-top: 2rem;">
             {% csrf_token %}
 
-            <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Votre réflexion</h3>
+            <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Your Reflection</h3>
             <p style="color: var(--text-gray); margin-bottom: 1.5rem;">
-                Maintenant que vous revisitez ce souvenir, comment vous sentez-vous ? Quelles pensées cela vous inspire-t-il ?
+                Now that you're revisiting this memory, how do you feel? What thoughts does it inspire?
             </p>
 
             <!-- Réflexion -->
             <div style="margin-bottom: 1.5rem;">
                 <label for="reflexion" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
-                    Votre réflexion <span style="color: #dc2626;">*</span>
+                    Your Reflection <span style="color: #dc2626;">*</span>
                 </label>
-                <textarea name="reflexion" id="reflexion" rows="4" required
+                <textarea name="reflexion" id="reflexion" rows="4"
                           style="width: 100%; padding: 0.75rem; border: 1px solid var(--separator-color); border-radius: 8px; font-family: inherit; resize: vertical;"
-                          placeholder="Partagez vos pensées et émotions en revisitant ce souvenir..."></textarea>
+                          placeholder="Share your thoughts and emotions when revisiting this memory..."></textarea>
             </div>
 
             <!-- Émotion actuelle -->
             <div style="margin-bottom: 2rem;">
                 <label for="emotion_reelle" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
-                    Émotion ressentie maintenant <span style="color: #dc2626;">*</span>
+                    Current Emotion <span style="color: #dc2626;">*</span>
                 </label>
-                <select name="emotion_reelle" id="emotion_reelle" required
+                <select name="emotion_reelle" id="emotion_reelle"
                         style="width: 100%; padding: 0.75rem; border: 1px solid var(--separator-color); border-radius: 8px; font-family: inherit;">
-                    <option value="">Sélectionnez une émotion</option>
+                    <option value="">Select an emotion</option>
                     {% for emotion_value, emotion_label in emotion_choices %}
                     <option value="{{ emotion_value }}">{{ emotion_label }}</option>
                     {% endfor %}
                 </select>
             </div>
 
-            <!-- Boutons d'action -->
+            <!-- Action Buttons -->
             <div style="display: flex; gap: 1rem;">
                 <button type="submit" class="btn-primary" style="flex: 1;">
-                    Ouvrir la capsule et enregistrer ma réflexion
+                    Open Capsule and Save My Reflection
                 </button>
                 <a href="{% url 'core:liste_capsules' %}" class="btn-secondary" style="flex: 1; text-align: center; line-height: 2.5;">
-                    Plus tard
+                    Later
                 </a>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    
+    // Function to show error message above a field
+    function showError(fieldId, message) {
+        const fieldElement = document.getElementById(fieldId);
+        if (!fieldElement) return;
+        
+        // Find the parent div by walking up the DOM
+        let fieldDiv = fieldElement.parentElement;
+        while (fieldDiv && (!fieldDiv.style || !fieldDiv.style.marginBottom)) {
+            fieldDiv = fieldDiv.parentElement;
+        }
+        if (!fieldDiv) return;
+        
+        // Remove existing error if present
+        const existingError = fieldDiv.querySelector('.client-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Add error message above the label
+        const label = fieldDiv.querySelector('label');
+        if (label) {
+            const errorDiv = document.createElement('p');
+            errorDiv.className = 'client-error';
+            errorDiv.style.color = '#dc2626';
+            errorDiv.style.fontSize = '0.9rem';
+            errorDiv.style.marginBottom = '0.5rem';
+            errorDiv.textContent = message;
+            label.parentNode.insertBefore(errorDiv, label);
+        }
+    }
+    
+    // Function to clear all client errors
+    function clearErrors() {
+        document.querySelectorAll('.client-error').forEach(error => error.remove());
+    }
+    
+    // Form validation on submit
+    form.addEventListener('submit', function(e) {
+        clearErrors();
+        let hasErrors = false;
+        
+        // Validate required fields
+        const reflexionField = document.getElementById('reflexion');
+        if (!reflexionField.value.trim()) {
+            showError('reflexion', 'Your reflection is required.');
+            hasErrors = true;
+        }
+        
+        const emotionField = document.getElementById('emotion_reelle');
+        if (!emotionField.value) {
+            showError('emotion_reelle', 'Current emotion is required.');
+            hasErrors = true;
+        }
+        
+        // If there are client-side errors, prevent form submission
+        if (hasErrors) {
+            e.preventDefault();
+            // Scroll to first error
+            const firstError = document.querySelector('.client-error');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return false;
+        }
+    });
+});
+</script>
+
 {% endblock %}

@@ -9,6 +9,7 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('notes/<uuid:note_id>/', views.note_detail, name='note_detail'),
     path('accounts/signup/', views.signup, name='signup'),
+    path('profile/', views.profile, name='profile'),
     
     # === MEMORIES DASHBOARD (UNIFIED) ===
     path('memories/dashboard/', views.memories_dashboard, name='memories_dashboard'),

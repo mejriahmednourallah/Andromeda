@@ -1,16 +1,29 @@
 {% extends "core/dashboard_base.html" %}
 
-{% block title %}Modifier un souvenir{% endblock %}
+{% block title %}Edit Memory{% endblock %}
 
 {% block content %}
+<style>
+ul.errorlist {
+    display: none;
+}
+</style>
 <div style="max-width: 800px; margin: 0 auto;">
     <div style="margin-bottom: 2rem;">
-        <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Modifier un Souvenir</h1>
-        <p style="color: var(--text-gray); font-size: 1rem;">Mettez à jour votre précieux moment</p>
+        <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Edit Memory</h1>
+        <p style="color: var(--text-gray); font-size: 1rem;">Update your precious moment</p>
     </div>
 
     <form method="post" enctype="multipart/form-data" class="card">
         {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 0.375rem;">
+                {% for error in form.non_field_errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin: 0;">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
 
         <!-- Titre -->
         <div style="margin-bottom: 1.5rem;">
@@ -19,7 +32,9 @@
             </label>
             {{ form.titre }}
             {% if form.titre.errors %}
-                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.titre.errors.0 }}</p>
+                {% for error in form.titre.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
             {% endif %}
         </div>
 
@@ -30,7 +45,9 @@
             </label>
             {{ form.description }}
             {% if form.description.errors %}
-                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.description.errors.0 }}</p>
+                {% for error in form.description.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
             {% endif %}
         </div>
 
@@ -41,17 +58,19 @@
             </label>
             {{ form.date_evenement }}
             {% if form.date_evenement.errors %}
-                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.date_evenement.errors.0 }}</p>
+                {% for error in form.date_evenement.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
             {% endif %}
         </div>
 
         <!-- Photo actuelle -->
         {% if souvenir.photo %}
         <div style="margin-bottom: 1.5rem;">
-            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Photo actuelle</label>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Current Photo</label>
             <div style="border: 1px solid var(--separator-color); border-radius: 8px; padding: 1rem; background: var(--bg-light);">
-                <img src="{{ souvenir.photo.url }}" alt="Photo actuelle" style="max-width: 200px; max-height: 200px; border-radius: 8px; display: block; margin-bottom: 0.5rem;">
-                <p style="color: var(--text-gray); font-size: 0.9rem; margin: 0;">Laissez vide pour conserver la photo actuelle</p>
+                <img src="{{ souvenir.photo.url }}" alt="Current photo" style="max-width: 200px; max-height: 200px; border-radius: 8px; display: block; margin-bottom: 0.5rem;">
+                <p style="color: var(--text-gray); font-size: 0.9rem; margin: 0;">Leave empty to keep the current photo</p>
             </div>
         </div>
         {% endif %}
@@ -62,25 +81,27 @@
                 {{ form.photo.label }}{% if not souvenir.photo %} <span style="color: #dc2626;">*</span>{% endif %}
             </label>
             {{ form.photo }}
-            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">
-                Formats acceptés: JPG, PNG, GIF, WebP (max 10 MB)
-                {% if souvenir.photo %}• Laissez vide pour conserver la photo actuelle{% endif %}
-            </p>
             {% if form.photo.errors %}
-                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.photo.errors.0 }}</p>
+                {% for error in form.photo.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
             {% endif %}
+            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">
+                Accepted formats: JPG, PNG, GIF, WebP (max 10 MB)
+                {% if souvenir.photo %}• Leave empty to keep the current photo{% endif %}
+            </p>
         </div>
 
         <!-- Vidéo actuelle -->
         {% if souvenir.video %}
         <div style="margin-bottom: 1.5rem;">
-            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Vidéo actuelle</label>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Current Video</label>
             <div style="border: 1px solid var(--separator-color); border-radius: 8px; padding: 1rem; background: var(--bg-light);">
                 <video controls style="max-width: 300px; max-height: 200px; border-radius: 8px; display: block; margin-bottom: 0.5rem;">
                     <source src="{{ souvenir.video.url }}" type="video/mp4">
-                    Votre navigateur ne supporte pas la lecture vidéo.
+                    Your browser does not support video playback.
                 </video>
-                <p style="color: var(--text-gray); font-size: 0.9rem; margin: 0;">Laissez vide pour conserver la vidéo actuelle</p>
+                <p style="color: var(--text-gray); font-size: 0.9rem; margin: 0;">Leave empty to keep the current video</p>
             </div>
         </div>
         {% endif %}
@@ -91,12 +112,34 @@
                 {{ form.video.label }}
             </label>
             {{ form.video }}
-            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">
-                Formats acceptés: MP4, AVI, MOV, WMV (max 100 MB)
-                {% if souvenir.video %}• Laissez vide pour conserver la vidéo actuelle{% endif %}
-            </p>
             {% if form.video.errors %}
-                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.video.errors.0 }}</p>
+                {% for error in form.video.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">
+                Accepted formats: MP4, AVI, MOV, WMV (max 100 MB)
+                {% if souvenir.video %}• Leave empty to keep the current video{% endif %}
+            </p>
+        </div>
+
+        <!-- Favori -->
+        <div style="margin-bottom: 1.5rem;">
+            <label for="{{ form.is_favorite.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                {{ form.is_favorite.label }}
+                <span id="favorite-star" style="font-size: 1.2em;">
+                    {% if souvenir.is_favorite %}
+                        <span style="color: #fbbf24;">⭐</span>
+                    {% else %}
+                        <span style="color: #9ca3af;">☆</span>
+                    {% endif %}
+                </span>
+            </label>
+            {{ form.is_favorite }}
+            {% if form.is_favorite.errors %}
+                {% for error in form.is_favorite.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
             {% endif %}
         </div>
 
@@ -107,4 +150,28 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const favoriteCheckbox = document.getElementById('id_is_favorite');
+    const favoriteStar = document.getElementById('favorite-star');
+    
+    if (favoriteCheckbox && favoriteStar) {
+        // Update star on page load
+        updateFavoriteStar();
+        
+        // Update star when checkbox changes
+        favoriteCheckbox.addEventListener('change', updateFavoriteStar);
+        
+        function updateFavoriteStar() {
+            if (favoriteCheckbox.checked) {
+                favoriteStar.innerHTML = '<span style="color: #fbbf24;">⭐</span>';
+            } else {
+                favoriteStar.innerHTML = '<span style="color: #9ca3af;">☆</span>';
+            }
+        }
+    }
+});
+</script>
+
 {% endblock %}

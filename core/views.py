@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
 from django.http import JsonResponse
+from django.urls import reverse
 from django.utils import timezone
 import logging
 
@@ -13,7 +14,7 @@ from .models import (
     Note, User, Souvenir, AnalyseIASouvenir, AlbumSouvenir,
     CapsuleTemporelle, PartageSouvenir, SuiviMotivationnel
 )
-from .forms import UserCreationForm, SouvenirForm, CapsuleTemporelleForm
+from .forms import UserCreationForm, SouvenirForm, CapsuleTemporelleForm, UserProfileForm
 from .ai_services import AIAnalysisService, AIRecommendationService
 
 logger = logging.getLogger(__name__)
@@ -93,6 +94,67 @@ def dashboard(request):
 
 
 @login_required
+def profile(request):
+    """
+    User profile management view
+    """
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, '✅ Profile updated successfully!')
+            return redirect('core:profile')
+    else:
+        form = UserProfileForm(instance=request.user)
+
+    # User statistics
+    user_stats = {
+        'total_memories': Souvenir.objects.filter(utilisateur=request.user).count(),
+        'favorite_memories': Souvenir.objects.filter(utilisateur=request.user, is_favorite=True).count(),
+        'analyzed_memories': Souvenir.objects.filter(utilisateur=request.user, ai_analyzed=True).count(),
+        'albums_count': AlbumSouvenir.objects.filter(utilisateur=request.user).count(),
+        'capsules_count': CapsuleTemporelle.objects.filter(souvenir__utilisateur=request.user).count(),
+        'notes_count': Note.objects.filter(owner=request.user).count(),
+        'member_since': request.user.date_joined.strftime('%B %Y'),
+    }
+
+    # Recent activity
+    recent_activity = []
+
+    # Recent memories
+    recent_memories = Souvenir.objects.filter(utilisateur=request.user).order_by('-created_at')[:3]
+    for memory in recent_memories:
+        recent_activity.append({
+            'type': 'memory',
+            'title': f'Created memory "{memory.titre}"',
+            'date': memory.created_at,
+            'url': reverse('core:detail_souvenir', args=[memory.id])
+        })
+
+    # Recent capsules
+    recent_capsules = CapsuleTemporelle.objects.filter(souvenir__utilisateur=request.user).order_by('-date_verrouillage')[:2]
+    for capsule in recent_capsules:
+        recent_activity.append({
+            'type': 'capsule',
+            'title': f'Created time capsule "{capsule.souvenir.titre}"',
+            'date': capsule.date_verrouillage,
+            'url': reverse('core:detail_capsule', args=[capsule.id])
+        })
+
+    # Sort by date and take top 5
+    recent_activity.sort(key=lambda x: x['date'], reverse=True)
+    recent_activity = recent_activity[:5]
+
+    context = {
+        'form': form,
+        'user_stats': user_stats,
+        'recent_activity': recent_activity,
+    }
+
+    return render(request, 'core/profile.html', context)
+
+
+@login_required
 def ajouter_souvenir(request):
     """
     Vue pour ajouter un souvenir dans la base de données.
@@ -114,6 +176,7 @@ def ajouter_souvenir(request):
                     AIAnalysisService.analyze_memory(souvenir)
                     messages.success(request, f'✨ Souvenir "{souvenir.titre}" ajouté avec succès et analysé par IA!')
                 except Exception as e:
+                    # Don't fail souvenir creation if AI analysis fails
                     messages.success(request, f'Souvenir "{souvenir.titre}" ajouté avec succès!')
                     messages.warning(request, f'⚠️ Analyse IA non disponible: {str(e)}')
                     logger.warning(f'AI analysis failed for new memory {souvenir.id}: {str(e)}')
@@ -135,10 +198,8 @@ def ajouter_souvenir(request):
                 messages.error(request, 'Une erreur est survenue lors de l\'enregistrement du souvenir.')
                 logger.error(f'Erreur lors de la création du souvenir: {str(e)}')
         else:
-            # Afficher les erreurs du formulaire
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f'{field}: {error}')
+            # Form is invalid - errors will be displayed inline in template
+            pass
     else:
         form = SouvenirForm()
     
@@ -206,9 +267,8 @@ def modifier_souvenir(request, souvenir_id):
                     for error in errors:
                         messages.error(request, f'{field}: {error}')
         else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f'{field}: {error}')
+            # Form is invalid - errors will be displayed inline in template
+            pass
     else:
         form = SouvenirForm(instance=souvenir)
     
@@ -562,9 +622,8 @@ def creer_capsule(request):
                 messages.error(request, f'Error creating capsule: {str(e)}')
                 logger.error(f'Capsule creation failed: {str(e)}')
         else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f'{field}: {error}')
+            # Form is invalid - errors will be displayed inline in template
+            pass
     else:
         form = CapsuleTemporelleForm()
     
