@@ -119,3 +119,90 @@ class AITask(models.Model):
 
     def __str__(self):
         return f"{self.task_type} ({self.status})"
+
+# --- Souvenirs (Memories) ---
+class Souvenir(models.Model):
+    """Modèle pour stocker les souvenirs des utilisateurs"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    utilisateur = models.ForeignKey('User', on_delete=models.CASCADE, related_name='souvenirs')
+    titre = models.CharField(max_length=200, help_text="Titre du souvenir")
+    description = models.TextField(help_text="Description détaillée du souvenir")
+    date_evenement = models.DateField(help_text="Date de l'événement")
+    photo = models.ImageField(upload_to='souvenirs/photos/%Y/%m/', blank=True, null=True)
+    video = models.FileField(upload_to='souvenirs/videos/%Y/%m/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date_evenement']
+        verbose_name = 'Souvenir'
+        verbose_name_plural = 'Souvenirs'
+
+    def __str__(self):
+        return f"{self.titre} - {self.date_evenement}"
+    
+    def clean(self):
+        """Validation personnalisée"""
+        from django.core.exceptions import ValidationError
+        from django.utils import timezone
+        
+        # Vérifier que la date n'est pas dans le futur
+        if self.date_evenement > timezone.now().date():
+            raise ValidationError({'date_evenement': 'La date de l\'événement ne peut pas être dans le futur.'})
+        
+        # Vérifier la taille des fichiers
+        if self.photo and self.photo.size > 10 * 1024 * 1024:  # 10 MB
+            raise ValidationError({'photo': 'La photo ne doit pas dépasser 10 MB.'})
+        
+        if self.video and self.video.size > 100 * 1024 * 1024:  # 100 MB
+            raise ValidationError({'video': 'La vidéo ne doit pas dépasser 100 MB.'})
+    
+    def save(self, *args, **kwargs):
+        """Appel de clean() avant la sauvegarde"""
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+# --- Badge/Medal System (Gamification) ---
+class Badge(models.Model):
+    BADGE_TYPES = [
+        ('consistency', 'Constance'),
+        ('reflective', 'Reflexif'),
+        ('emotional_balance', 'Equilibre Emotionnel'),
+        ('memory_keeper', 'Gardien de Memoires'),
+        ('storyteller', 'Conteur'),
+        ('explorer', 'Explorateur'),
+    ]
+    
+    code = models.CharField(max_length=50, unique=True, choices=BADGE_TYPES)
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    icon = models.CharField(max_length=10, default='trophy')
+    requirement_value = models.IntegerField(help_text="Valeur requise pour debloquer")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.icon} {self.name}"
+
+
+class UserBadge(models.Model):
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='badges')
+    badge = models.ForeignKey(Badge, on_delete=models.CASCADE)
+    earned_at = models.DateTimeField(auto_now_add=True)
+    progress = models.IntegerField(default=0, help_text="Progression actuelle vers le badge")
+    
+    class Meta:
+        unique_together = ('user', 'badge')
+        ordering = ['-earned_at']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.badge.name}"
+    
+    @property
+    def is_unlocked(self):
+        return self.progress >= self.badge.requirement_value
+    
+    @property
+    def progress_percentage(self):
+        if self.badge.requirement_value == 0:
+            return 100
+        return min(100, (self.progress / self.badge.requirement_value) * 100)
