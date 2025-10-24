@@ -1,0 +1,113 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Memory Albums{% endblock %}
+
+{% block content %}
+<style>
+.album-cover-placeholder {
+    width: 100%;
+    height: 200px;
+    background: var(--album-color, #3498db);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Memory Albums</h1>
+            <p style="color: var(--text-gray); font-size: 1rem;">Organize your memories into themed collections</p>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <a href="{% url 'core:creer_album' %}" class="btn-primary">
+                + Create Album
+            </a>
+            <a href="{% url 'core:liste_souvenirs' %}" class="btn-secondary">
+                Back to Memories
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- AI Suggestions -->
+{% if suggestions %}
+<div class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);">
+    <h2 class="card-title" style="color: #0277bd;">AI Album Suggestions</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+        {% for suggestion in suggestions %}
+        <div style="background: white; padding: 1.5rem; border-radius: 0.5rem; border: 2px solid #0277bd;">
+            <h4 style="font-weight: bold; margin-bottom: 0.75rem; color: #0277bd;">{{ suggestion.title }}</h4>
+            <p style="color: var(--text-gray); font-size: 0.9rem; margin-bottom: 1rem;">{{ suggestion.description }}</p>
+            <p style="font-size: 0.85rem; margin-bottom: 1rem;"><strong>Memories:</strong> {{ suggestion.memory_count }}</p>
+            <button class="btn-primary" style="width: 100%;" onclick="createSuggestedAlbum('{{ suggestion.title }}', '{{ suggestion.description }}')">
+                Create This Album
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- User's Albums -->
+{% if albums %}
+<div class="card">
+    <h2 class="card-title">Your Albums</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+        {% for album in albums %}
+        <div class="card" style="padding: 0; overflow: hidden;">
+            <!-- Album Cover -->
+            {% if album.couverture_generee %}
+                <img src="{{ album.couverture_generee.url }}" alt="{{ album.titre }}" style="width: 100%; height: 200px; object-fit: cover;">
+            {% else %}
+                <div class="album-cover-placeholder" style="--album-color: {{ album.couleur_theme|default:'#3498db' }};">
+                    <span style="font-size: 3rem; color: white; font-weight: bold;"></span>
+                </div>
+            {% endif %}
+
+            <!-- Album Info -->
+            <div style="padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
+                    <h3 style="font-size: 1.25rem; font-weight: bold;">{{ album.titre }}</h3>
+                    {% if album.is_auto_generated %}
+                        <span style="background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">AI</span>
+                    {% endif %}
+                </div>
+
+                {% if album.description %}
+                <p style="color: var(--text-gray); font-size: 0.95rem; margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ album.description }}</p>
+                {% endif %}
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <span style="background: #e5e7eb; color: #374151; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem;">{{ album.souvenirs_total }} memories</span>
+                    <span style="color: var(--text-gray); font-size: 0.8rem;">{{ album.created_at|date:"M j, Y" }}</span>
+                </div>
+
+                <a href="{% url 'core:detail_album' album.id %}" class="btn-primary" style="width: 100%; text-align: center;">
+                    View Album
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="card" style="text-align: center; padding: 4rem;">
+    <p style="font-size: 1.25rem; color: var(--text-gray); margin-bottom: 1.5rem;">No albums yet</p>
+    <p style="color: var(--text-gray); margin-bottom: 2rem;">Create your first album to organize your memories!</p>
+    <a href="{% url 'core:creer_album' %}" class="btn-primary" style="display: inline-block;">
+        Create Your First Album
+    </a>
+</div>
+{% endif %}
+
+<script>
+function createSuggestedAlbum(title, description) {
+    // This would typically make an AJAX call to create the album
+    // For now, redirect to create album page with pre-filled data
+    const url = `{% url 'core:creer_album' %}?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}`;
+    window.location.href = url;
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Time Capsules{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Time Capsules</h1>
+            <p style="color: var(--text-gray); font-size: 1rem;">Messages to your future self</p>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <a href="{% url 'core:creer_capsule' %}" class="btn-primary">
+                + Create Capsule
+            </a>
+            <a href="{% url 'core:liste_souvenirs' %}" class="btn-secondary">
+                Back to Memories
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Ready to Open Alert -->
+{% if ready_to_open %}
+<div class="card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-color: #f59e0b; margin-bottom: 2rem;">
+    <h3 style="color: #92400e; font-weight: bold; margin-bottom: 1rem;">Capsules Ready to Open!</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+        {% for capsule in ready_to_open %}
+        <div style="background: white; padding: 1rem; border-radius: 0.5rem; border: 2px solid #f59e0b;">
+            <h4 style="font-weight: bold; margin-bottom: 0.5rem;">{{ capsule.souvenir.titre }}</h4>
+            <p style="color: var(--text-gray); font-size: 0.9rem; margin-bottom: 1rem;">Created {{ capsule.date_verrouillage|date:"M j, Y" }}</p>
+            <a href="{% url 'core:ouvrir_capsule' capsule.id %}" class="btn-primary" style="width: 100%; text-align: center;">🎁 Open Now</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Locked Capsules -->
+{% if locked_capsules %}
+<div class="card" style="margin-bottom: 2rem;">
+    <h2 class="card-title">🔒 Locked Capsules</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+        {% for capsule in locked_capsules %}
+        <div class="card" style="padding: 0; overflow: hidden;">
+            {% if capsule.souvenir.photo %}
+                <img src="{{ capsule.souvenir.photo.url }}" alt="{{ capsule.souvenir.titre }}" style="width: 100%; height: 200px; object-fit: cover; filter: blur(8px);">
+            {% else %}
+                <div style="width: 100%; height: 200px; background: linear-gradient(135deg, #374151 0%, #1f2937 100%); display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 2rem; color: white; font-weight: bold;">🔒</span>
+                </div>
+            {% endif %}
+            <div style="padding: 1.5rem;">
+                <h3 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 0.75rem;">{{ capsule.souvenir.titre }}</h3>
+                <p style="color: var(--text-gray); font-size: 0.9rem; margin-bottom: 0.5rem;">Opens: {{ capsule.date_ouverture|date:"F j, Y" }}</p>
+                <div style="margin-bottom: 1rem;">
+                    <div style="background: #e5e7eb; border-radius: 1rem; height: 0.5rem; overflow: hidden; --progress: {{ capsule.pourcentage_progression }}%;">
+                        <div style="background: linear-gradient(90deg, #10b981 0%, #34d399 100%); height: 100%; width: var(--progress); transition: width 0.3s ease;"></div>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-gray); margin-top: 0.25rem;">{{ capsule.jours_restants }} days remaining</p>
+                </div>
+                {% if capsule.emotion_predite_par_ia %}
+                <p style="font-size: 0.85rem; margin-bottom: 1rem;"><strong>AI Prediction:</strong> {{ capsule.get_emotion_predite_par_ia_display }}</p>
+                {% endif %}
+                <div style="color: var(--text-gray); font-style: italic; font-size: 0.9rem; padding: 1rem; background: #f9fafb; border-radius: 0.5rem;">
+                    "{{ capsule.message_futur|truncatewords:20 }}"
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Opened Capsules -->
+{% if opened_capsules %}
+<div class="card" style="margin-bottom: 2rem;">
+    <h2 class="card-title">Opened Capsules</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+        {% for capsule in opened_capsules %}
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.25rem; font-weight: bold;">{{ capsule.souvenir.titre }}</h3>
+                <span style="background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">OPENED</span>
+            </div>
+            <p style="color: var(--text-gray); font-size: 0.9rem; margin-bottom: 0.5rem;">Opened: {{ capsule.date_ouverture_reelle|date:"F j, Y" }}</p>
+            <p style="color: var(--text-gray); font-size: 0.9rem; margin-bottom: 1rem;">Predicted: {{ capsule.get_emotion_predite_par_ia_display }} | Actual: {{ capsule.get_emotion_reelle_display }}</p>
+            {% if capsule.reflexion_ouverture %}
+            <div style="margin-bottom: 1rem;">
+                <p style="font-size: 0.85rem; color: var(--text-gray); margin-bottom: 0.25rem;"><strong>Your Reflection:</strong></p>
+                <p style="font-style: italic; background: #f0f9ff; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.9rem;">"{{ capsule.reflexion_ouverture }}"</p>
+            </div>
+            {% endif %}
+            <a href="{% url 'core:detail_capsule' capsule.id %}" class="btn-primary" style="width: 100%; text-align: center;">View Full Details</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Empty State -->
+{% if not locked_capsules and not opened_capsules %}
+<div class="card" style="text-align: center; padding: 4rem;">
+    <p style="font-size: 1.25rem; color: var(--text-gray); margin-bottom: 1.5rem;">No time capsules yet</p>
+    <p style="color: var(--text-gray); margin-bottom: 2rem;">Create your first time capsule to send a message to your future self!</p>
+    <a href="{% url 'core:creer_capsule' %}" class="btn-primary" style="display: inline-block;">
+        Create Your First Capsule
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

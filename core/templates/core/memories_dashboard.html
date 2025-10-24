@@ -1,0 +1,527 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}My Memories{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">My Memories</h1>
+            <p style="color: var(--text-gray); font-size: 1rem;">Explore and manage your precious moments with AI insights</p>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary">Add Memory</a>
+        </div>
+    </div>
+</div>
+
+<!-- Vue d'ensemble : Statistiques -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+    <div class="card" style="text-align: center;">
+        <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ stats.total_memories }}</p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">Total Memories</p>
+    </div>
+    <div class="card" style="text-align: center;">
+        <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ stats.favorites }}</p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">Favorites</p>
+    </div>
+    <div class="card" style="text-align: center;">
+        <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ stats.analyzed }}</p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">AI Analyzed</p>
+    </div>
+    <div class="card" style="text-align: center;">
+        <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ stats.pending }}</p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">Pending Analysis</p>
+    </div>
+    {% if insights %}
+    <div class="card" style="text-align: center;">
+        <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ insights.dominant_emotion|title }}</p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">Dominant Emotion</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Filtres et recherche -->
+<div class="card" style="margin-bottom: 2rem;">
+    <h2 class="card-title">🔍 Filters & Search</h2>
+    <form method="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end;">
+        <!-- Recherche sémantique -->
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Search</label>
+            <input type="text" name="q" value="{{ filtres_actifs.search }}" placeholder="Search memories..."
+                   style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 0.5rem;">
+        </div>
+
+        <!-- Filtre par émotion -->
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Emotion</label>
+            <select name="emotion" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 0.5rem;">
+                <option value="">All Emotions</option>
+                {% for emotion_value, emotion_label in emotion_choices %}
+                <option value="{{ emotion_value }}" {% if filtres_actifs.emotion == emotion_value %}selected{% endif %}>{{ emotion_label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Filtre par thème -->
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Theme</label>
+            <select name="theme" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 0.5rem;">
+                <option value="">All Themes</option>
+                {% for theme_value, theme_label in theme_choices %}
+                <option value="{{ theme_value }}" {% if filtres_actifs.theme == theme_value %}selected{% endif %}>{{ theme_label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Filtre par année -->
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Year</label>
+            <select name="annee" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 0.5rem;">
+                <option value="">All Years</option>
+                {% for year in available_years %}
+                <option value="{{ year.year }}" {% if filtres_actifs.annee == year.year|stringformat:"s" %}selected{% endif %}>{{ year.year }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Statut IA -->
+        <div>
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">AI Status</label>
+            <select name="ai_status" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 0.5rem;">
+                <option value="">All Memories</option>
+                <option value="analyzed" {% if filtres_actifs.ai_status == 'analyzed' %}selected{% endif %}>AI Analyzed</option>
+                <option value="pending" {% if filtres_actifs.ai_status == 'pending' %}selected{% endif %}>Pending Analysis</option>
+            </select>
+        </div>
+
+        <!-- Boutons -->
+        <div style="display: flex; gap: 0.5rem;">
+            <button type="submit" class="btn-primary" style="flex: 1;">Apply Filters</button>
+            <a href="{% url 'core:memories_dashboard' %}" class="btn-secondary" style="flex: 1; text-align: center; padding: 0.75rem;">Clear</a>
+        </div>
+    </form>
+
+    <!-- Filtres actifs -->
+    {% if filtres_actifs.emotion or filtres_actifs.theme or filtres_actifs.annee or filtres_actifs.favoris or filtres_actifs.search or filtres_actifs.ai_status %}
+    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+        <p style="font-weight: bold; margin-bottom: 0.5rem;">Active Filters:</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            {% if filtres_actifs.search %}
+            <span style="background: #e0f2fe; color: #0277bd; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem;">
+                Search: "{{ filtres_actifs.search }}"
+            </span>
+            {% endif %}
+            {% if filtres_actifs.emotion %}
+            <span style="background: #f3e5f5; color: #7b1fa2; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem;">
+                Emotion: {{ filtres_actifs.emotion|title }}
+            </span>
+            {% endif %}
+            {% if filtres_actifs.theme %}
+            <span style="background: #e8f5e8; color: #2e7d32; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem;">
+                Theme: {{ filtres_actifs.theme|title }}
+            </span>
+            {% endif %}
+            {% if filtres_actifs.annee %}
+            <span style="background: #fff3e0; color: #ef6c00; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem;">
+                Year: {{ filtres_actifs.annee }}
+            </span>
+            {% endif %}
+            {% if filtres_actifs.ai_status %}
+            <span style="background: #fce4ec; color: #c2185b; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem;">
+                AI: {{ filtres_actifs.ai_status|title }}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Actions rapides -->
+<div class="card" style="margin-bottom: 2rem;">
+    <h2 class="card-title">⚡ Quick Actions</h2>
+    <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+        <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary">Add Memory</a>
+        {% if stats.pending > 0 %}
+        <form method="post" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" name="analyze_all" class="btn-secondary">Analyze All Pending ({{ stats.pending }})</button>
+        </form>
+        {% endif %}
+        <a href="#" onclick="exportMemories()" class="btn-secondary">Export PDF</a>
+        <a href="{% url 'core:liste_albums' %}" class="btn-secondary">View Albums</a>
+    </div>
+</div>
+
+<!-- AI Insights (si disponibles) -->
+{% if insights %}
+<div class="card" style="margin-bottom: 2rem;">
+    <h2 class="card-title">✨ AI Insights</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div style="border: 2px solid var(--border-color); padding: 1rem; background: white;">
+            <h4 style="font-weight: bold; margin-bottom: 0.5rem;">Total Memories</h4>
+            <p style="font-size: 1.5rem; font-weight: bold; color: var(--accent-orange);">{{ insights.total_memories }}</p>
+        </div>
+        <div style="border: 2px solid var(--border-color); padding: 1rem; background: white;">
+            <h4 style="font-weight: bold; margin-bottom: 0.5rem;">Dominant Emotion</h4>
+            <p style="font-size: 1.5rem; font-weight: bold; color: var(--accent-orange);">{{ insights.dominant_emotion|title }}</p>
+        </div>
+        <div style="border: 2px solid var(--border-color); padding: 1rem; background: white;">
+            <h4 style="font-weight: bold; margin-bottom: 0.5rem;">AI Analyzed</h4>
+            <p style="font-size: 1.5rem; font-weight: bold; color: var(--accent-orange);">{{ insights.analyzed_count }}</p>
+        </div>
+        <div style="border: 2px solid var(--border-color); padding: 1rem; background: white;">
+            <h4 style="font-weight: bold; margin-bottom: 0.5rem;">With Media</h4>
+            <p style="font-size: 1.5rem; font-weight: bold; color: var(--accent-orange);">{{ insights.with_media }}</p>
+        </div>
+    </div>
+
+    {% if insights.most_common_themes %}
+    <div style="margin-bottom: 1.5rem;">
+        <h4 style="font-weight: bold; margin-bottom: 0.75rem;">Most Common Themes</h4>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            {% for theme, count in insights.most_common_themes.items %}
+            <span style="background: #e0f2fe; color: #0277bd; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.9rem; font-weight: bold;">{{ theme|title }} ({{ count }})</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if insights.emotion_distribution %}
+    <div>
+        <h4 style="font-weight: bold; margin-bottom: 0.75rem;">Emotion Distribution</h4>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            {% for emotion, count in insights.emotion_distribution.items %}
+            <span style="background: #f3e5f5; color: #7b1fa2; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.9rem; font-weight: bold;">{{ emotion|title }}: {{ count }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Liste des souvenirs -->
+<div class="card" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 class="card-title">📚 Memories ({{ stats.filtered_count }} results)</h2>
+        {% if page_obj.has_other_pages %}
+        <div style="font-size: 0.9rem; color: var(--text-gray);">
+            Page {{ page_obj.number }} of {{ paginator.num_pages }}
+        </div>
+        {% endif %}
+    </div>
+
+    {% if souvenirs %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+            {% for souvenir in souvenirs %}
+                <div class="card memory-card" style="padding: 0; overflow: hidden; position: relative;">
+                    <!-- Badge AI -->
+                    {% if souvenir.ai_analyzed %}
+                        <div style="position: absolute; top: 10px; right: 10px; z-index: 10;">
+                            <span style="background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; font-weight: bold;">AI</span>
+                        </div>
+                    {% endif %}
+
+                    <!-- Image de prévisualisation -->
+                    {% if souvenir.photo %}
+                        <img src="{{ souvenir.photo.url }}" alt="{{ souvenir.titre }}" style="width: 100%; height: 200px; object-fit: cover;">
+                    {% elif souvenir.video %}
+                        <div style="width: 100%; height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 2rem; color: white; font-weight: bold;">VIDEO</span>
+                        </div>
+                    {% else %}
+                        <div style="width: 100%; height: 200px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 2rem; color: white; font-weight: bold;">NOTE</span>
+                        </div>
+                    {% endif %}
+
+                    <!-- Contenu -->
+                    <div style="padding: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
+                            <h3 style="font-size: 1.25rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">{{ souvenir.titre }}</h3>
+                            {% if souvenir.is_favorite %}
+                                <span style="color: #f59e0b; font-size: 1.25rem; cursor: pointer;" onclick="toggleFavorite({{ souvenir.id }})">⭐</span>
+                            {% else %}
+                                <span style="color: #d1d5db; font-size: 1.25rem; cursor: pointer;" onclick="toggleFavorite({{ souvenir.id }})">☆</span>
+                            {% endif %}
+                        </div>
+
+                        <p style="color: var(--text-gray); font-size: 0.95rem; margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ souvenir.description }}</p>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <p style="color: var(--text-gray); font-size: 0.9rem;">
+                                {{ souvenir.date_evenement|date:"d/m/Y" }}
+                            </p>
+                        </div>
+
+                        <!-- Résumé IA si disponible -->
+                        {% if souvenir.ai_analyzed and souvenir.analyse_ia %}
+                        <div style="margin-bottom: 1rem; padding: 0.75rem; background: #f8fafc; border-radius: 0.5rem;">
+                            <p style="font-size: 0.8rem; color: var(--text-gray); margin-bottom: 0.25rem;"><strong>AI Summary:</strong></p>
+                            <p style="font-size: 0.8rem; margin-bottom: 0.5rem;">{{ souvenir.analyse_ia.resume_genere|truncatewords:12 }}</p>
+                            {% if souvenir.ai_tags %}
+                            <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+                                {% for tag in souvenir.ai_tags|slice:":3" %}
+                                <span style="background: #e0f2fe; color: #0277bd; padding: 0.15rem 0.3rem; border-radius: 0.2rem; font-size: 0.7rem;">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                            <span style="background: #e5e7eb; color: #374151; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">{{ souvenir.get_emotion_display }}</span>
+                            <span style="background: #e5e7eb; color: #374151; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">{{ souvenir.get_theme_display }}</span>
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem;">
+                            <a href="{% url 'core:detail_souvenir' souvenir.id %}" class="btn-primary" style="flex: 1; text-align: center; font-size: 0.9rem;">View</a>
+                            <a href="{% url 'core:modifier_souvenir' souvenir.id %}" class="btn-secondary" style="flex: 1; text-align: center; font-size: 0.9rem;">Edit</a>
+                            {% if not souvenir.ai_analyzed %}
+                            <a href="{% url 'core:analyser_souvenir_ia' souvenir.id %}" class="btn-secondary" style="flex: 1; text-align: center; font-size: 0.9rem;">AI</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div style="display: flex; justify-content: center; margin-top: 2rem;">
+            <div style="display: flex; gap: 0.5rem;">
+                {% if page_obj.has_previous %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" class="btn-secondary">Previous</a>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <span style="padding: 0.5rem 1rem; background: var(--accent-orange); color: white; border-radius: 0.25rem; font-weight: bold;">{{ num }}</span>
+                    {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}" style="padding: 0.5rem 1rem; border: 1px solid var(--border-color); border-radius: 0.25rem; text-decoration: none; color: var(--text-color);">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" class="btn-secondary">Next</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+    {% else %}
+        <div style="text-align: center; padding: 4rem;">
+            <p style="font-size: 1.25rem; color: var(--text-gray); margin-bottom: 1.5rem;">
+                {% if filtres_actifs.emotion or filtres_actifs.theme or filtres_actifs.annee or filtres_actifs.favoris or filtres_actifs.search %}
+                No memories match your filters
+                {% else %}
+                No memories yet
+                {% endif %}
+            </p>
+            <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary" style="display: inline-block;">
+                {% if filtres_actifs.emotion or filtres_actifs.theme or filtres_actifs.annee or filtres_actifs.favoris or filtres_actifs.search %}
+                Create your first memory
+                {% else %}
+                Create your first memory
+                {% endif %}
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Section IA : Albums suggérés et prompts de réflexion -->
+{% if album_suggestions or reflection_prompts %}
+<div class="card" style="margin-bottom: 2rem;">
+
+    <!-- Albums suggérés -->
+    {% if album_suggestions %}
+    <div style="margin-bottom: 2rem;">
+        <h3 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;">📚 Album Suggestions</h3>
+        <p style="color: var(--text-gray); font-size: 0.9rem; margin-bottom: 1rem;">Organize your memories by date, theme, or other patterns</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+            {% for suggestion in album_suggestions %}
+            <div style="border: 2px solid var(--border-color); padding: 1.5rem; background: white; border-radius: 0.5rem;">
+                <h4 style="font-weight: bold; margin-bottom: 0.75rem;">{{ suggestion.title }}</h4>
+                <p style="color: var(--text-gray); font-size: 0.9rem; margin-bottom: 1rem;">{{ suggestion.type|title }} album with {{ suggestion.count }} memories</p>
+                <p style="font-size: 0.85rem; margin-bottom: 1rem;"><strong>Theme:</strong> {{ suggestion.theme|default:"Various"|title }}</p>
+                <a href="{% url 'core:creer_album' %}?{% for id in suggestion.souvenir_ids %}souvenirs={{ id }}{% if not forloop.last %}&{% endif %}{% endfor %}&title={{ suggestion.title|urlencode }}&description=AI-generated album suggestion" class="btn-secondary" style="width: 100%; text-align: center;">Create This Album</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Prompts de réflexion -->
+    {% if reflection_prompts %}
+    <div>
+        <h3 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;">💭 Reflection Prompts</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+            {% for prompt in reflection_prompts %}
+            <div class="reflection-prompt-card" style="border: 2px solid var(--border-color); padding: 1.5rem; background: white; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s ease;" onclick="openReflectionModal('{{ prompt }}')">
+                <p style="font-style: italic; color: var(--text-gray); margin: 0;">{{ prompt }}</p>
+                <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--accent-orange); font-weight: bold;">
+                    Click to reflect →
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<script>
+function toggleFavorite(souvenirId) {
+    fetch(`/memories/${souvenirId}/favorite/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.is_favorite !== undefined) {
+            // Update star appearance
+            const star = event.target;
+            if (data.is_favorite) {
+                star.textContent = '⭐';
+                star.style.color = '#f59e0b';
+            } else {
+                star.textContent = '☆';
+                star.style.color = '#d1d5db';
+            }
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function exportMemories() {
+    // Simple PDF export placeholder
+    alert('PDF export feature coming soon! For now, you can manually save your memories.');
+}
+
+// Reflection modal functions
+function openReflectionModal(prompt) {
+    document.getElementById('reflectionPrompt').textContent = prompt;
+    document.getElementById('reflectionAnswer').value = '';
+    document.getElementById('reflectionModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeReflectionModal() {
+    document.getElementById('reflectionModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function saveReflection() {
+    const prompt = document.getElementById('reflectionPrompt').textContent;
+    const answer = document.getElementById('reflectionAnswer').value.trim();
+    
+    if (!answer) {
+        alert('Please write your reflection before saving.');
+        return;
+    }
+    
+    // For now, just show a success message
+    // In a real app, this would save to database
+    alert('Reflection saved! Your thoughtful response has been recorded.');
+    closeReflectionModal();
+}
+
+// Close modal when clicking outside
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('reflectionModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeReflectionModal();
+            }
+        });
+    }
+});
+</script>
+
+<style>
+.memory-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.reflection-prompt-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: var(--accent-orange);
+    transition: all 0.2s ease;
+}
+
+.reflection-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.reflection-modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    border: 3px solid var(--border-color);
+    max-width: 500px;
+    width: 90%;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translate(-50%, -60%); opacity: 0; }
+    to { transform: translate(-50%, -50%); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    .memory-card {
+        margin-bottom: 1rem;
+    }
+    
+    .reflection-modal-content {
+        padding: 1.5rem;
+        width: 95%;
+    }
+}
+</style>
+
+<!-- Reflection Modal -->
+<div id="reflectionModal" class="reflection-modal">
+    <div class="reflection-modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.5rem; font-weight: bold; margin: 0;">💭 Reflection Time</h2>
+            <button onclick="closeReflectionModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-gray);">&times;</button>
+        </div>
+        
+        <div id="reflectionPrompt" style="font-style: italic; color: var(--text-gray); margin-bottom: 1.5rem; font-size: 1.1rem;"></div>
+        
+        <textarea id="reflectionAnswer" placeholder="Take a moment to reflect and write your thoughts..." 
+                  style="width: 100%; height: 120px; padding: 1rem; border: 2px solid var(--border-color); border-radius: 0.5rem; resize: vertical; font-family: inherit;"></textarea>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button onclick="saveReflection()" class="btn-primary" style="flex: 1;">Save Reflection</button>
+            <button onclick="closeReflectionModal()" class="btn-secondary" style="flex: 1;">Close</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

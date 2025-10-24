@@ -1,0 +1,193 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Create Time Capsule{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Create Time Capsule</h1>
+            <p style="color: var(--text-gray); font-size: 1rem;">Send a message to your future self</p>
+        </div>
+        <a href="{% url 'core:liste_capsules' %}" class="btn-secondary">
+            Back to Capsules
+        </a>
+    </div>
+</div>
+
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- Memory Details -->
+        <div style="margin-bottom: 2rem;">
+            <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">Memory Details</h2>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label for="{{ form.titre.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Title *</label>
+                {{ form.titre }}
+                {% if form.titre.errors %}
+                    <p style="color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ form.titre.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label for="{{ form.description.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Description *</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <p style="color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label for="{{ form.date_evenement.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Event Date *</label>
+                {{ form.date_evenement }}
+                {% if form.date_evenement.errors %}
+                    <p style="color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ form.date_evenement.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <label for="{{ form.photo.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Photo (optional)</label>
+                    {{ form.photo }}
+                    <p style="font-size: 0.8rem; color: var(--text-gray); margin-top: 0.25rem;">Formats: JPG, PNG, GIF, WebP (max 10MB)</p>
+                </div>
+                <div>
+                    <label for="{{ form.video.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Video (optional)</label>
+                    {{ form.video }}
+                    <p style="font-size: 0.8rem; color: var(--text-gray); margin-top: 0.25rem;">Formats: MP4, AVI, MOV, WMV (max 100MB)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Capsule Settings -->
+        <div style="margin-bottom: 2rem;">
+            <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">Capsule Settings</h2>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label for="id_date_ouverture" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Opening Date *</label>
+                <input type="date" name="date_ouverture" id="id_date_ouverture" class="form-input" required>
+                <p style="font-size: 0.8rem; color: var(--text-gray); margin-top: 0.25rem;">When should this capsule unlock?</p>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label for="id_message_futur" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Message to Future Self (Optional)</label>
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <textarea name="message_futur" id="id_message_futur" class="form-input" rows="4" placeholder="Write a message to your future self... (leave empty for AI-generated message)" style="flex: 1;"></textarea>
+                    <button type="button" id="generate-ai-btn" class="btn-secondary" style="align-self: flex-start; padding: 0.5rem 1rem; white-space: nowrap;">
+                        🤖 Generate AI Message
+                    </button>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--text-gray); margin-top: 0.25rem;">Leave empty and AI will create an inspiring message based on your memory</p>
+            </div>
+        </div>
+
+        <!-- Preview -->
+        <div style="background: #f9fafb; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+            <h3 style="font-weight: bold; margin-bottom: 1rem;">Preview</h3>
+            <div id="capsule-preview" style="display: none;">
+                <p><strong>Title:</strong> <span id="preview-title"></span></p>
+                <p><strong>Opens:</strong> <span id="preview-date"></span></p>
+                <p><strong>Message:</strong> <span id="preview-message"></span></p>
+            </div>
+            <p id="preview-empty" style="color: var(--text-gray); font-style: italic;">Fill in the details above to see a preview</p>
+        </div>
+
+        <!-- Submit -->
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn-primary" style="flex: 1;">
+                Create Time Capsule
+            </button>
+            <a href="{% url 'core:liste_capsules' %}" class="btn-secondary" style="flex: 1; text-align: center;">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+// Live preview
+document.addEventListener('DOMContentLoaded', function() {
+    const titleInput = document.getElementById('id_titre');
+    const dateInput = document.getElementById('id_date_ouverture');
+    const messageInput = document.getElementById('id_message_futur');
+    const preview = document.getElementById('capsule-preview');
+    const previewEmpty = document.getElementById('preview-empty');
+    const previewTitle = document.getElementById('preview-title');
+    const previewDate = document.getElementById('preview-date');
+    const previewMessage = document.getElementById('preview-message');
+    const generateAiBtn = document.getElementById('generate-ai-btn');
+
+    function updatePreview() {
+        const title = titleInput.value;
+        const date = dateInput.value;
+        const message = messageInput.value;
+
+        if (title || date || message) {
+            preview.style.display = 'block';
+            previewEmpty.style.display = 'none';
+            previewTitle.textContent = title || 'Untitled';
+            previewDate.textContent = date ? new Date(date).toLocaleDateString() : 'Not set';
+            previewMessage.textContent = message || 'No message';
+        } else {
+            preview.style.display = 'none';
+            previewEmpty.style.display = 'block';
+        }
+    }
+
+    // Generate AI message
+    generateAiBtn.addEventListener('click', function() {
+        const title = titleInput.value.trim();
+        const description = document.getElementById('id_description').value.trim();
+        
+        if (!title || !description) {
+            alert('Please fill in the title and description first.');
+            return;
+        }
+        
+        // Disable button and show loading
+        generateAiBtn.disabled = true;
+        generateAiBtn.textContent = '🤖 Generating...';
+        
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('titre', title);
+        formData.append('description', description);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        // Make AJAX request
+        fetch('{% url "core:generate_ai_message" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Error: ' + data.error);
+            } else {
+                messageInput.value = data.message;
+                updatePreview();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to generate AI message. Please try again.');
+        })
+        .finally(() => {
+            // Re-enable button
+            generateAiBtn.disabled = false;
+            generateAiBtn.textContent = '🤖 Generate AI Message';
+        });
+    });
+
+    titleInput.addEventListener('input', updatePreview);
+    dateInput.addEventListener('input', updatePreview);
+    messageInput.addEventListener('input', updatePreview);
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Delete Album{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px; margin: 0 auto;">
+    <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 1.5rem; color: #dc2626;">Confirm Deletion</h1>
+
+    <div class="card">
+        <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">Are you sure you want to delete this album?</p>
+
+        <div style="background: #f3f4f6; padding: 1.5rem; border: 2px solid var(--border-color); margin-bottom: 1.5rem;">
+            <h3 style="font-weight: bold; font-size: 1.25rem; margin-bottom: 0.75rem;">{{ album.titre }}</h3>
+            {% if album.description %}
+            <p style="color: var(--text-dark); margin-bottom: 0.75rem; font-size: 0.95rem;">{{ album.description }}</p>
+            {% endif %}
+            <p style="color: var(--text-gray); font-size: 0.9rem;">Contains {{ album.souvenirs.count }} memories</p>
+        </div>
+
+        <div style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 1.25rem; margin-bottom: 1.5rem;">
+            <p style="color: #991b1b;">
+                <strong>Warning:</strong> This action is irreversible. The album will be permanently deleted. The memories contained in this album will not be deleted.
+            </p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" style="flex: 1; padding: 0.85rem; background: #dc2626; color: white; border: none; font-weight: bold; font-family: 'Courier New', monospace; font-size: 1rem; cursor: pointer; transition: opacity 0.2s ease;">
+                    Yes, delete
+                </button>
+                <a href="{% url 'core:detail_album' album.id %}" class="btn-secondary" style="flex: 1; text-align: center; line-height: 2.5;">
+                    No, cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

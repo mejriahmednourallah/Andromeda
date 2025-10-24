@@ -5,7 +5,7 @@
 {% block content %}
 <div style="max-width: 1000px; margin: 0 auto;">
     <a href="{% url 'core:liste_souvenirs' %}" style="display: inline-block; margin-bottom: 1.5rem; color: var(--accent-orange); text-decoration: none; font-weight: bold; padding: 0.5rem 1rem; border: 2px solid var(--border-color); background: white;">
-        ← Back to list
+    Back to list
     </a>
 
     <div class="card" style="padding: 0; overflow: hidden;">
@@ -38,10 +38,99 @@
                 </div>
             {% endif %}
 
-            <!-- Description -->
-            <div style="margin-bottom: 2rem;">
-                <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; color: var(--text-dark); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">Description</h2>
-                <div style="color: var(--text-dark); line-height: 1.8; white-space: pre-wrap; font-size: 1.05rem; background: #f9f9f9; padding: 1.5rem; border: 2px solid var(--border-color);">{{ souvenir.description }}</div>
+
+            <!-- AI Analysis Section -->
+            {% if souvenir.ai_analyzed %}
+            <div style="margin-bottom: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; border: 3px solid var(--border-color);">
+                <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1.5rem; color: white; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 0.5rem;">🤖 AI Analysis</h2>
+                
+                <!-- AI Summary -->
+                {% if souvenir.ai_summary %}
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem; color: white;">AI Summary</h3>
+                    <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; color: white; line-height: 1.6;">{{ souvenir.ai_summary }}</div>
+                </div>
+                {% endif %}
+                
+                <!-- AI Keywords -->
+                {% if souvenir.ai_tags %}
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem; color: white;">Keywords</h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        {% for tag in souvenir.ai_tags %}
+                        <span style="background: rgba(255,255,255,0.2); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- AI Detected Emotion -->
+                {% if souvenir.ai_emotion_detected %}
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem; color: white;">AI Detected Emotion</h3>
+                    <div style="background: rgba(255,255,255,0.1); padding: 0.75rem; border-radius: 8px; color: white; font-weight: bold; display: inline-block;">{{ souvenir.ai_emotion_detected|title }}</div>
+                </div>
+                {% endif %}
+                
+                <!-- Analysis Details -->
+                {% if souvenir.analyse_ia %}
+                <div style="margin-bottom: 1rem;">
+                    <h3 style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem; color: white;">Analysis Details</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        {% if souvenir.analyse_ia.objets_detectes %}
+                        <div style="background: rgba(255,255,255,0.1); padding: 0.75rem; border-radius: 8px;">
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.8); margin-bottom: 0.25rem;">Objects Detected</div>
+                            <div style="color: white; font-weight: bold;">{{ souvenir.analyse_ia.objets_detectes|join:", " }}</div>
+                        </div>
+                        {% endif %}
+                        {% if souvenir.analyse_ia.lieu_detecte %}
+                        <div style="background: rgba(255,255,255,0.1); padding: 0.75rem; border-radius: 8px;">
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.8); margin-bottom: 0.25rem;">Location</div>
+                            <div style="color: white; font-weight: bold;">{{ souvenir.analyse_ia.lieu_detecte }}</div>
+                        </div>
+                        {% endif %}
+                        {% if souvenir.analyse_ia.personnes_detectees %}
+                        <div style="background: rgba(255,255,255,0.1); padding: 0.75rem; border-radius: 8px;">
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.8); margin-bottom: 0.25rem;">People Detected</div>
+                            <div style="color: white; font-weight: bold;">{{ souvenir.analyse_ia.personnes_detectees }}</div>
+                        </div>
+                        {% endif %}
+                        {% if souvenir.analyse_ia.couleurs_dominantes %}
+                        <div style="background: rgba(255,255,255,0.1); padding: 0.75rem; border-radius: 8px;">
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.8); margin-bottom: 0.25rem;">Dominant Colors</div>
+                            <div style="color: white; font-weight: bold;">{{ souvenir.analyse_ia.couleurs_dominantes|join:", " }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Analysis Info -->
+                <div style="font-size: 0.85rem; color: rgba(255,255,255,0.7); border-top: 1px solid rgba(255,255,255,0.3); padding-top: 0.75rem; margin-top: 1rem;">
+                    Analyzed on {{ souvenir.ai_analysis_date|date:"d/m/Y" }} at {{ souvenir.ai_analysis_date|date:"H:i" }} using {{ souvenir.analyse_ia.modele_utilise|default:"AI Model" }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Manual AI Analysis Button -->
+            {% if not souvenir.ai_analyzed %}
+            <div style="margin-bottom: 2rem; background: #fef3c7; border: 2px solid #f59e0b; padding: 1.5rem; border-radius: 8px;">
+                <h3 style="color: #92400e; font-weight: bold; margin-bottom: 0.5rem;">🤖 AI Analysis Available</h3>
+                <p style="color: #92400e; margin-bottom: 1rem;">Get AI-powered insights about this memory including summary, keywords, and emotion analysis.</p>
+                <a href="{% url 'core:analyser_souvenir_ia' souvenir.id %}" style="background: #f59e0b; color: white; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">Analyze with AI</a>
+            </div>
+            {% endif %}
+
+            <!-- Emotion & Theme Section -->
+            <div style="margin-bottom: 2rem; display: flex; gap: 2rem;">
+                <div style="background: #f3f4f6; border: 2px solid var(--border-color); border-radius: 8px; padding: 1.25rem 2rem; min-width: 180px;">
+                    <div style="font-size: 0.95rem; color: var(--text-gray); font-weight: bold; margin-bottom: 0.5rem;">Emotion</div>
+                    <div style="font-size: 1.15rem; color: var(--text-dark); font-weight: bold;">{{ souvenir.get_emotion_display|default:"Not specified" }}</div>
+                </div>
+                <div style="background: #f3f4f6; border: 2px solid var(--border-color); border-radius: 8px; padding: 1.25rem 2rem; min-width: 180px;">
+                    <div style="font-size: 0.95rem; color: var(--text-gray); font-weight: bold; margin-bottom: 0.5rem;">Theme</div>
+                    <div style="font-size: 1.15rem; color: var(--text-dark); font-weight: bold;">{{ souvenir.get_theme_display|default:"Not specified" }}</div>
+                </div>
             </div>
 
             <!-- Métadonnées dans un tableau -->
@@ -65,12 +154,9 @@
 
             <!-- Actions -->
             <div style="display: flex; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 3px solid var(--border-color);">
-                <a href="{% url 'core:liste_souvenirs' %}" class="btn-secondary" style="flex: 1; text-align: center; line-height: 2.5;">
-                    Back to List
-                </a>
-                <a href="{% url 'core:supprimer_souvenir' souvenir.id %}" style="flex: 1; padding: 0.85rem 1.5rem; background: #dc2626; color: white; border: 2px solid var(--border-color); font-weight: bold; text-decoration: none; text-align: center; font-family: 'Courier New', monospace;">
-                    Delete Souvenir
-                </a>
+                <a href="{% url 'core:liste_souvenirs' %}" class="btn-secondary" style="flex: 1; text-align: center; line-height: 2.5;">Back to List</a>
+                <a href="{% url 'core:modifier_souvenir' souvenir.id %}" class="btn-secondary" style="flex: 1; text-align: center; line-height: 2.5;">Edit</a>
+                <a href="{% url 'core:supprimer_souvenir' souvenir.id %}" style="flex: 1; padding: 0.85rem 1.5rem; background: #dc2626; color: white; border: 2px solid var(--border-color); font-weight: bold; text-decoration: none; text-align: center; font-family: 'Courier New', monospace;">Delete</a>
             </div>
         </div>
     </div>

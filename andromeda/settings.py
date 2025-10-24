@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
 try:
     import dj_database_url
@@ -7,6 +8,9 @@ except ImportError:
     dj_database_url = None
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
@@ -87,3 +91,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 LOGIN_URL = '/accounts/login/'
+
+# AI API Configuration
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+GROK_API_KEY = os.environ.get('GROK_API_KEY')
+GOOGLE_VISION_API_KEY = os.environ.get('GOOGLE_VISION_API_KEY')
+
+# AI Service Settings
+AI_TEXT_MODEL = os.environ.get('AI_TEXT_MODEL', 'gpt-4o-mini')
+AI_VISION_MODEL = os.environ.get('AI_VISION_MODEL', 'gpt-4o-mini')

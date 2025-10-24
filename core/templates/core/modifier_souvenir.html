@@ -1,17 +1,17 @@
 {% extends "core/dashboard_base.html" %}
 
-{% block title %}Ajouter un souvenir{% endblock %}
+{% block title %}Modifier un souvenir{% endblock %}
 
 {% block content %}
 <div style="max-width: 800px; margin: 0 auto;">
     <div style="margin-bottom: 2rem;">
-        <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Ajouter un Souvenir</h1>
-        <p style="color: var(--text-gray); font-size: 1rem;">Capturez vos précieux moments</p>
+        <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Modifier un Souvenir</h1>
+        <p style="color: var(--text-gray); font-size: 1rem;">Mettez à jour votre précieux moment</p>
     </div>
 
     <form method="post" enctype="multipart/form-data" class="card">
         {% csrf_token %}
-        
+
         <!-- Titre -->
         <div style="margin-bottom: 1.5rem;">
             <label for="{{ form.titre.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
@@ -34,7 +34,6 @@
             {% endif %}
         </div>
 
-
         <!-- Date de l'événement -->
         <div style="margin-bottom: 1.5rem;">
             <label for="{{ form.date_evenement.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
@@ -46,41 +45,45 @@
             {% endif %}
         </div>
 
-        <!-- Emotion -->
+        <!-- Photo actuelle -->
+        {% if souvenir.photo %}
         <div style="margin-bottom: 1.5rem;">
-            <label for="{{ form.emotion.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
-                {{ form.emotion.label }}
-            </label>
-            {{ form.emotion }}
-            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">{{ form.emotion.help_text }}</p>
-            {% if form.emotion.errors %}
-                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.emotion.errors.0 }}</p>
-            {% endif %}
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Photo actuelle</label>
+            <div style="border: 1px solid var(--separator-color); border-radius: 8px; padding: 1rem; background: var(--bg-light);">
+                <img src="{{ souvenir.photo.url }}" alt="Photo actuelle" style="max-width: 200px; max-height: 200px; border-radius: 8px; display: block; margin-bottom: 0.5rem;">
+                <p style="color: var(--text-gray); font-size: 0.9rem; margin: 0;">Laissez vide pour conserver la photo actuelle</p>
+            </div>
         </div>
-
-        <!-- Theme -->
-        <div style="margin-bottom: 1.5rem;">
-            <label for="{{ form.theme.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
-                {{ form.theme.label }}
-            </label>
-            {{ form.theme }}
-            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">{{ form.theme.help_text }}</p>
-            {% if form.theme.errors %}
-                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.theme.errors.0 }}</p>
-            {% endif %}
-        </div>
+        {% endif %}
 
         <!-- Photo -->
         <div style="margin-bottom: 1.5rem;">
             <label for="{{ form.photo.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
-                {{ form.photo.label }}
+                {{ form.photo.label }}{% if not souvenir.photo %} <span style="color: #dc2626;">*</span>{% endif %}
             </label>
             {{ form.photo }}
-            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">Formats acceptés: JPG, PNG, GIF, WebP (max 10 MB)</p>
+            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">
+                Formats acceptés: JPG, PNG, GIF, WebP (max 10 MB)
+                {% if souvenir.photo %}• Laissez vide pour conserver la photo actuelle{% endif %}
+            </p>
             {% if form.photo.errors %}
                 <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.photo.errors.0 }}</p>
             {% endif %}
         </div>
+
+        <!-- Vidéo actuelle -->
+        {% if souvenir.video %}
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Vidéo actuelle</label>
+            <div style="border: 1px solid var(--separator-color); border-radius: 8px; padding: 1rem; background: var(--bg-light);">
+                <video controls style="max-width: 300px; max-height: 200px; border-radius: 8px; display: block; margin-bottom: 0.5rem;">
+                    <source src="{{ souvenir.video.url }}" type="video/mp4">
+                    Votre navigateur ne supporte pas la lecture vidéo.
+                </video>
+                <p style="color: var(--text-gray); font-size: 0.9rem; margin: 0;">Laissez vide pour conserver la vidéo actuelle</p>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Vidéo -->
         <div style="margin-bottom: 1.5rem;">
@@ -88,7 +91,10 @@
                 {{ form.video.label }}
             </label>
             {{ form.video }}
-            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">Formats acceptés: MP4, AVI, MOV, WMV (max 100 MB)</p>
+            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">
+                Formats acceptés: MP4, AVI, MOV, WMV (max 100 MB)
+                {% if souvenir.video %}• Laissez vide pour conserver la vidéo actuelle{% endif %}
+            </p>
             {% if form.video.errors %}
                 <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.video.errors.0 }}</p>
             {% endif %}
@@ -96,8 +102,8 @@
 
         <!-- Action Buttons -->
         <div style="display: flex; gap: 1rem; padding-top: 1rem; border-top: 2px solid var(--separator-color);">
-            <button type="submit" class="btn-primary" style="flex: 1;">Save</button>
-            <a href="{% url 'core:liste_souvenirs' %}" class="btn-secondary" style="flex: 1; text-align: center; line-height: 2.5;">Cancel</a>
+            <button type="submit" class="btn-primary" style="flex: 1;">Save Changes</button>
+            <a href="{% url 'core:detail_souvenir' souvenir_id=souvenir.id %}" class="btn-secondary" style="flex: 1; text-align: center; line-height: 2.5;">Cancel</a>
         </div>
     </form>
 </div>
