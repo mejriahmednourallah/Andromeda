@@ -341,24 +341,39 @@
         <p>One subscription for Litverse, Recognotes, and Sparks.</p>
       </div>
 
-      <button class="social-btn">
+      <button class="social-btn" disabled style="opacity: 0.5; cursor: not-allowed;">
         <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google">
-        Continue with Google
+        Continue with Google (Coming soon)
       </button>
-      <button class="social-btn">
+      <button class="social-btn" disabled style="opacity: 0.5; cursor: not-allowed;">
         <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook">
-        Continue with Facebook
+        Continue with Facebook (Coming soon)
       </button>
-      <button class="social-btn">
+      <button class="social-btn" disabled style="opacity: 0.5; cursor: not-allowed;">
         <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple">
-        Continue with Apple
+        Continue with Apple (Coming soon)
       </button>
 
       <div class="separator">or sign up with</div>
 
       <form method="post">
         {% csrf_token %}
-        <input type="email" name="username" placeholder="Email address" class="form-input" required>
+        
+        {% if form.errors %}
+          <div style="background: #fee; border: 2px solid #c00; padding: 1rem; margin-bottom: 1rem;">
+            {% for field in form %}
+              {% for error in field.errors %}
+                <p style="color: #c00; margin: 0.25rem 0;">{{ error }}</p>
+              {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+              <p style="color: #c00; margin: 0.25rem 0;">{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+        
+        <input type="text" name="username" placeholder="Username" class="form-input" required value="{{ form.username.value|default:'' }}">
+        <input type="email" name="email" placeholder="Email address" class="form-input" required value="{{ form.email.value|default:'' }}">
         
         <div class="password-container">
           <input type="password" id="password1" name="password1" placeholder="Password" class="form-input" required>
