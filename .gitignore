@@ -146,6 +146,9 @@ Thumbs.db
 # Static files
 staticfiles/
 
+# Media files (user uploads)
+media/
+
 # Database
 db.sqlite3
 db.sqlite3-journal

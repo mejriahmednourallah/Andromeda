@@ -1,0 +1,63 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Mes Souvenirs{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Mes Souvenirs</h1>
+            <p style="color: var(--text-gray); font-size: 1rem;">Vos précieux moments capturés</p>
+        </div>
+        <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary">
+            + Nouveau souvenir
+        </a>
+    </div>
+</div>
+
+    {% if souvenirs %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+            {% for souvenir in souvenirs %}
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <!-- Image de prévisualisation -->
+                    {% if souvenir.photo %}
+                        <img src="{{ souvenir.photo.url }}" alt="{{ souvenir.titre }}" style="width: 100%; height: 200px; object-fit: cover;">
+                    {% elif souvenir.video %}
+                        <div style="width: 100%; height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 2rem; color: white; font-weight: bold;">VIDEO</span>
+                        </div>
+                    {% else %}
+                        <div style="width: 100%; height: 200px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 2rem; color: white; font-weight: bold;">NOTE</span>
+                        </div>
+                    {% endif %}
+
+                    <!-- Contenu -->
+                    <div style="padding: 1.5rem;">
+                        <h3 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ souvenir.titre }}</h3>
+                        <p style="color: var(--text-gray); font-size: 0.95rem; margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ souvenir.description }}</p>
+                        <p style="color: var(--text-gray); font-size: 0.9rem; margin-bottom: 1rem;">
+                            {{ souvenir.date_evenement|date:"d/m/Y" }}
+                        </p>
+                        <div style="display: flex; gap: 0.75rem;">
+                            <a href="{% url 'core:detail_souvenir' souvenir.id %}" class="btn-secondary" style="flex: 1; text-align: center; padding: 0.75rem;">
+                                Voir
+                            </a>
+                            <a href="{% url 'core:supprimer_souvenir' souvenir.id %}" style="flex: 1; text-align: center; padding: 0.75rem; background: #fee2e2; color: #dc2626; border: 2px solid var(--border-color); font-weight: bold; text-decoration: none;">
+                                Supprimer
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card" style="text-align: center; padding: 4rem;">
+            <p style="font-size: 1.25rem; color: var(--text-gray); margin-bottom: 1.5rem;">Aucun souvenir pour le moment</p>
+            <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary" style="display: inline-block;">
+                Créer mon premier souvenir
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

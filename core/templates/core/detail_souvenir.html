@@ -1,0 +1,78 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}{{ souvenir.titre }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+    <a href="{% url 'core:liste_souvenirs' %}" style="display: inline-block; margin-bottom: 1.5rem; color: var(--accent-orange); text-decoration: none; font-weight: bold; padding: 0.5rem 1rem; border: 2px solid var(--border-color); background: white;">
+        ← Back to list
+    </a>
+
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <!-- En-tête amélioré -->
+        <div style="background: white; padding: 2rem; border-bottom: 3px solid var(--border-color);">
+            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.75rem; color: var(--text-dark);">{{ souvenir.titre }}</h1>
+            <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-gray);">
+                <span style="font-size: 1rem;">{{ souvenir.date_evenement|date:"d F Y" }}</span>
+                <span style="color: var(--separator-color);">|</span>
+                <span style="font-size: 0.9rem;">By {{ souvenir.utilisateur.get_full_name|default:souvenir.utilisateur.username }}</span>
+            </div>
+        </div>
+
+        <!-- Contenu principal -->
+        <div style="padding: 2rem;">
+            <!-- Photo -->
+            {% if souvenir.photo %}
+                <div style="margin-bottom: 2rem; background: #f9f9f9; padding: 1rem; border: 2px solid var(--border-color);">
+                    <img src="{{ souvenir.photo.url }}" alt="{{ souvenir.titre }}" style="width: 100%; height: auto; display: block;">
+                </div>
+            {% endif %}
+
+            <!-- Vidéo -->
+            {% if souvenir.video %}
+                <div style="margin-bottom: 2rem; background: #f9f9f9; padding: 1rem; border: 2px solid var(--border-color);">
+                    <video controls style="width: 100%; height: auto;">
+                        <source src="{{ souvenir.video.url }}" type="video/mp4">
+                        Your browser does not support video playback.
+                    </video>
+                </div>
+            {% endif %}
+
+            <!-- Description -->
+            <div style="margin-bottom: 2rem;">
+                <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; color: var(--text-dark); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">Description</h2>
+                <div style="color: var(--text-dark); line-height: 1.8; white-space: pre-wrap; font-size: 1.05rem; background: #f9f9f9; padding: 1.5rem; border: 2px solid var(--border-color);">{{ souvenir.description }}</div>
+            </div>
+
+            <!-- Métadonnées dans un tableau -->
+            <div style="border-top: 3px solid var(--border-color); padding-top: 1.5rem; margin-top: 2rem;">
+                <h3 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem; color: var(--text-dark);">Information</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="border-bottom: 2px solid var(--separator-color);">
+                        <td style="padding: 0.75rem; font-weight: bold; color: var(--text-dark); width: 30%;">Created</td>
+                        <td style="padding: 0.75rem; color: var(--text-gray);">{{ souvenir.created_at|date:"d/m/Y" }} at {{ souvenir.created_at|date:"H:i" }}</td>
+                    </tr>
+                    <tr style="border-bottom: 2px solid var(--separator-color);">
+                        <td style="padding: 0.75rem; font-weight: bold; color: var(--text-dark);">Last Modified</td>
+                        <td style="padding: 0.75rem; color: var(--text-gray);">{{ souvenir.updated_at|date:"d/m/Y" }} at {{ souvenir.updated_at|date:"H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.75rem; font-weight: bold; color: var(--text-dark);">Event Date</td>
+                        <td style="padding: 0.75rem; color: var(--text-gray);">{{ souvenir.date_evenement|date:"d/m/Y" }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Actions -->
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 3px solid var(--border-color);">
+                <a href="{% url 'core:liste_souvenirs' %}" class="btn-secondary" style="flex: 1; text-align: center; line-height: 2.5;">
+                    Back to List
+                </a>
+                <a href="{% url 'core:supprimer_souvenir' souvenir.id %}" style="flex: 1; padding: 0.85rem 1.5rem; background: #dc2626; color: white; border: 2px solid var(--border-color); font-weight: bold; text-decoration: none; text-align: center; font-family: 'Courier New', monospace;">
+                    Delete Souvenir
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
