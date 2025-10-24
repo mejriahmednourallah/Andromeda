@@ -1,0 +1,95 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}{{ album.titre }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ album.titre }}</h1>
+            {% if album.description %}
+            <p style="color: var(--text-gray); font-size: 1rem;">{{ album.description }}</p>
+            {% endif %}
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <a href="{% url 'core:modifier_album' album.id %}" class="btn-secondary">
+                Edit Album
+            </a>
+            <a href="{% url 'core:supprimer_album' album.id %}" class="btn-secondary" style="background: #dc2626; color: white;" onclick="return confirm('Are you sure you want to delete this album?')">
+                Delete Album
+            </a>
+            <a href="{% url 'core:liste_albums' %}" class="btn-secondary">
+                Back to Albums
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Album Stats -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+    <div class="card" style="text-align: center;">
+        <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ souvenirs|length }}</p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">Memories</p>
+    </div>
+    <div class="card" style="text-align: center;">
+        <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ album.created_at|date:"M Y" }}</p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">Created</p>
+    </div>
+    {% if album.is_auto_generated %}
+    <div class="card" style="text-align: center;">
+    <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;"></p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">AI Generated</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Memories in Album -->
+{% if souvenirs %}
+<div class="card">
+    <h2 class="card-title">Memories in This Album</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+        {% for souvenir in souvenirs %}
+        <div class="card" style="padding: 0; overflow: hidden;">
+            {% if souvenir.photo %}
+                <img src="{{ souvenir.photo.url }}" alt="{{ souvenir.titre }}" style="width: 100%; height: 200px; object-fit: cover;">
+            {% elif souvenir.video %}
+                <div style="width: 100%; height: 200px; background: linear-gradient(135deg, #374151 0%, #1f2937 100%); display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 2rem; color: white; font-weight: bold;">VIDEO</span>
+                </div>
+            {% else %}
+                <div style="width: 100%; height: 200px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 2rem; color: white; font-weight: bold;">NOTE</span>
+                </div>
+            {% endif %}
+            <div style="padding: 1.5rem;">
+                <h3 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 0.75rem;">{{ souvenir.titre }}</h3>
+                <p style="color: var(--text-gray); font-size: 0.9rem; margin-bottom: 0.5rem;">{{ souvenir.date_evenement|date:"d/m/Y" }}</p>
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <span style="background: #e5e7eb; color: #374151; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">{{ souvenir.get_emotion_display }}</span>
+                    <span style="background: #e5e7eb; color: #374151; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">{{ souvenir.get_theme_display }}</span>
+                    {% if souvenir.is_favorite %}
+                    <span style="background: #fef3c7; color: #d97706; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">Favorite</span>
+                    {% endif %}
+                    {% if souvenir.ai_analyzed %}
+                    <span style="background: #dbeafe; color: #2563eb; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">AI</span>
+                    {% endif %}
+                </div>
+                <a href="{% url 'core:detail_souvenir' souvenir.id %}" class="btn-primary" style="width: 100%; text-align: center;">
+                    View Memory
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="card" style="text-align: center; padding: 4rem;">
+    <p style="font-size: 1.25rem; color: var(--text-gray); margin-bottom: 1.5rem;">This album is empty</p>
+    <p style="color: var(--text-gray); margin-bottom: 2rem;">Add some memories to this album to get started!</p>
+    <a href="{% url 'core:liste_souvenirs' %}" class="btn-primary" style="display: inline-block;">
+        Browse Memories
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

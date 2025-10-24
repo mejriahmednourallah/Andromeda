@@ -1,0 +1,81 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Edit Album{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Edit Album</h1>
+            <p style="color: var(--text-gray); font-size: 1rem;">Update your memory collection</p>
+        </div>
+        <a href="{% url 'core:liste_albums' %}" class="btn-secondary">
+            Back to Albums
+        </a>
+    </div>
+</div>
+
+<div class="card" style="max-width: 1000px; margin: 0 auto;">
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Album Details -->
+        <div style="margin-bottom: 2rem;">
+            <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">Album Details</h2>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <label for="id_titre" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Album Title *</label>
+                    <input type="text" name="titre" id="id_titre" class="form-input" placeholder="e.g., Summer 2024 Adventures" value="{{ album.titre }}" required>
+                </div>
+                <div>
+                    <label for="id_description" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Description (optional)</label>
+                    <input type="text" name="description" id="id_description" class="form-input" placeholder="Brief description of this album" value="{{ album.description }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Memory Selection -->
+        <div style="margin-bottom: 2rem;">
+            <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">Select Memories</h2>
+            <p style="color: var(--text-gray); margin-bottom: 1rem;">Choose which memories to include in this album</p>
+
+            {% if souvenirs %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; max-height: 400px; overflow-y: auto; padding: 1rem; border: 2px solid var(--border-color); border-radius: 0.5rem;">
+                {% for souvenir in souvenirs %}
+                <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 0.5rem; background: white; cursor: pointer; transition: all 0.2s;">
+                    <input type="checkbox" name="souvenirs" value="{{ souvenir.id }}" {% if souvenir in album.souvenirs.all %}checked{% endif %} style="margin: 0;">
+                    <div style="flex: 1;">
+                        {% if souvenir.photo %}
+                            <img src="{{ souvenir.photo.url }}" alt="{{ souvenir.titre }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 0.25rem; margin-bottom: 0.5rem;">
+                        {% else %}
+                            <div style="width: 50px; height: 50px; background: #e5e7eb; border-radius: 0.25rem; margin-bottom: 0.5rem;"></div>
+                        {% endif %}
+                        <p style="font-weight: bold; font-size: 0.9rem; margin-bottom: 0.25rem;">{{ souvenir.titre }}</p>
+                        <p style="color: var(--text-gray); font-size: 0.8rem;">{{ souvenir.date_evenement|date:"M j, Y" }}</p>
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 3rem; color: var(--text-gray);">
+                <p>You don't have any memories yet.</p>
+                <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary" style="display: inline-block; margin-top: 1rem;">Create Your First Memory</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Submit -->
+        {% if souvenirs %}
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn-primary" style="flex: 1;">
+                Update Album
+            </button>
+            <a href="{% url 'core:detail_album' album.id %}" class="btn-secondary" style="flex: 1; text-align: center;">
+                Cancel
+            </a>
+        </div>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

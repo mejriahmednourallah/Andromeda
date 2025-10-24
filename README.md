@@ -1,173 +1,348 @@
-# Andromeda - Second Brain
+# Andromeda - Personal Memory Journal
 
-Andromeda est une application de gestion de connaissances personnelles (second brain) qui permet de capturer, organiser et relier vos idées sous forme de notes interconnectées.
+Andromeda is a personal memory management application that helps you capture, organize, and reflect on your life's precious moments. Create memories, analyze them with AI, organize them in albums, and lock them in time capsules for future reflection.
 
-## 🌟 Fonctionnalités
+## 🌟 Features
 
-### Actuellement implémenté
-- ✅ Authentification utilisateur (inscription/connexion)
-- ✅ Modèle de données complet (Notes, Templates, Links, Attachments)
-- ✅ Interface utilisateur immersive avec design unique
-- ✅ Affichage des notes
-- ✅ Admin Django configuré
+### Currently Implemented
+- ✅ User authentication (registration/login)
+- ✅ Complete memory management (Souvenirs)
+- ✅ AI-powered analysis (text & image analysis)
+- ✅ Memory albums and organization
+- ✅ Time capsules for future memories
+- ✅ Advanced filtering and search
+- ✅ Modern, responsive UI
+- ✅ Django admin configured
 
-### En développement
-- 🚧 CRUD complet pour les notes
-- 🚧 Éditeur de notes riche
-- 🚧 Visualisation graphe des liens
-- 🚧 Recherche et filtres
-- 🚧 Fonctionnalités IA (embeddings, summarization, transcription)
+### AI Analysis Features
+- **Text Analysis**: Emotion detection, keyword extraction, summarization
+- **Image Analysis**: Object detection, face recognition, color analysis, location detection
+- **Smart Organization**: Auto-generated album suggestions
+- **Reflection Prompts**: Personalized prompts based on your memory patterns
 
 ## 🚀 Installation
 
-### Prérequis
+### Prerequisites
 - Python 3.10+
 - pip
 
-### Étapes
+### Steps
 
-1. **Cloner le projet**
+1. **Clone the project**
 ```bash
 git clone <repository-url>
-cd Andromeda-main
+cd Andromeda
 ```
 
-2. **Créer un environnement virtuel**
+2. **Create a virtual environment**
 ```bash
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-# ou
+# or
 venv\Scripts\activate  # Windows
 ```
 
-3. **Installer les dépendances**
+3. **Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-4. **Appliquer les migrations**
+4. **Set up environment variables** (optional for AI features)
+```bash
+cp .env.example .env
+# Edit .env with your API keys
+```
+
+5. **Apply migrations**
 ```bash
 python manage.py migrate
 ```
 
-5. **Créer un superuser**
+6. **Create a superuser**
 ```bash
 python manage.py createsuperuser
 ```
 
-6. **Lancer le serveur**
+7. **Run the server**
 ```bash
 python manage.py runserver
 ```
 
-7. **Accéder à l'application**
-- Application : http://127.0.0.1:8000/
-- Admin : http://127.0.0.1:8000/admin/
+8. **Access the application**
+- Application: http://127.0.0.1:8000/
+- Admin: http://127.0.0.1:8000/admin/
 
-## 📁 Structure du projet
+## 🤖 AI Analysis Setup
+
+To enable real AI analysis (instead of simulated), configure these environment variables:
+
+### OpenAI (Text Analysis)
+```bash
+OPENAI_API_KEY=sk-your-openai-api-key-here
+AI_TEXT_MODEL=gpt-4o-mini  # or gpt-4, gpt-3.5-turbo
+```
+
+### Google Vision (Image Analysis)
+1. Create a Google Cloud project
+2. Enable the Vision API
+3. Create a service account and download the JSON key
+4. Set the environment variable:
+```bash
+GOOGLE_VISION_API_KEY=path/to/your/service-account-key.json
+```
+
+If API keys are not provided, the app will use simulated analysis with realistic results.
+
+## 📁 Project Structure
 
 ```
-Andromeda-main/
-├── andromeda/          # Configuration Django
-│   ├── settings.py     # Paramètres
-│   ├── urls.py         # URLs principales
+Andromeda/
+├── andromeda/          # Django configuration
+│   ├── settings.py     # Settings with AI API config
+│   ├── urls.py         # Main URLs
 │   └── wsgi.py         # WSGI
-├── core/               # Application principale
-│   ├── models.py       # Modèles (User, Note, Link, etc.)
-│   ├── views.py        # Vues
-│   ├── forms.py        # Formulaires
-│   ├── urls.py         # URLs de l'app
-│   ├── admin.py        # Configuration admin
-│   └── templates/      # Templates HTML
-├── static/             # Fichiers statiques
-│   ├── assets/         # Images, SVG, logos
+├── core/               # Main application
+│   ├── models.py       # Models (Souvenir, Album, Capsule, etc.)
+│   ├── views.py        # Views for all features
+│   ├── forms.py        # Forms for memories and capsules
+│   ├── urls.py         # App URLs
+│   ├── admin.py        # Admin configuration
+│   ├── ai_services.py  # AI analysis services
+│   └── templates/      # HTML templates
+├── static/             # Static files
+│   ├── assets/         # Images, SVGs
 │   ├── css/            # Styles
-│   ├── js/             # Scripts
-│   └── images/         # Images
-├── requirements.txt    # Dépendances Python
-└── manage.py           # CLI Django
+│   └── js/             # Scripts
+├── media/              # User uploads
+├── requirements.txt    # Python dependencies
+├── .env.example        # Environment variables template
+└── manage.py           # Django CLI
 ```
 
 ## 🎨 Design
 
-Andromeda utilise un design unique "warm paper" avec :
-- Palette de couleurs : #efe0d0 (fond), #f28a2e (accent)
-- Typographie : Monospace (Courier New, ui-monospace)
-- Animations CSS avancées (halo, floating, glow)
-- Interface responsive
+Andromeda features a modern, warm design with:
+- Color palette: Warm grays and accent colors
+- Typography: Clean, readable fonts
+- Responsive design for all devices
+- Intuitive navigation and user experience
 
 ## 🔧 Technologies
 
-- **Backend** : Django 5.2+
-- **Frontend** : HTML, CSS (Tailwind CDN), JavaScript vanilla
-- **Base de données** : SQLite (dev) / PostgreSQL (prod)
-- **API** : Django REST Framework
-- **Déploiement** : Render, Gunicorn, WhiteNoise
+- **Backend**: Django 5.2+
+- **Frontend**: HTML, CSS, JavaScript
+- **Database**: SQLite (dev) / PostgreSQL (prod)
+- **AI Services**: OpenAI GPT, Google Vision API
+- **Deployment**: Render, Gunicorn, WhiteNoise
 
-## 📝 Modèles de données
+## 📝 Data Models
 
-- **User** : Utilisateur personnalisé avec avatar
-- **Note** : Notes avec UUID, métadonnées JSON, support embeddings
-- **Template** : Templates réutilisables (style Notion)
-- **Link** : Liens entre notes (reference, derived, quote)
-- **Attachment** : Fichiers attachés aux notes
-- **APIIntegration** : Intégrations externes
-- **AITask** : Tâches IA (embedding, transcription, summarization, OCR)
+- **Souvenir**: Memories with text, photos, videos, emotions, themes
+- **AnalyseIASouvenir**: AI analysis results for each memory
+- **AlbumSouvenir**: Collections of memories
+- **CapsuleTemporelle**: Time-locked memories
+- **PartageSouvenir**: Social sharing of memories
 
-## 🧪 Tests
+## 🧪 Testing
 
-Exécuter les tests :
+Andromeda includes comprehensive testing for all major components. You can test functions in several ways:
+
+### Quick Test Runner
+
+Use the interactive test runner:
+```bash
+python run_tests.py
+```
+
+This provides a menu with options to:
+- Run smoke tests (basic functionality)
+- Test AI analysis functions
+- Test Django views
+- Test model methods
+- Run manual tests for specific features
+
+### Test Specific Functions
+
+#### AI Analysis Functions
+```bash
+# Test all AI functions
+python test_suite.py AIAnalysisServiceTest
+
+# Test specific AI function
+python test_suite.py AIAnalysisServiceTest test_analyze_memory
+python test_suite.py AIAnalysisServiceTest test_analyze_text_function
+python test_suite.py AIAnalysisServiceTest test_predict_future_emotion
+```
+
+#### Django Views
+```bash
+# Test all view functions
+python test_suite.py ViewTest
+
+# Test souvenir creation
+python test_suite.py ViewTest test_souvenir_creation
+```
+
+#### Model Methods
+```bash
+# Test all model methods
+python test_suite.py ModelTest
+
+# Test time capsule functionality
+python test_suite.py ModelTest test_capsule_temporelle_methods
+```
+
+### Manual Testing
+
+#### Test AI Analysis Manually
+```bash
+python -c "
+import os, django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'andromeda.settings')
+django.setup()
+
+from django.contrib.auth.models import User
+from core.models import Souvenir
+from core.ai_services import AIAnalysisService
+
+user = User.objects.create_user('test', 'test@example.com', 'pass')
+souvenir = Souvenir.objects.create(
+    utilisateur=user, titre='Test', description='Test memory',
+    emotion='joy', theme='personal', date_evenement='2024-01-01'
+)
+analysis = AIAnalysisService.analyze_memory(souvenir)
+print('Analysis:', analysis.resume_genere)
+"
+```
+
+#### Test Souvenir Creation
+```bash
+python -c "
+import os, django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'andromeda.settings')
+django.setup()
+
+from django.contrib.auth.models import User
+from core.models import Souvenir
+
+user = User.objects.create_user('test', 'test@example.com', 'pass')
+souvenir = Souvenir.objects.create(
+    utilisateur=user, titre='Test Memory', description='Description',
+    emotion='joy', theme='personal', date_evenement='2024-01-01'
+)
+print('Created souvenir:', souvenir.titre)
+"
+```
+
+### Test Coverage
+
+The test suite covers:
+
+**AI Services (`core/ai_services.py`)**:
+- `analyze_memory()` - Complete memory analysis
+- `_analyze_text()` - Text analysis (OpenAI/simulated)
+- `_analyze_image()` - Image analysis (Google Vision/simulated)
+- `predict_future_emotion()` - Future emotion prediction
+- `generate_album_suggestions()` - Smart album suggestions
+- `get_memory_insights()` - User memory insights
+- `suggest_reflection_prompts()` - Reflection prompts
+
+**Django Views (`core/views.py`)**:
+- `dashboard()` - Main dashboard
+- `ajouter_souvenir()` - Add memory
+- `analyser_souvenir_ia()` - AI analysis view
+- `liste_souvenirs()` - Memory list
+- `creer_capsule()` - Create time capsule
+
+**Models (`core/models.py`)**:
+- `Souvenir` methods: `has_media()`, `needs_ai_analysis()`
+- `CapsuleTemporelle` methods: `jours_restants()`, `pourcentage_progression()`, `is_expired()`
+- `AlbumSouvenir` methods: `souvenirs_count()`
+
+### Running Tests in Development
+
+1. **Basic smoke test**:
 ```bash
 python smoke_test.py
 ```
 
+2. **Interactive test menu**:
+```bash
+python run_tests.py
+```
+
+3. **Run all tests**:
+```bash
+python test_suite.py
+```
+
+4. **Run with Django's test runner**:
+```bash
+python manage.py test
+```
+
+### Testing AI Features
+
+To test AI features with real APIs:
+
+1. **Set up API keys** in `.env`:
+```bash
+OPENAI_API_KEY=sk-your-key-here
+GOOGLE_VISION_API_KEY=path/to/service-account.json
+```
+
+2. **Test AI analysis**:
+```bash
+python run_tests.py
+# Choose option 7: Test AI analysis manually
+```
+
+Without API keys, tests will use simulated analysis with realistic results.
+
 ## 📚 Documentation
 
-- `BUILD_SPEC.md` : Spécifications détaillées du projet
-- `GOOGLE_OAUTH_SETUP.md` : Guide pour configurer l'authentification Google
+- `BUILD_SPEC.md`: Detailed project specifications
+- `GUIDE_UTILISATION.md`: User guide
+- `SOUVENIRS_API.md`: API documentation
 
-## 🔐 Sécurité
+## 🔐 Security
 
-Pour la production :
-- Définir `SECRET_KEY` dans les variables d'environnement
-- Mettre `DEBUG=False`
-- Configurer `ALLOWED_HOSTS`
-- Utiliser HTTPS
+For production:
+- Set `SECRET_KEY` in environment variables
+- Set `DEBUG=False`
+- Configure `ALLOWED_HOSTS`
+- Use HTTPS
+- Secure API keys
 
-## 🤝 Contribution
+## 🤝 Contributing
 
-Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou une pull request.
+Contributions are welcome! Feel free to open an issue or pull request.
 
-## 📄 Licence
+## 📄 License
 
-[À définir]
+[To be defined]
 
-## 👤 Auteur
+## 👤 Author
 
-[Votre nom]
+[Your name]
 
 ## 🗺️ Roadmap
 
-### Phase 1 (MVP)
-- [x] Auth et modèles de base
-- [x] UI immersive
-- [ ] CRUD complet pour notes
-- [ ] Recherche basique
+### Phase 1 (Current)
+- [x] Memory CRUD with AI analysis
+- [x] Album organization
+- [x] Time capsules
+- [x] Advanced filtering
+- [x] Modern UI
 
 ### Phase 2
-- [ ] Éditeur de notes riche
-- [ ] Gestion des liens
-- [ ] Upload d'attachments
-- [ ] Visualisation graphe basique
+- [ ] Social sharing features
+- [ ] PDF export
+- [ ] Journal integration
+- [ ] Gamification (badges)
 
 ### Phase 3
-- [ ] Embeddings & recherche sémantique
-- [ ] Workers Celery
-- [ ] Fonctionnalités IA avancées
-- [ ] API REST complète
-
-### Phase 4
-- [ ] Fonctionnalités équipe
-- [ ] Synchronisation offline
-- [ ] Intégrations externes
 - [ ] Mobile app
+- [ ] Advanced AI features
+- [ ] Team collaboration
+- [ ] Offline sync

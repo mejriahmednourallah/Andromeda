@@ -1,0 +1,160 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Filter Memories{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Filter Memories</h1>
+            <p style="color: var(--text-gray); font-size: 1rem;">Find specific memories using advanced filters</p>
+        </div>
+        <a href="{% url 'core:liste_souvenirs' %}" class="btn-secondary">
+            Back to Memories
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <form method="get" id="filter-form">
+    <h2 class="card-title">Filter Options</h2>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            <!-- Date Range -->
+            <div>
+                <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Date Range</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="date" name="date_from" class="form-input" placeholder="From">
+                    <input type="date" name="date_to" class="form-input" placeholder="To">
+                </div>
+            </div>
+
+            <!-- Emotion -->
+            <div>
+                <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Emotion</label>
+                <select name="emotion" class="form-input">
+                    <option value="">All Emotions</option>
+                    <option value="joy">Joy</option>
+                    <option value="sadness">Sadness</option>
+                    <option value="nostalgia">Nostalgia</option>
+                    <option value="gratitude">Gratitude</option>
+                    <option value="excitement">Excitement</option>
+                    <option value="peace">Peace</option>
+                    <option value="love">Love</option>
+                    <option value="surprise">Surprise</option>
+                    <option value="neutral">Neutral</option>
+                </select>
+            </div>
+
+            <!-- Theme -->
+            <div>
+                <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Theme</label>
+                <select name="theme" class="form-input">
+                    <option value="">All Themes</option>
+                    <option value="family">Family</option>
+                    <option value="travel">Travel</option>
+                    <option value="work">Work</option>
+                    <option value="friends">Friends</option>
+                    <option value="achievement">Achievement</option>
+                    <option value="celebration">Celebration</option>
+                    <option value="nature">Nature</option>
+                    <option value="learning">Learning</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <!-- Location -->
+            <div>
+                <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Location</label>
+                <input type="text" name="location" class="form-input" placeholder="e.g., Paris, France">
+            </div>
+
+            <!-- People -->
+            <div>
+                <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">People</label>
+                <input type="text" name="people" class="form-input" placeholder="e.g., Marie, Paul">
+            </div>
+
+            <!-- AI Status -->
+            <div>
+                <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">AI Analysis</label>
+                <select name="ai_status" class="form-input">
+                    <option value="">All Memories</option>
+                    <option value="analyzed">AI Analyzed</option>
+                    <option value="pending">Pending Analysis</option>
+                </select>
+            </div>
+
+            <!-- Favorites -->
+            <div>
+                <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Favorites</label>
+                <select name="favorites" class="form-input">
+                    <option value="">All Memories</option>
+                    <option value="yes">Favorites Only</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div style="margin-bottom: 2rem;">
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Search</label>
+            <input type="text" name="q" class="form-input" placeholder="Search in titles and descriptions..." style="max-width: 400px;">
+        </div>
+
+        <!-- Actions -->
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn-primary">Apply Filters</button>
+            <a href="{% url 'core:filtrer_souvenirs' %}" class="btn-secondary">Clear Filters</a>
+        </div>
+    </form>
+</div>
+
+<!-- Results -->
+{% if souvenirs %}
+<div class="card" style="margin-top: 2rem;">
+    <h2 class="card-title">Filtered Results ({{ souvenirs|length }} memories)</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+        {% for souvenir in souvenirs %}
+        <div class="card" style="padding: 0; overflow: hidden;">
+            {% if souvenir.photo %}
+                <img src="{{ souvenir.photo.url }}" alt="{{ souvenir.titre }}" style="width: 100%; height: 200px; object-fit: cover;">
+            {% else %}
+                <div style="width: 100%; height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;"></div>
+            {% endif %}
+            <div style="padding: 1.5rem;">
+                <h3 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 0.75rem;">{{ souvenir.titre }}</h3>
+                <p style="color: var(--text-gray); font-size: 0.9rem; margin-bottom: 0.5rem;">{{ souvenir.date_evenement|date:"d/m/Y" }}</p>
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <span style="background: #e5e7eb; color: #374151; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">{{ souvenir.get_emotion_display }}</span>
+                    <span style="background: #e5e7eb; color: #374151; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">{{ souvenir.get_theme_display }}</span>
+                </div>
+                <a href="{% url 'core:detail_souvenir' souvenir.id %}" class="btn-primary" style="width: 100%; text-align: center;">
+                    View Details
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% elif request.GET %}
+<div class="card" style="margin-top: 2rem; text-align: center; padding: 4rem;">
+    <p style="font-size: 1.25rem; color: var(--text-gray); margin-bottom: 1.5rem;">No memories match your filters</p>
+    <a href="{% url 'core:filtrer_souvenirs' %}" class="btn-primary" style="display: inline-block;">
+        Clear Filters
+    </a>
+</div>
+{% endif %}
+
+<script>
+// Auto-submit form on select change for better UX
+document.addEventListener('DOMContentLoaded', function() {
+    const selects = document.querySelectorAll('select');
+    selects.forEach(select => {
+        select.addEventListener('change', function() {
+            document.getElementById('filter-form').submit();
+        });
+    });
+});
+</script>
+
+{% endblock %}

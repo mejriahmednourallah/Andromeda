@@ -1,0 +1,118 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Ouvrir la capsule temporelle{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Ouvrir la Capsule Temporelle</h1>
+    <p style="color: var(--text-gray); font-size: 1rem;">Le moment est venu de revisiter ce souvenir du passé</p>
+    </div>
+
+    <div class="card">
+        <!-- Informations de la capsule -->
+        <div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-light); border-radius: 8px;">
+            <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Informations de la capsule</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <strong>Date de création:</strong><br>
+                    {{ capsule.souvenir.date_evenement|date:"d F Y" }}
+                </div>
+                <div>
+                    <strong>Date d'ouverture prévue:</strong><br>
+                    {{ capsule.date_ouverture|date:"d F Y" }}
+                </div>
+                <div>
+                    <strong>Émotion prédite par l'IA:</strong><br>
+                    {% if capsule.emotion_predite_par_ia %}
+                        <span class="emotion-badge">{{ capsule.get_emotion_predite_par_ia_display }}</span>
+                    {% else %}
+                        <em>Non disponible</em>
+                    {% endif %}
+                </div>
+                <div>
+                    <strong>Message futur:</strong><br>
+                    {% if capsule.message_futur %}
+                        <em>"{{ capsule.message_futur }}"</em>
+                    {% else %}
+                        <em>Aucun message</em>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Souvenir contenu dans la capsule -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Le souvenir scellé</h3>
+            <div style="border: 1px solid var(--separator-color); border-radius: 8px; padding: 1.5rem; background: var(--bg-light);">
+                <h4 style="margin-bottom: 0.5rem; color: var(--text-dark);">{{ capsule.souvenir.titre }}</h4>
+                <p style="color: var(--text-gray); margin-bottom: 1rem;">{{ capsule.souvenir.description }}</p>
+
+                {% if capsule.souvenir.photo %}
+                <div style="margin-bottom: 1rem;">
+                    <img src="{{ capsule.souvenir.photo.url }}" alt="Photo du souvenir" style="max-width: 300px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                </div>
+                {% endif %}
+
+                {% if capsule.souvenir.video %}
+                <div style="margin-bottom: 1rem;">
+                    <video controls style="max-width: 300px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <source src="{{ capsule.souvenir.video.url }}" type="video/mp4">
+                        Votre navigateur ne supporte pas la lecture vidéo.
+                    </video>
+                </div>
+                {% endif %}
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem; color: var(--text-gray);">
+                    <div><strong>Lieu:</strong> {{ capsule.souvenir.lieu|default:"Non spécifié" }}</div>
+                    <div><strong>Émotion ressentie:</strong> {{ capsule.souvenir.get_emotion_display|default:"Non spécifiée" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulaire de réflexion -->
+        <form method="post" style="border-top: 2px solid var(--separator-color); padding-top: 2rem;">
+            {% csrf_token %}
+
+            <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Votre réflexion</h3>
+            <p style="color: var(--text-gray); margin-bottom: 1.5rem;">
+                Maintenant que vous revisitez ce souvenir, comment vous sentez-vous ? Quelles pensées cela vous inspire-t-il ?
+            </p>
+
+            <!-- Réflexion -->
+            <div style="margin-bottom: 1.5rem;">
+                <label for="reflexion" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                    Votre réflexion <span style="color: #dc2626;">*</span>
+                </label>
+                <textarea name="reflexion" id="reflexion" rows="4" required
+                          style="width: 100%; padding: 0.75rem; border: 1px solid var(--separator-color); border-radius: 8px; font-family: inherit; resize: vertical;"
+                          placeholder="Partagez vos pensées et émotions en revisitant ce souvenir..."></textarea>
+            </div>
+
+            <!-- Émotion actuelle -->
+            <div style="margin-bottom: 2rem;">
+                <label for="emotion_reelle" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                    Émotion ressentie maintenant <span style="color: #dc2626;">*</span>
+                </label>
+                <select name="emotion_reelle" id="emotion_reelle" required
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--separator-color); border-radius: 8px; font-family: inherit;">
+                    <option value="">Sélectionnez une émotion</option>
+                    {% for emotion_value, emotion_label in emotion_choices %}
+                    <option value="{{ emotion_value }}">{{ emotion_label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn-primary" style="flex: 1;">
+                    Ouvrir la capsule et enregistrer ma réflexion
+                </button>
+                <a href="{% url 'core:liste_capsules' %}" class="btn-secondary" style="flex: 1; text-align: center; line-height: 2.5;">
+                    Plus tard
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

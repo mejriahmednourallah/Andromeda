@@ -122,45 +122,396 @@ class AITask(models.Model):
 
 # --- Souvenirs (Memories) ---
 class Souvenir(models.Model):
-    """Modèle pour stocker les souvenirs des utilisateurs"""
+    """Model for storing user memories with AI-enhanced features"""
+    EMOTION_CHOICES = [
+        ('joy', 'Joy'),
+        ('sadness', 'Sadness'),
+        ('nostalgia', 'Nostalgia'),
+        ('gratitude', 'Gratitude'),
+        ('excitement', 'Excitement'),
+        ('peace', 'Peace'),
+        ('love', 'Love'),
+        ('surprise', 'Surprise'),
+        ('pride', 'Pride'),
+        ('neutral', 'Neutral'),
+    ]
+    
+    THEME_CHOICES = [
+        ('family', 'Family'),
+        ('travel', 'Travel'),
+        ('work', 'Work'),
+        ('friends', 'Friends'),
+        ('achievement', 'Achievement'),
+        ('celebration', 'Celebration'),
+        ('nature', 'Nature'),
+        ('learning', 'Learning'),
+        ('other', 'Other'),
+    ]
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     utilisateur = models.ForeignKey('User', on_delete=models.CASCADE, related_name='souvenirs')
-    titre = models.CharField(max_length=200, help_text="Titre du souvenir")
-    description = models.TextField(help_text="Description détaillée du souvenir")
-    date_evenement = models.DateField(help_text="Date de l'événement")
+    
+    # Basic Information
+    titre = models.CharField(max_length=200, help_text="Memory title")
+    description = models.TextField(help_text="Detailed description of the memory")
+    date_evenement = models.DateField(help_text="Date of the event")
+    
+    # Media
     photo = models.ImageField(upload_to='souvenirs/photos/%Y/%m/', blank=True, null=True)
     video = models.FileField(upload_to='souvenirs/videos/%Y/%m/', blank=True, null=True)
+    
+    # Metadata
+    emotion = models.CharField(max_length=50, choices=EMOTION_CHOICES, default='neutral', help_text="Primary emotion")
+    theme = models.CharField(max_length=50, choices=THEME_CHOICES, default='other', help_text="Memory theme")
+    lieu = models.CharField(max_length=200, blank=True, default='', help_text="Location of the memory")
+    personnes_presentes = models.CharField(max_length=500, blank=True, default='', help_text="People present (comma-separated)")
+    
+    # User Preferences
+    is_favorite = models.BooleanField(default=False, help_text="Mark as favorite")
+    is_public = models.BooleanField(default=False, help_text="Make publicly visible")
+    
+    # AI-Enhanced Fields
+    ai_summary = models.TextField(blank=True, default='', help_text="AI-generated summary")
+    ai_emotion_detected = models.CharField(max_length=50, blank=True, default='', help_text="AI-detected emotion")
+    ai_tags = models.JSONField(default=list, blank=True, help_text="AI-generated tags")
+    ai_analyzed = models.BooleanField(default=False, help_text="Has been analyzed by AI")
+    ai_analysis_date = models.DateTimeField(null=True, blank=True, help_text="Date of AI analysis")
+    
+    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-date_evenement']
-        verbose_name = 'Souvenir'
-        verbose_name_plural = 'Souvenirs'
+        verbose_name = 'Memory'
+        verbose_name_plural = 'Memories'
+        indexes = [
+            models.Index(fields=['-date_evenement']),
+            models.Index(fields=['utilisateur', '-created_at']),
+            models.Index(fields=['is_favorite']),
+        ]
 
     def __str__(self):
         return f"{self.titre} - {self.date_evenement}"
     
     def clean(self):
-        """Validation personnalisée"""
+        """Custom validation"""
         from django.core.exceptions import ValidationError
         from django.utils import timezone
         
-        # Vérifier que la date n'est pas dans le futur
+        # Check that date is not in the future
         if self.date_evenement > timezone.now().date():
-            raise ValidationError({'date_evenement': 'La date de l\'événement ne peut pas être dans le futur.'})
+            raise ValidationError({'date_evenement': 'Event date cannot be in the future.'})
         
-        # Vérifier la taille des fichiers
+        # Check file sizes
         if self.photo and self.photo.size > 10 * 1024 * 1024:  # 10 MB
-            raise ValidationError({'photo': 'La photo ne doit pas dépasser 10 MB.'})
+            raise ValidationError({'photo': 'Photo must not exceed 10 MB.'})
         
         if self.video and self.video.size > 100 * 1024 * 1024:  # 100 MB
-            raise ValidationError({'video': 'La vidéo ne doit pas dépasser 100 MB.'})
+            raise ValidationError({'video': 'Video must not exceed 100 MB.'})
     
     def save(self, *args, **kwargs):
-        """Appel de clean() avant la sauvegarde"""
+        """Call clean() before saving"""
         self.full_clean()
         super().save(*args, **kwargs)
+    
+    @property
+    def has_media(self):
+        """Check if memory has any media attached"""
+        return bool(self.photo or self.video)
+    
+    @property
+    def needs_ai_analysis(self):
+        """Check if memory needs AI analysis"""
+        return not self.ai_analyzed and (self.description or self.photo)
+
+
+# --- AI Analysis Results for Memories ---
+class AnalyseIASouvenir(models.Model):
+    """Stores AI analysis results for a memory"""
+    souvenir = models.OneToOneField(Souvenir, on_delete=models.CASCADE, related_name='analyse_ia')
+    
+    # Text Analysis
+    resume_genere = models.TextField(blank=True, default='', help_text="AI-generated summary")
+    mots_cles = models.JSONField(default=list, help_text="Extracted keywords")
+    emotion_texte = models.CharField(max_length=50, blank=True, default='', help_text="Emotion from text")
+    score_emotion_texte = models.FloatField(default=0.0, help_text="Emotion confidence score (0-1)")
+    
+    # Image Analysis
+    objets_detectes = models.JSONField(default=list, help_text="Detected objects in image")
+    lieu_detecte = models.CharField(max_length=200, blank=True, default='', help_text="Detected location")
+    personnes_detectees = models.IntegerField(default=0, help_text="Number of faces detected")
+    emotion_image = models.CharField(max_length=50, blank=True, default='', help_text="Emotion from image")
+    couleurs_dominantes = models.JSONField(default=list, help_text="Dominant colors (hex codes)")
+    
+    # Metadata
+    date_analyse = models.DateTimeField(auto_now_add=True)
+    modele_utilise = models.CharField(max_length=100, default='gpt-4', help_text="AI model used")
+    confiance_globale = models.FloatField(default=0.0, help_text="Overall confidence score (0-1)")
+    
+    class Meta:
+        verbose_name = "AI Analysis"
+        verbose_name_plural = "AI Analyses"
+    
+    def __str__(self):
+        return f"AI Analysis: {self.souvenir.titre}"
+
+
+# --- Memory Albums ---
+class AlbumSouvenir(models.Model):
+    """Collection of memories organized by theme or manually"""
+    utilisateur = models.ForeignKey('User', on_delete=models.CASCADE, related_name='albums')
+    titre = models.CharField(max_length=200, help_text="Album title")
+    description = models.TextField(blank=True, help_text="Album description")
+    
+    # Auto-generation
+    is_auto_generated = models.BooleanField(default=False, help_text="Generated by AI")
+    theme_auto = models.CharField(max_length=100, blank=True, default='', help_text="Auto-detected theme")
+    
+    souvenirs = models.ManyToManyField(Souvenir, related_name='albums', blank=True)
+    
+    # Visuals
+    couverture_generee = models.ImageField(upload_to='albums/', blank=True, help_text="Auto-generated cover")
+    couleur_theme = models.CharField(max_length=7, default='#3498db', help_text="Theme color (hex)")
+    
+    # Settings
+    is_public = models.BooleanField(default=False)
+    ordre_affichage = models.IntegerField(default=0, help_text="Display order")
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['ordre_affichage', '-created_at']
+        verbose_name = "Memory Album"
+        verbose_name_plural = "Memory Albums"
+    
+    def __str__(self):
+        return self.titre
+    
+    @property
+    def souvenirs_count(self):
+        return self.souvenirs.count()
+
+
+# --- Time Capsules ---
+class CapsuleTemporelle(models.Model):
+    """Time-locked memories that open in the future"""
+    souvenir = models.OneToOneField(Souvenir, on_delete=models.CASCADE, related_name='capsule')
+    
+    # Timing
+    date_verrouillage = models.DateTimeField(auto_now_add=True)
+    date_ouverture = models.DateField(help_text="Date when capsule unlocks")
+    
+    # Future Message
+    message_futur = models.TextField(help_text="Message to your future self")
+    emotion_predite_par_ia = models.CharField(max_length=50, blank=True, default='', help_text="AI-predicted future emotion")
+    
+    # Status
+    is_opened = models.BooleanField(default=False)
+    date_ouverture_reelle = models.DateTimeField(null=True, blank=True, help_text="Actual opening date")
+    
+    # Reflection after opening
+    reflexion_ouverture = models.TextField(blank=True, default='', help_text="Reflection upon opening")
+    emotion_reelle = models.CharField(max_length=50, blank=True, default='', help_text="Actual emotion upon opening")
+    
+    class Meta:
+        verbose_name = "Time Capsule"
+        verbose_name_plural = "Time Capsules"
+        ordering = ['date_ouverture']
+    
+    def __str__(self):
+        status = "Opened" if self.is_opened else "Locked"
+        return f"{status}: {self.souvenir.titre} (opens {self.date_ouverture})"
+    
+    @property
+    def jours_restants(self):
+        """Days remaining until opening"""
+        from django.utils import timezone
+        if self.is_opened:
+            return 0
+        delta = self.date_ouverture - timezone.now().date()
+        return max(0, delta.days)
+    
+    @property
+    def pourcentage_progression(self):
+        """Progress percentage (0-100)"""
+        from django.utils import timezone
+        if self.is_opened:
+            return 100
+        total_days = (self.date_ouverture - self.date_verrouillage.date()).days
+        if total_days <= 0:
+            return 100
+        days_passed = (timezone.now().date() - self.date_verrouillage.date()).days
+        return min(100, int((days_passed / total_days) * 100))
+
+
+# --- Memory Sharing ---
+class PartageSouvenir(models.Model):
+    """Social sharing of memories"""
+    VISIBILITE_CHOICES = [
+        ('private_link', 'Private Link'),
+        ('friends', 'Friends Only'),
+        ('public', 'Public'),
+    ]
+    
+    souvenir = models.ForeignKey(Souvenir, on_delete=models.CASCADE, related_name='partages')
+    type_visibilite = models.CharField(max_length=50, choices=VISIBILITE_CHOICES, default='private_link')
+    
+    # Link Settings
+    lien_partage = models.UUIDField(unique=True, editable=False, null=True, blank=True)
+    code_acces = models.CharField(max_length=20, blank=True, default='', help_text="Optional access code")
+    date_expiration = models.DateField(null=True, blank=True, help_text="Link expiration date")
+    
+    # Content
+    message_partage = models.TextField(blank=True, default='', help_text="Accompanying message")
+    
+    # Statistics
+    vues_count = models.IntegerField(default=0)
+    likes_count = models.IntegerField(default=0)
+    
+    # Settings
+    autoriser_commentaires = models.BooleanField(default=True)
+    autoriser_reactions = models.BooleanField(default=True)
+    masquer_infos_perso = models.BooleanField(default=False)
+    
+    date_partage = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Memory Share"
+        verbose_name_plural = "Memory Shares"
+    
+    def __str__(self):
+        return f"Share: {self.souvenir.titre} ({self.type_visibilite})"
+    
+    def save(self, *args, **kwargs):
+        """Generate UUID on first save"""
+        if not self.lien_partage:
+            self.lien_partage = uuid.uuid4()
+        super().save(*args, **kwargs)
+    
+    @property
+    def is_expired(self):
+        """Check if share link is expired"""
+        from django.utils import timezone
+        if not self.date_expiration:
+            return False
+        return timezone.now().date() > self.date_expiration
+
+
+# --- Journal Entries (for linking memories to journal) ---
+class EntreeJournal(models.Model):
+    """Journal entries that can be linked to memories"""
+    utilisateur = models.ForeignKey('User', on_delete=models.CASCADE, related_name='entrees_journal')
+    titre = models.CharField(max_length=200)
+    contenu_texte = models.TextField()
+    
+    date_creation = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Journal Entry"
+        verbose_name_plural = "Journal Entries"
+        ordering = ['-date_creation']
+    
+    def __str__(self):
+        return f"{self.titre} - {self.date_creation.strftime('%Y-%m-%d')}"
+
+
+# --- Link between Memories and Journal Entries ---
+class SouvenirEntree(models.Model):
+    """Many-to-many relationship between memories and journal entries"""
+    souvenir = models.ForeignKey(Souvenir, on_delete=models.CASCADE, related_name='entrees_liees')
+    entree_journal = models.ForeignKey(EntreeJournal, on_delete=models.CASCADE, related_name='souvenirs_lies')
+    date_association = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('souvenir', 'entree_journal')
+        verbose_name = "Memory-Journal Link"
+        verbose_name_plural = "Memory-Journal Links"
+    
+    def __str__(self):
+        return f"{self.souvenir.titre} ↔ {self.entree_journal.titre}"
+
+
+# --- PDF Export ---
+class ExportPDF(models.Model):
+    """PDF export of memories"""
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('ready', 'Ready'),
+        ('error', 'Error'),
+    ]
+    
+    utilisateur = models.ForeignKey('User', on_delete=models.CASCADE, related_name='exports_pdf')
+    titre_export = models.CharField(max_length=200)
+    
+    # Content
+    souvenirs = models.ManyToManyField(Souvenir, related_name='exports')
+    inclure_photos = models.BooleanField(default=True)
+    style_template = models.CharField(max_length=50, default='modern', help_text="PDF style template")
+    
+    # File
+    fichier_pdf = models.FileField(upload_to='exports/pdf/', blank=True)
+    nombre_pages = models.IntegerField(default=0)
+    
+    # Status
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    date_export = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "PDF Export"
+        verbose_name_plural = "PDF Exports"
+        ordering = ['-date_export']
+    
+    def __str__(self):
+        return f"{self.titre_export} - {self.status}"
+
+
+# --- Motivational Tracking ---
+class SuiviMotivationnel(models.Model):
+    """Track user engagement and motivation"""
+    NIVEAU_MOTIVATION = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('very_high', 'Very High'),
+    ]
+    
+    utilisateur = models.OneToOneField('User', on_delete=models.CASCADE, related_name='suivi_motivationnel')
+    
+    # Statistics
+    nb_souvenirs_ajoutes = models.IntegerField(default=0)
+    nb_entrees_journal = models.IntegerField(default=0)
+    total_mots_ecrits = models.IntegerField(default=0)
+    souvenirs_partages = models.IntegerField(default=0)
+    exports_realises = models.IntegerField(default=0)
+    
+    # Streaks
+    jours_consecutifs = models.IntegerField(default=0, help_text="Current streak")
+    meilleure_serie = models.IntegerField(default=0, help_text="Best streak")
+    
+    # Last Activity
+    derniere_activite = models.DateTimeField(null=True, blank=True)
+    dernier_souvenir_ajoute = models.DateTimeField(null=True, blank=True)
+    derniere_entree_journal = models.DateTimeField(null=True, blank=True)
+    
+    # Motivation
+    niveau_motivation = models.CharField(max_length=20, choices=NIVEAU_MOTIVATION, default='medium')
+    messages_motivationnels = models.JSONField(default=list, help_text="Motivational messages shown")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Motivational Tracking"
+        verbose_name_plural = "Motivational Tracking"
+    
+    def __str__(self):
+        return f"{self.utilisateur.username} - {self.niveau_motivation}"
+
 
 # --- Badge/Medal System (Gamification) ---
 class Badge(models.Model):

@@ -1,0 +1,189 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Détails de la capsule temporelle{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Capsule Temporelle Ouverte</h1>
+        <p style="color: #6b7280; font-size: 1rem;">Revisitez ce souvenir du passé avec le recul du présent</p>
+    </div>
+
+    <div class="card">
+        <!-- Informations de la capsule -->
+        <div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-light); border-radius: 8px;">
+            <h3 style="margin-bottom: 1rem; color: #2563eb;">Résumé de la capsule</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div>
+                    <strong>Créée le:</strong><br>
+                    {{ capsule.souvenir.date_evenement|date:"d F Y" }}
+                </div>
+                <div>
+                    <strong>Ouverte le:</strong><br>
+                    {{ capsule.date_ouverture_reelle|date:"d F Y à H:i" }}
+                </div>
+                <div>
+                    <strong>Émotion prédite:</strong><br>
+                    {% if capsule.emotion_predite_par_ia %}
+                        <span class="emotion-badge">{{ capsule.get_emotion_predite_par_ia_display }}</span>
+                    {% else %}
+                        <em>Non disponible</em>
+                    {% endif %}
+                </div>
+                <div>
+                    <strong>Émotion ressentie:</strong><br>
+                    <span class="emotion-badge">{{ capsule.get_emotion_reelle_display }}</span>
+                </div>
+                <div>
+                    <strong>Prédiction correcte:</strong><br>
+                    {% if prediction_correct %}
+                        <span style="color: #059669; font-weight: bold;">Oui</span>
+                    {% else %}
+                        <span style="color: #dc2626; font-weight: bold;">Non</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <strong>Écart temporel:</strong><br>
+                    {{ capsule.date_ouverture_reelle|date:"d F Y" }} - {{ capsule.souvenir.date_evenement|date:"d F Y" }}
+                </div>
+            </div>
+
+            {% if capsule.message_futur %}
+            <div style="margin-top: 1rem; padding: 1rem; background: #f9fafb; border: 2px solid #2563eb; border-radius: 8px;">
+                <strong style="color: #1f2937;">Message du passé:</strong><br>
+                <em style="color: #1f2937;">"{{ capsule.message_futur }}"</em>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Souvenir -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: #2563eb;">Le souvenir revisité</h3>
+            <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; background: #f9fafb;">
+                <h4 style="margin-bottom: 0.5rem; color: #1f2937;">{{ capsule.souvenir.titre }}</h4>
+                <p style="color: #6b7280; margin-bottom: 1rem;">{{ capsule.souvenir.description }}</p>
+
+                {% if capsule.souvenir.photo %}
+                <div style="margin-bottom: 1rem;">
+                    <img src="{{ capsule.souvenir.photo.url }}" alt="Photo du souvenir" style="max-width: 400px; max-height: 300px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                </div>
+                {% endif %}
+
+                {% if capsule.souvenir.video %}
+                <div style="margin-bottom: 1rem;">
+                    <video controls style="max-width: 400px; max-height: 300px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <source src="{{ capsule.souvenir.video.url }}" type="video/mp4">
+                        Votre navigateur ne supporte pas la lecture vidéo.
+                    </video>
+                </div>
+                {% endif %}
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem; color: #6b7280;">
+                    <div><strong>Lieu:</strong> {{ capsule.souvenir.lieu|default:"Non spécifié" }}</div>
+                    <div><strong>Émotion d'origine:</strong> {{ capsule.souvenir.get_emotion_display|default:"Non spécifiée" }}</div>
+                    {% if capsule.souvenir.theme %}
+                    <div><strong>Thème:</strong> {{ capsule.souvenir.get_theme_display }}</div>
+                    {% endif %}
+                    {% if capsule.souvenir.is_favorite %}
+                    <div><strong>Favori</strong></div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Réflexion -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: #2563eb;">Votre réflexion à l'ouverture</h3>
+            <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; background: #f9fafb;">
+                <blockquote style="font-style: italic; color: #1f2937; border-left: 4px solid #2563eb; padding-left: 1rem; margin: 0;">
+                    "{{ capsule.reflexion_ouverture }}"
+                </blockquote>
+                <p style="margin-top: 1rem; font-size: 0.9rem; color: #6b7280;">
+                    Réflexion enregistrée le {{ capsule.date_ouverture_reelle|date:"d F Y à H:i" }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Analyse IA si disponible -->
+        {% if capsule.souvenir.ai_analyzed and capsule.souvenir.analyse_ia %}
+        <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: #2563eb;">Analyse IA du souvenir</h3>
+            <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; background: #f9fafb;">
+                {% with analyse=capsule.souvenir.analyse_ia %}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    {% if analyse.emotion_texte %}
+                    <div><strong style="color: #1f2937;">Émotion détectée (texte):</strong> <span class="emotion-badge">{{ analyse.emotion_texte }}</span></div>
+                    {% endif %}
+                    {% if analyse.score_emotion_texte %}
+                    <div><strong style="color: #1f2937;">Confiance (texte):</strong> {{ analyse.score_emotion_texte|floatformat:1 }}%</div>
+                    {% endif %}
+                    {% if analyse.emotion_image %}
+                    <div><strong style="color: #1f2937;">Émotion détectée (image):</strong> <span class="emotion-badge">{{ analyse.emotion_image }}</span></div>
+                    {% endif %}
+                    {% if analyse.confiance_globale %}
+                    <div><strong style="color: #1f2937;">Confiance globale:</strong> {{ analyse.confiance_globale|floatformat:1 }}%</div>
+                    {% endif %}
+                    {% if analyse.objets_detectes %}
+                    <div><strong style="color: #1f2937;">Objets détectés:</strong> {{ analyse.objets_detectes|join:", " }}</div>
+                    {% endif %}
+                    {% if analyse.lieu_detecte %}
+                    <div><strong style="color: #1f2937;">Lieu détecté:</strong> {{ analyse.lieu_detecte }}</div>
+                    {% endif %}
+                </div>
+                {% if analyse.resume_genere %}
+                <div>
+                    <strong style="color: #1f2937;">Résumé IA:</strong><br>
+                    <p style="margin-top: 0.5rem; color: #6b7280;">{{ analyse.resume_genere }}</p>
+                </div>
+                {% endif %}
+                {% if analyse.mots_cles %}
+                <div style="margin-top: 1rem;">
+                    <strong style="color: #1f2937;">Mots-clés:</strong><br>
+                    <div style="margin-top: 0.5rem;">
+                        {% for mot in analyse.mots_cles %}
+                        <span style="display: inline-block; background: #2563eb; color: #000000 !important; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem; margin: 0.125rem; font-weight: bold;">{{ mot }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+        {% else %}
+        <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: #2563eb;">Analyse IA du souvenir</h3>
+            <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; background: #f9fafb; text-align: center; color: #6b7280;">
+                <p>🤖 Aucune analyse IA disponible pour ce souvenir.</p>
+                <p style="font-size: 0.9rem; margin-top: 0.5rem; margin-bottom: 1rem;">L'analyse IA n'a pas encore été effectuée sur ce souvenir.</p>
+                <a href="{% url 'core:analyser_souvenir_ia' capsule.souvenir.id %}" class="btn-primary" style="display: inline-block;">
+                    Analyser avec IA
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+                <div style="display: flex; gap: 1rem; padding-top: 1rem; border-top: 2px solid #e5e7eb;">
+            <a href="{% url 'core:detail_souvenir' souvenir_id=capsule.souvenir.id %}" class="btn-primary" style="flex: 1; text-align: center;">
+                Voir le souvenir complet
+            </a>
+            <a href="{% url 'core:liste_capsules' %}" class="btn-secondary" style="flex: 1; text-align: center; line-height: 2.5;">
+                Toutes les capsules
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.emotion-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: #2563eb;
+    color: #1f2937;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+</style>
+{% endblock %}

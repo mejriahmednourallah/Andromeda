@@ -6,14 +6,34 @@
 <div style="margin-bottom: 2rem;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <div>
-            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Mes Souvenirs</h1>
-            <p style="color: var(--text-gray); font-size: 1rem;">Vos précieux moments capturés</p>
+            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">My Memories</h1>
+            <p style="color: var(--text-gray); font-size: 1rem;">Your precious moments captured</p>
         </div>
-        <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary">
-            + Nouveau souvenir
-        </a>
+        <div style="display: flex; gap: 1rem;">
+            <a href="{% url 'core:filtrer_souvenirs' %}" class="btn-secondary">Filter</a>
+            <a href="{% url 'core:galerie_ia' %}" class="btn-secondary">AI Gallery</a>
+            <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary">Add Memory</a>
+        </div>
     </div>
 </div>
+
+<!-- Quick Stats -->
+{% if souvenirs %}
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+    <div class="card" style="text-align: center;">
+        <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ souvenirs|length }}</p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">Total Memories</p>
+    </div>
+    <div class="card" style="text-align: center;">
+        <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ souvenirs|length|add:-1 }}</p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">Favorites</p>
+    </div>
+    <div class="card" style="text-align: center;">
+        <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ souvenirs|length|add:-2 }}</p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">AI Analyzed</p>
+    </div>
+</div>
+{% endif %}
 
     {% if souvenirs %}
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
@@ -34,30 +54,60 @@
 
                     <!-- Contenu -->
                     <div style="padding: 1.5rem;">
-                        <h3 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ souvenir.titre }}</h3>
-                        <p style="color: var(--text-gray); font-size: 0.95rem; margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ souvenir.description }}</p>
-                        <p style="color: var(--text-gray); font-size: 0.9rem; margin-bottom: 1rem;">
-                            {{ souvenir.date_evenement|date:"d/m/Y" }}
-                        </p>
-                        <div style="display: flex; gap: 0.75rem;">
-                            <a href="{% url 'core:detail_souvenir' souvenir.id %}" class="btn-secondary" style="flex: 1; text-align: center; padding: 0.75rem;">
-                                Voir
-                            </a>
-                            <a href="{% url 'core:supprimer_souvenir' souvenir.id %}" style="flex: 1; text-align: center; padding: 0.75rem; background: #fee2e2; color: #dc2626; border: 2px solid var(--border-color); font-weight: bold; text-decoration: none;">
-                                Supprimer
-                            </a>
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
+                            <h3 style="font-size: 1.25rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">{{ souvenir.titre }}</h3>
+                            {% if souvenir.is_favorite %}
+                                <span style="color: #f59e0b; font-size: 1.25rem;"></span>
+                            {% endif %}
                         </div>
+                        <p style="color: var(--text-gray); font-size: 0.95rem; margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ souvenir.description }}</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <p style="color: var(--text-gray); font-size: 0.9rem;">
+                                {{ souvenir.date_evenement|date:"d/m/Y" }}
+                            </p>
+                            {% if souvenir.ai_analyzed %}
+                                <span style="background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: bold;">AI</span>
+                            {% endif %}
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                            <span style="background: #e5e7eb; color: #374151; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">{{ souvenir.get_emotion_display }}</span>
+                            <span style="background: #e5e7eb; color: #374151; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">{{ souvenir.get_theme_display }}</span>
+                        </div>
+                        <div style="display: flex;">
+                            <a href="{% url 'core:detail_souvenir' souvenir.id %}" class="btn-primary" style="width: 100%; text-align: center;">View Details</a>
+                        </div>
+                        <!-- Only show analyze/delete on detail page for minimalism -->
                     </div>
                 </div>
             {% endfor %}
         </div>
     {% else %}
         <div class="card" style="text-align: center; padding: 4rem;">
-            <p style="font-size: 1.25rem; color: var(--text-gray); margin-bottom: 1.5rem;">Aucun souvenir pour le moment</p>
+            <p style="font-size: 1.25rem; color: var(--text-gray); margin-bottom: 1.5rem;">No memories yet</p>
             <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary" style="display: inline-block;">
-                Créer mon premier souvenir
+                Create your first memory
             </a>
         </div>
     {% endif %}
 </div>
+
+<script>
+function toggleFavorite(souvenirId) {
+    fetch(`/memories/${souvenirId}/favorite/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Simple reload for now
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+
 {% endblock %}

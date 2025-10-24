@@ -36,7 +36,10 @@
             <h3 style="font-size: 1.25rem; font-weight: bold;">Quick Actions</h3>
         </div>
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary" style="text-align: center;">+ Add Souvenir</a>
+            <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary" style="text-align: center;">Add Souvenir</a>
+            <a href="{% url 'core:memories_dashboard' %}" class="btn-secondary" style="text-align: center;">My Memories</a>
+            <a href="{% url 'core:liste_capsules' %}" class="btn-secondary" style="text-align: center;">Time Capsules</a>
+            <a href="{% url 'core:liste_albums' %}" class="btn-secondary" style="text-align: center;">Albums</a>
             <a href="{% url 'core:index' %}" class="btn-secondary" style="text-align: center;">Create Note</a>
         </div>
     </div>
