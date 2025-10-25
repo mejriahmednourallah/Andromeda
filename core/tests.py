@@ -15,22 +15,21 @@ class CoreTests(TestCase):
         )
 
     def test_dashboard_access(self):
-        # Test redirect when not logged in
         response = self.client.get(reverse('core:dashboard'))
         self.assertEqual(response.status_code, 302)
-        # Test access when logged in
         self.client.login(username='testuser', password='testpass123')
         response = self.client.get(reverse('core:dashboard'))
         self.assertEqual(response.status_code, 200)
 
     def test_souvenir_creation(self):
         self.client.login(username='testuser', password='testpass123')
-        # Ajoute ici d'autres champs si ton modèle Souvenir en exige plus
+        # Ajoute ici les autres champs obligatoires si nécessaire !
         response = self.client.post(reverse('core:ajouter_souvenir'), {
             'titre': 'Test Memory',
             'description': 'A wonderful test memory about friends',
             'emotion': 'joy',
             'date_evenement': '2024-01-01',
+            # 'image': image,  # Décommente si requis dans ton modèle
         })
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Souvenir.objects.filter(titre='Test Memory').exists())
