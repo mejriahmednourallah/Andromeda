@@ -209,18 +209,23 @@ textarea.form-input {
             <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">{{ form.personnes_presentes.help_text }}</p>
         </div>
 
-        <!-- Public -->
+        <!-- Favori -->
         <div style="margin-bottom: 1.5rem;">
-            <label for="{{ form.is_public.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
-                {{ form.is_public.label }}
+            <label for="{{ form.is_favorite.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                {{ form.is_favorite.label }}
             </label>
-            {{ form.is_public }}
-            {% if form.is_public.errors %}
-                {% for error in form.is_public.errors %}
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                {{ form.is_favorite }}
+                <span id="favorite-star" style="font-size: 1.5rem; cursor: pointer;" onclick="toggleFavorite()">
+                    {% if souvenir.is_favorite %}⭐{% else %}☆{% endif %}
+                </span>
+                <span style="color: var(--text-gray); font-size: 0.9rem;">Mark this memory as favorite</span>
+            </div>
+            {% if form.is_favorite.errors %}
+                {% for error in form.is_favorite.errors %}
                     <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
                 {% endfor %}
             {% endif %}
-            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">{{ form.is_public.help_text }}</p>
         </div>
 
         <!-- Action Buttons -->
@@ -245,13 +250,24 @@ document.addEventListener('DOMContentLoaded', function() {
         
         function updateFavoriteStar() {
             if (favoriteCheckbox.checked) {
-                favoriteStar.innerHTML = '<span style="color: #fbbf24;">⭐</span>';
+                favoriteStar.innerHTML = '⭐';
+                favoriteStar.style.color = '#fbbf24';
             } else {
-                favoriteStar.innerHTML = '<span style="color: #9ca3af;">☆</span>';
+                favoriteStar.innerHTML = '☆';
+                favoriteStar.style.color = '#9ca3af';
             }
         }
     }
 });
+
+// Function to toggle favorite when clicking the star
+function toggleFavorite() {
+    const checkbox = document.getElementById('id_is_favorite');
+    if (checkbox) {
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change'));
+    }
+}
 </script>
 
 {% endblock %}
