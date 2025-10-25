@@ -473,6 +473,65 @@ def toggle_favori(request, souvenir_id):
 
 
 # ============================================
+# EMOTIONAL CALENDAR VIEW
+# ============================================
+
+@login_required
+def calendrier_emotionnel(request):
+    """
+    Display emotional timeline view organized by year and date
+    """
+    # Get user's memories
+    souvenirs = Souvenir.objects.filter(utilisateur=request.user).order_by('-date_evenement')
+    
+    # Emotion color mapping
+    emotion_colors = {
+        'joy': '#FFD700',        # Gold
+        'sadness': '#4169E1',    # Royal Blue
+        'nostalgia': '#9370DB',  # Medium Purple
+        'gratitude': '#32CD32',  # Lime Green
+        'excitement': '#FF4500', # Orange Red
+        'peace': '#98FB98',      # Pale Green
+        'love': '#FF69B4',       # Hot Pink
+        'surprise': '#FFA500',   # Orange
+        'pride': '#DC143C',      # Crimson
+        'neutral': '#808080',    # Gray
+    }
+    
+    # Organize memories by year and month
+    memories_by_year = {}
+    
+    for souvenir in souvenirs:
+        year = souvenir.date_evenement.year
+        month = souvenir.date_evenement.strftime('%Y-%m')  # YYYY-MM format for sorting
+        
+        if year not in memories_by_year:
+            memories_by_year[year] = {}
+        
+        if month not in memories_by_year[year]:
+            memories_by_year[year][month] = []
+        
+        # Add emotion color to each memory
+        souvenir.emotion_color = emotion_colors.get(souvenir.emotion, '#808080')
+        memories_by_year[year][month].append(souvenir)
+    
+    # Sort months within each year
+    for year in memories_by_year:
+        memories_by_year[year] = dict(sorted(memories_by_year[year].items()))
+    
+    # Sort years in descending order
+    memories_by_year = dict(sorted(memories_by_year.items(), reverse=True))
+    
+    context = {
+        'memories_by_year': memories_by_year,
+        'emotion_colors': emotion_colors,
+        'total_memories': souvenirs.count(),
+    }
+    
+    return render(request, 'core/calendrier_emotionnel.html', context)
+
+
+# ============================================
 # AI ANALYSIS VIEWS
 # ============================================
 
@@ -1035,6 +1094,365 @@ def liste_exports_pdf(request):
     """
     exports = ExportPDF.objects.filter(utilisateur=request.user).order_by('-date_export')
     return render(request, 'core/liste_exports_pdf.html', {'exports': exports})
+
+
+@login_required
+def calendrier_emotionnel(request):
+    """
+    Display emotional calendar with yearly overview and monthly detail views
+    """
+    # Get user's memories
+    souvenirs = Souvenir.objects.filter(utilisateur=request.user)
+    
+    # Get selected year from URL parameter, default to current year
+    selected_year = request.GET.get('year')
+    if selected_year:
+        try:
+            selected_year = int(selected_year)
+            # Validate year is within reasonable bounds
+            if selected_year < 2000 or selected_year > 2030:
+                selected_year = timezone.now().year
+        except ValueError:
+            selected_year = timezone.now().year
+    else:
+        selected_year = timezone.now().year
+    
+    # Get all available years for navigation
+    available_years = souvenirs.values_list('date_evenement__year', flat=True).distinct().order_by('-date_evenement__year')
+    available_years = list(available_years)
+    
+    # Emotion color mapping with pastel tones
+    emotion_colors = {
+        'joy': '#FEF3C7',        # Soft yellow
+        'sadness': '#DBEAFE',    # Soft blue
+        'nostalgia': '#E9D5FF',  # Soft purple
+        'gratitude': '#D1FAE5',  # Soft green
+        'excitement': '#FED7AA', # Soft orange
+        'peace': '#F0FDF4',      # Very soft green
+        'love': '#FCE7F3',       # Soft pink
+        'surprise': '#FEF3C7',   # Soft yellow
+        'pride': '#FEE2E2',      # Soft red
+        'anger': '#FEE2E2',      # Soft red
+        'stress': '#FEF3C7',     # Soft yellow
+        'calm': '#F0FDF4',       # Very soft green
+        'neutral': '#F9FAFB',    # Light gray
+    }
+    yearly_data = []
+    
+    for month in range(12):
+        month_data = {
+            'month': month,
+            'year': selected_year,
+            'month_name': ['January', 'February', 'March', 'April', 'May', 'June',
+                          'July', 'August', 'September', 'October', 'November', 'December'][month],
+            'days': [],
+            'memory_count': 0,
+            'dominant_emotion': 'No data',
+            'dominant_color': '#f3f4f6'
+        }
+        
+        # Get memories for this month
+        month_memories = souvenirs.filter(
+            date_evenement__year=selected_year,
+            date_evenement__month=month + 1
+        )
+        
+        month_data['memory_count'] = month_memories.count()
+        
+        # Calculate emotion distribution for the month
+        emotion_counts = {}
+        for memory in month_memories:
+            emotion = memory.ai_emotion_detected if memory.ai_emotion_detected else memory.emotion
+            emotion_counts[emotion] = emotion_counts.get(emotion, 0) + 1
+        
+        if emotion_counts:
+            dominant_emotion = max(emotion_counts.keys(), key=lambda x: emotion_counts[x])
+            month_data['dominant_emotion'] = dominant_emotion.title()
+            month_data['dominant_color'] = emotion_colors.get(dominant_emotion, '#f3f4f6')
+        
+        # Generate mini calendar days
+        import calendar
+        from datetime import date
+        
+        cal = calendar.monthcalendar(selected_year, month + 1)
+        day_emotions = {}
+        
+        # Map memories to days
+        for memory in month_memories:
+            day = memory.date_evenement.day
+            emotion = memory.ai_emotion_detected if memory.ai_emotion_detected else memory.emotion
+            if day not in day_emotions:
+                day_emotions[day] = []
+            day_emotions[day].append(emotion)
+        
+        # Create day data for mini calendar
+        for week in cal:
+            for day_num in week:
+                if day_num == 0:
+                    # Empty day from previous/next month
+                    month_data['days'].append({
+                        'class': 'empty',
+                        'color': '#f9fafb',
+                        'date': '',
+                        'emotion': None
+                    })
+                else:
+                    emotions = day_emotions.get(day_num, [])
+                    if emotions:
+                        # Use the most common emotion for the day
+                        emotion_counts = {}
+                        for emotion in emotions:
+                            emotion_counts[emotion] = emotion_counts.get(emotion, 0) + 1
+                        dominant_day_emotion = max(emotion_counts.keys(), key=lambda x: emotion_counts[x])
+                        color = emotion_colors.get(dominant_day_emotion, '#f9fafb')
+                        day_class = 'has-memory'
+                    else:
+                        color = '#f9fafb'
+                        day_class = 'empty'
+                        dominant_day_emotion = None
+                    
+                    month_data['days'].append({
+                        'class': day_class,
+                        'color': color,
+                        'date': f"{selected_year}-{month+1:02d}-{day_num:02d}",
+                        'emotion': dominant_day_emotion
+                    })
+        
+        yearly_data.append(month_data)
+    
+    context = {
+        'emotion_colors': emotion_colors,
+        'yearly_data': yearly_data,
+        'selected_year': selected_year,
+        'available_years': available_years,
+        'current_year': timezone.now().year,
+    }
+    
+    return render(request, 'core/calendrier_emotionnel.html', context)
+
+
+@login_required
+def calendrier_emotionnel_events(request):
+    """
+    Return JSON events for FullCalendar
+    """
+    # Emotion color mapping - therapeutic pastel colors
+    emotion_colors = {
+        'joy': '#FEF3C7',        # Soft yellow
+        'sadness': '#DBEAFE',    # Soft blue
+        'nostalgia': '#E9D5FF',  # Soft purple
+        'gratitude': '#D1FAE5',  # Soft green
+        'excitement': '#FED7AA', # Soft orange
+        'peace': '#F0FDF4',      # Very soft green
+        'love': '#FCE7F3',       # Soft pink
+        'surprise': '#FEF3C7',   # Soft yellow
+        'pride': '#FEE2E2',      # Soft red
+        'anger': '#FEE2E2',      # Soft red
+        'stress': '#FEF3C7',     # Soft yellow
+        'calm': '#F0FDF4',       # Very soft green
+        'neutral': '#F9FAFB',    # Soft gray
+    }
+    
+    # Get user's memories
+    souvenirs = Souvenir.objects.filter(utilisateur=request.user)
+    
+    events = []
+    for souvenir in souvenirs:
+        # Use AI-detected emotion if available, otherwise use user emotion
+        emotion = souvenir.ai_emotion_detected if souvenir.ai_emotion_detected else souvenir.emotion
+        color = emotion_colors.get(emotion, '#808080')  # Default to gray
+        
+        events.append({
+            'title': f"{souvenir.titre} ({emotion})",
+            'start': souvenir.date_evenement.isoformat(),
+            'backgroundColor': color,
+            'borderColor': color,
+            'textColor': '#000000',
+            'url': reverse('core:detail_souvenir', kwargs={'souvenir_id': souvenir.id}),
+            'extendedProps': {
+                'emotion': emotion,
+                'description': souvenir.description[:100] + '...' if len(souvenir.description) > 100 else souvenir.description,
+                'has_media': souvenir.has_media,
+            }
+        })
+    
+    return JsonResponse(events, safe=False)
+
+
+@login_required
+def calendrier_emotionnel_day_memories(request):
+    """
+    Return JSON data for memories on a specific day
+    """
+    date_str = request.GET.get('date')
+    if not date_str:
+        return JsonResponse({'error': 'Date parameter required'}, status=400)
+    
+    try:
+        from datetime import datetime
+        date = datetime.fromisoformat(date_str).date()
+        
+        # Get memories for this specific day
+        memories = Souvenir.objects.filter(
+            utilisateur=request.user,
+            date_evenement__date=date
+        ).order_by('-date_evenement')
+        
+        # Emotion color mapping
+        emotion_colors = {
+            'joy': '#FEF3C7',
+            'sadness': '#DBEAFE',
+            'nostalgia': '#E9D5FF',
+            'gratitude': '#D1FAE5',
+            'excitement': '#FED7AA',
+            'peace': '#F0FDF4',
+            'love': '#FCE7F3',
+            'surprise': '#FEF3C7',
+            'pride': '#FEE2E2',
+            'anger': '#FEE2E2',
+            'stress': '#FEF3C7',
+            'calm': '#F0FDF4',
+            'neutral': '#F9FAFB',
+        }
+        
+        memories_data = []
+        for memory in memories:
+            emotion = memory.ai_emotion_detected if memory.ai_emotion_detected else memory.emotion
+            memories_data.append({
+                'id': memory.id,
+                'titre': memory.titre,
+                'description': memory.description,
+                'date_evenement': memory.date_evenement.isoformat(),
+                'emotion': emotion,
+                'emotion_display': memory.get_emotion_display(),
+                'photo': memory.photo.url if memory.photo else None,
+                'video': memory.video.url if memory.video else None,
+            })
+        
+        return JsonResponse({
+            'memories': memories_data,
+            'date': date_str,
+            'count': len(memories_data)
+        })
+        
+    except Exception as e:
+        logger.error(f'Error fetching day memories: {str(e)}')
+        return JsonResponse({'error': 'Failed to fetch memories'}, status=500)
+
+
+@login_required
+def calendrier_emotionnel_monthly_analytics(request):
+    """
+    Return JSON data for monthly analytics (emotion distribution, stats)
+    """
+    month = request.GET.get('month')
+    year = request.GET.get('year')
+    
+    if not month or not year:
+        return JsonResponse({'error': 'Month and year parameters required'}, status=400)
+    
+    try:
+        month = int(month)
+        year = int(year)
+        
+        # Get memories for this month
+        month_memories = Souvenir.objects.filter(
+            utilisateur=request.user,
+            date_evenement__year=year,
+            date_evenement__month=month
+        )
+        
+        # Calculate emotion distribution
+        emotion_distribution = {}
+        theme_distribution = {}
+        daily_activity = {}
+        
+        for memory in month_memories:
+            emotion = memory.ai_emotion_detected if memory.ai_emotion_detected else memory.emotion
+            emotion_distribution[emotion] = emotion_distribution.get(emotion, 0) + 1
+            
+            # Track themes if available
+            if memory.theme:
+                theme_distribution[memory.theme] = theme_distribution.get(memory.theme, 0) + 1
+            
+            # Track daily activity
+            day = memory.date_evenement.day
+            daily_activity[day] = daily_activity.get(day, 0) + 1
+        
+        # Calculate stats
+        total_memories = month_memories.count()
+        days_with_memories = len(daily_activity)
+        
+        # Calculate month length for activity metrics
+        import calendar
+        month_length = calendar.monthrange(year, month)[1]
+        
+        # Memory frequency (memories per active day)
+        memory_frequency = total_memories / days_with_memories if days_with_memories > 0 else 0
+        
+        # Most active day
+        most_active_day = max(daily_activity.keys(), key=lambda x: daily_activity[x]) if daily_activity else None
+        
+        # Emotion diversity (number of different emotions used)
+        emotion_diversity = len(emotion_distribution)
+        
+        # Dominant emotion
+        dominant_emotion = 'No data'
+        dominant_emotion_count = 0
+        if emotion_distribution:
+            dominant_emotion = max(emotion_distribution.keys(), key=lambda x: emotion_distribution[x])
+            dominant_emotion_count = emotion_distribution[dominant_emotion]
+            dominant_emotion = dominant_emotion.title()
+        
+        # Dominant theme
+        dominant_theme = 'No data'
+        if theme_distribution:
+            dominant_theme = max(theme_distribution.keys(), key=lambda x: theme_distribution[x])
+            dominant_theme = dominant_theme.title()
+        
+        # Calculate activity level
+        activity_percentage = (days_with_memories / month_length) * 100
+        
+        # Get previous month data for comparison
+        prev_month = month - 1 if month > 1 else 12
+        prev_year = year if month > 1 else year - 1
+        
+        prev_month_memories = Souvenir.objects.filter(
+            utilisateur=request.user,
+            date_evenement__year=prev_year,
+            date_evenement__month=prev_month
+        )
+        prev_month_count = prev_month_memories.count()
+        
+        # Calculate change from previous month
+        change_from_prev = total_memories - prev_month_count
+        change_percentage = ((total_memories - prev_month_count) / prev_month_count * 100) if prev_month_count > 0 else 0
+        
+        stats = {
+            'total_memories': total_memories,
+            'days_with_memories': days_with_memories,
+            'dominant_emotion': dominant_emotion,
+            'dominant_emotion_count': dominant_emotion_count,
+            'dominant_theme': dominant_theme,
+            'memory_frequency': round(memory_frequency, 1),
+            'most_active_day': most_active_day,
+            'emotion_diversity': emotion_diversity,
+            'activity_percentage': round(activity_percentage, 1),
+            'change_from_prev': change_from_prev,
+            'change_percentage': round(change_percentage, 1),
+            'month_length': month_length,
+        }
+        
+        return JsonResponse({
+            'emotion_distribution': emotion_distribution,
+            'theme_distribution': theme_distribution,
+            'daily_activity': daily_activity,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        logger.error(f'Error fetching monthly analytics: {str(e)}')
+        return JsonResponse({'error': 'Failed to fetch analytics'}, status=500)
 
 
 def generate_pdf_content(export_pdf):

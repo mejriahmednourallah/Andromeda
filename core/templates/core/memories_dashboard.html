@@ -210,6 +210,7 @@
     <h2 class="card-title">⚡ Quick Actions</h2>
     <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
         <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary">Add Memory</a>
+        <a href="{% url 'core:calendrier_emotionnel' %}" class="btn-primary">Emotional Calendar</a>
         {% if stats.pending > 0 %}
         <form method="post" style="display: inline;">
             {% csrf_token %}
@@ -648,77 +649,6 @@ function saveReflection() {
     alert('Reflection saved! Your thoughtful response has been recorded.');
     closeReflectionModal();
 }
-
-<script>
-// Recherche en temps réel
-let searchTimeout;
-const searchInput = document.querySelector('input[name="q"]');
-
-if (searchInput) {
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            updateSearchResults();
-        }, 300); // Délai de 300ms pour éviter trop de requêtes
-    });
-}
-
-function updateSearchResults() {
-    const formData = new FormData(document.querySelector('form'));
-    const params = new URLSearchParams();
-    
-    // Ajouter tous les paramètres du formulaire
-    for (let [key, value] of formData.entries()) {
-        if (value.trim() !== '') {
-            params.append(key, value);
-        }
-    }
-    
-    // Mettre à jour l'URL sans recharger la page
-    const newUrl = `${window.location.pathname}?${params.toString()}`;
-    window.history.pushState({}, '', newUrl);
-    
-    // Afficher un indicateur de chargement
-    const resultsContainer = document.querySelector('.card:has(h2:contains("📚 Memories"))');
-    if (resultsContainer) {
-        const originalContent = resultsContainer.innerHTML;
-        resultsContainer.innerHTML = '<div style="text-align: center; padding: 2rem;"><p>🔍 Searching...</p></div>';
-        
-        // Recharger la page pour mettre à jour les résultats
-        // Note: Pour une vraie implémentation AJAX, il faudrait une API séparée
-        setTimeout(() => {
-            window.location.reload();
-        }, 100);
-    }
-}
-
-// Mise à jour des statistiques en temps réel
-function updateStats() {
-    const searchQuery = searchInput ? searchInput.value : '';
-    if (searchQuery.length > 2) {
-        // Mettre à jour le compteur de résultats
-        const resultsCount = document.querySelector('h2:contains("📚 Memories")');
-        if (resultsCount) {
-            resultsCount.textContent = `📚 Memories (${searchQuery ? 'Searching...' : '{{ stats.filtered_count }} results'})`;
-        }
-    }
-}
-
-// Améliorer l'expérience utilisateur pour les facettes
-document.addEventListener('DOMContentLoaded', function() {
-    // Ajouter des tooltips aux liens de facettes
-    const facetLinks = document.querySelectorAll('.facet-link');
-    facetLinks.forEach(link => {
-        link.title = `Click to filter by ${link.textContent.trim()}`;
-    });
-    
-    // Animation pour les facettes actives
-    const activeFacets = document.querySelectorAll('a[style*="background: #f3e5f5"], a[style*="background: #e8f5e8"], a[style*="background: #fff3e0"], a[style*="background: #fce4ec"]');
-    activeFacets.forEach(facet => {
-        facet.style.transform = 'scale(1.05)';
-        facet.style.fontWeight = 'bold';
-    });
-});
 </script>
 
 <style>

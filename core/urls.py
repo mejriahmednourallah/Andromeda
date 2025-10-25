@@ -14,6 +14,12 @@ urlpatterns = [
     # === MEMORIES DASHBOARD (UNIFIED) ===
     path('memories/dashboard/', views.memories_dashboard, name='memories_dashboard'),
     
+    # === EMOTIONAL CALENDAR ===
+    path('calendar/', views.calendrier_emotionnel, name='calendrier_emotionnel'),
+    path('calendar/events/', views.calendrier_emotionnel_events, name='calendrier_emotionnel_events'),
+    path('calendar/day-memories/', views.calendrier_emotionnel_day_memories, name='calendrier_emotionnel_day_memories'),
+    path('calendar/monthly-analytics/', views.calendrier_emotionnel_monthly_analytics, name='calendrier_emotionnel_monthly_analytics'),
+    
     # === LEGACY REDIRECTS ===
     path('memories/', views.memories_dashboard, name='liste_souvenirs'),  # Redirect old URL
     path('ai-gallery/', views.memories_dashboard, name='galerie_ia'),  # Redirect old URL
