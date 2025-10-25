@@ -6,6 +6,7 @@ Andromeda is a personal memory management application that helps you capture, or
 
 ### Currently Implemented
 - ✅ User authentication (registration/login)
+- ✅ Password reset via email
 - ✅ Complete memory management (Souvenirs)
 - ✅ AI-powered analysis (text & image analysis)
 - ✅ Memory albums and organization
@@ -47,10 +48,10 @@ venv\Scripts\activate  # Windows
 pip install -r requirements.txt
 ```
 
-4. **Set up environment variables** (optional for AI features)
+4. **Set up environment variables** (optional for AI features, required for password reset)
 ```bash
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your API keys and email settings
 ```
 
 5. **Apply migrations**
@@ -71,6 +72,34 @@ python manage.py runserver
 8. **Access the application**
 - Application: http://127.0.0.1:8000/
 - Admin: http://127.0.0.1:8000/admin/
+
+## 📧 Email Configuration (Password Reset)
+
+To enable password reset functionality, configure email settings in your `.env` file:
+
+```bash
+# Email Configuration
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+DEFAULT_FROM_EMAIL=noreply@andromeda.com
+```
+
+**For Gmail:**
+1. Enable 2-factor authentication
+2. Generate an App Password: https://support.google.com/accounts/answer/185833
+3. Use your Gmail address as `EMAIL_HOST_USER`
+4. Use the App Password as `EMAIL_HOST_PASSWORD`
+
+**Development (Console Backend):**
+If you don't configure email, Django will use console backend and print emails to the terminal.
+
+```bash
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+```
 
 ## 🤖 AI Analysis Setup
 
