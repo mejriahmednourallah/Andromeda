@@ -3,7 +3,7 @@ from .models import (
     User, Note, Link, Template, Attachment, APIIntegration, AITask,
     Souvenir, AnalyseIASouvenir, AlbumSouvenir, CapsuleTemporelle,
     EntreeJournal, SouvenirEntree, PartageSouvenir,
-    ExportPDF, SuiviMotivationnel, Badge, UserBadge
+    ExportPDF, SuiviMotivationnel, Badge, UserBadge, HistoireInspirante
 )
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
@@ -143,6 +143,39 @@ class UserBadgeAdmin(admin.ModelAdmin):
     list_filter = ('earned_at', 'badge__code')
     search_fields = ('user__username', 'badge__name')
     readonly_fields = ('earned_at', 'is_unlocked', 'progress_percentage')
+
+
+@admin.register(HistoireInspirante)
+class HistoireInspiranteAdmin(admin.ModelAdmin):
+    list_display = ('celebrite', 'utilisateur', 'est_simulee', 'is_favorite', 'created_at')
+    list_filter = ('est_simulee', 'is_favorite', 'created_at')
+    search_fields = ('celebrite', 'reflexion_text', 'histoire_generee', 'utilisateur__username')
+    date_hierarchy = 'created_at'
+    readonly_fields = ('id', 'created_at', 'updated_at', 'reflexion_courte')
+    
+    fieldsets = (
+        ('Information Principale', {
+            'fields': ('utilisateur', 'celebrite', 'is_favorite')
+        }),
+        ('Contenu', {
+            'fields': ('reflexion_text', 'histoire_generee', 'notes_personnelles')
+        }),
+        ('Métadonnées IA', {
+            'fields': ('est_simulee', 'modele_utilise'),
+            'classes': ('collapse',)
+        }),
+        ('Système', {
+            'fields': ('id', 'created_at', 'updated_at', 'reflexion_courte'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    actions = ['mark_as_favorite']
+    
+    def mark_as_favorite(self, request, queryset):
+        updated = queryset.update(is_favorite=True)
+        self.message_user(request, f'{updated} histoires marquées comme favorites.')
+    mark_as_favorite.short_description = "Marquer comme favorite"
 
 
 admin.site.register(Note)

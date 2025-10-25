@@ -14,7 +14,7 @@ from io import BytesIO
 
 from .models import (
     Note, User, Souvenir, AnalyseIASouvenir, AlbumSouvenir,
-    CapsuleTemporelle, PartageSouvenir, SuiviMotivationnel, ExportPDF
+    CapsuleTemporelle, PartageSouvenir, SuiviMotivationnel, ExportPDF , HistoireInspirante
 )
 from .forms import UserCreationForm, SouvenirForm, CapsuleTemporelleForm, UserProfileForm
 from .ai_services import AIAnalysisService, AIRecommendationService
@@ -991,6 +991,119 @@ def supprimer_album(request, album_id):
     }
     
     return render(request, 'core/supprimer_album.html', context)
+
+
+@login_required
+def story_inspiration(request):
+    """
+    Vue pour la page Story - génération d'histoires inspirantes
+    """
+    story_data = None
+    reflexion_text = ""
+    histoire_saved = None
+    
+    if request.method == 'POST':
+        reflexion_text = request.POST.get('reflexion_text', '').strip()
+        
+        if reflexion_text:
+            try:
+                # Générer l'histoire inspirante avec l'IA
+                story_data = AIRecommendationService.generate_inspirational_story(reflexion_text)
+                
+                # Sauvegarder l'histoire dans la base de données
+                histoire_saved = HistoireInspirante.objects.create(
+                    utilisateur=request.user,
+                    reflexion_text=reflexion_text,
+                    histoire_generee=story_data['story'],
+                    celebrite=story_data['celebrity'],
+                    est_simulee=story_data.get('simulated', True),
+                    modele_utilise=story_data.get('model', '')
+                )
+                
+                logger.info(f"Histoire inspirante sauvegardée (ID: {histoire_saved.id}) pour l'utilisateur {request.user.username}")
+                messages.success(request, "✨ Votre histoire inspirante a été générée et sauvegardée !")
+                
+            except Exception as e:
+                logger.error(f"Error generating story: {str(e)}")
+                messages.error(request, "Une erreur s'est produite lors de la génération de l'histoire. Veuillez réessayer.")
+        else:
+            messages.warning(request, "Veuillez entrer une réflexion pour générer une histoire inspirante.")
+    
+    context = {
+        'story_data': story_data,
+        'reflexion_text': reflexion_text,
+        'histoire_saved': histoire_saved,
+    }
+    
+    return render(request, 'core/story_inspiration.html', context)
+
+
+@login_required
+def story_history(request):
+    """
+    Vue pour afficher l'historique de toutes les histoires inspirantes de l'utilisateur
+    """
+    # Récupérer toutes les histoires de l'utilisateur
+    histoires = HistoireInspirante.objects.filter(utilisateur=request.user).order_by('-created_at')
+    
+    # Filtres
+    filter_favorite = request.GET.get('favorite', None)
+    filter_simulated = request.GET.get('simulated', None)
+    search_query = request.GET.get('search', '')
+    
+    if filter_favorite == 'true':
+        histoires = histoires.filter(is_favorite=True)
+    
+    if filter_simulated == 'true':
+        histoires = histoires.filter(est_simulee=True)
+    elif filter_simulated == 'false':
+        histoires = histoires.filter(est_simulee=False)
+    
+    if search_query:
+        histoires = histoires.filter(
+            Q(celebrite__icontains=search_query) | 
+            Q(reflexion_text__icontains=search_query) |
+            Q(histoire_generee__icontains=search_query)
+        )
+    
+    # Pagination
+    paginator = Paginator(histoires, 10)  # 10 histoires par page
+    page_number = request.GET.get('page')
+    histoires_page = paginator.get_page(page_number)
+    
+    # Statistiques
+    stats = {
+        'total': HistoireInspirante.objects.filter(utilisateur=request.user).count(),
+        'favorites': HistoireInspirante.objects.filter(utilisateur=request.user, is_favorite=True).count(),
+        'simulated': HistoireInspirante.objects.filter(utilisateur=request.user, est_simulee=True).count(),
+        'ai_generated': HistoireInspirante.objects.filter(utilisateur=request.user, est_simulee=False).count(),
+    }
+    
+    context = {
+        'histoires': histoires_page,
+        'stats': stats,
+        'filter_favorite': filter_favorite,
+        'filter_simulated': filter_simulated,
+        'search_query': search_query,
+    }
+    
+    return render(request, 'core/story_history.html', context)
+
+
+@login_required
+def toggle_histoire_favorite(request, histoire_id):
+    """
+    Toggle favorite status for a story
+    """
+    histoire = get_object_or_404(HistoireInspirante, id=histoire_id, utilisateur=request.user)
+    histoire.is_favorite = not histoire.is_favorite
+    histoire.save()
+    
+    status = "ajoutée aux" if histoire.is_favorite else "retirée des"
+    messages.success(request, f'✨ Histoire {status} favorites!')
+    
+    # Redirect back to history or story page
+    return redirect(request.META.get('HTTP_REFERER', 'core:story_history'))
 
 
 # ============================================

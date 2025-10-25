@@ -558,3 +558,49 @@ class UserBadge(models.Model):
         if self.badge.requirement_value == 0:
             return 100
         return min(100, (self.progress / self.badge.requirement_value) * 100)
+
+
+# --- Histoires Inspirantes (Inspirational Stories) ---
+class HistoireInspirante(models.Model):
+    """
+    Modèle pour sauvegarder les histoires inspirantes générées pour les utilisateurs.
+    Chaque histoire est liée à une réflexion personnelle de l'utilisateur.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    utilisateur = models.ForeignKey('User', on_delete=models.CASCADE, related_name='histoires_inspirantes')
+    
+    # Contenu de la réflexion et de l'histoire
+    reflexion_text = models.TextField(help_text="Texte de réflexion personnel de l'utilisateur")
+    histoire_generee = models.TextField(help_text="Histoire inspirante générée")
+    celebrite = models.CharField(max_length=200, help_text="Nom de la célébrité mentionnée dans l'histoire")
+    
+    # Métadonnées de génération
+    est_simulee = models.BooleanField(default=True, help_text="True si histoire simulée, False si générée par IA")
+    modele_utilise = models.CharField(max_length=100, blank=True, default='', help_text="Modèle IA utilisé (ex: gpt-4o-mini)")
+    
+    # Interactions utilisateur
+    is_favorite = models.BooleanField(default=False, help_text="Marquée comme favorite")
+    notes_personnelles = models.TextField(blank=True, default='', help_text="Notes personnelles de l'utilisateur sur cette histoire")
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Histoire Inspirante'
+        verbose_name_plural = 'Histoires Inspirantes'
+        indexes = [
+            models.Index(fields=['utilisateur', '-created_at']),
+            models.Index(fields=['is_favorite']),
+        ]
+    
+    def __str__(self):
+        return f"{self.celebrite} - {self.utilisateur.username} ({self.created_at.strftime('%d/%m/%Y')})"
+    
+    @property
+    def reflexion_courte(self):
+        """Retourne une version courte de la réflexion (premiers 100 caractères)"""
+        if len(self.reflexion_text) > 100:
+            return self.reflexion_text[:100] + '...'
+        return self.reflexion_text

@@ -1,0 +1,496 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Historique des Histoires{% endblock %}
+
+{% block extra_css %}
+<style>
+    .history-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .page-header h1 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: var(--text-dark);
+    }
+
+    .new-story-btn {
+        padding: 0.85rem 1.5rem;
+        background: var(--accent-orange);
+        color: white;
+        border: 2px solid var(--border-color);
+        font-weight: bold;
+        font-family: 'Courier New', monospace;
+        text-decoration: none;
+        display: inline-block;
+        transition: opacity 0.2s ease;
+    }
+
+    .new-story-btn:hover {
+        opacity: 0.9;
+    }
+
+    /* Statistics Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--panel-bg);
+        border: 3px solid var(--border-color);
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: var(--accent-orange);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--text-gray);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Filters */
+    .filters-section {
+        background: var(--panel-bg);
+        border: 3px solid var(--border-color);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .filters-title {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        color: var(--text-dark);
+    }
+
+    .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .filter-group label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        color: var(--text-dark);
+    }
+
+    .filter-input, .filter-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid var(--border-color);
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        background: white;
+    }
+
+    .filter-input:focus, .filter-select:focus {
+        outline: none;
+        border-color: var(--accent-orange);
+    }
+
+    .filter-buttons {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    .filter-btn {
+        padding: 0.75rem 1.25rem;
+        border: 2px solid var(--border-color);
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .filter-btn-apply {
+        background: var(--accent-orange);
+        color: white;
+    }
+
+    .filter-btn-clear {
+        background: white;
+        color: var(--text-dark);
+    }
+
+    .filter-btn:hover {
+        opacity: 0.85;
+    }
+
+    /* Story Cards */
+    .stories-list {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .story-item {
+        background: linear-gradient(135deg, #fef3e8 0%, #f3e8ff 100%);
+        border: 3px solid var(--border-color);
+        padding: 2rem;
+        position: relative;
+        transition: transform 0.2s ease;
+    }
+
+    .story-item:hover {
+        transform: translateY(-2px);
+    }
+
+    .story-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 1.5rem;
+        gap: 1rem;
+    }
+
+    .story-meta {
+        flex: 1;
+    }
+
+    .story-celebrity {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #5b21b6;
+        margin-bottom: 0.5rem;
+    }
+
+    .story-date {
+        font-size: 0.85rem;
+        color: var(--text-gray);
+    }
+
+    .story-badges {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .badge {
+        padding: 0.4rem 0.75rem;
+        border: 2px solid;
+        font-size: 0.75rem;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .badge-simulated {
+        border-color: #3b82f6;
+        background: rgba(59, 130, 246, 0.1);
+        color: #1e40af;
+    }
+
+    .badge-ai {
+        border-color: #8b5cf6;
+        background: rgba(139, 92, 246, 0.1);
+        color: #6d28d9;
+    }
+
+    .favorite-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+
+    .favorite-btn:hover {
+        transform: scale(1.2);
+    }
+
+    .story-reflexion {
+        background: rgba(255, 255, 255, 0.6);
+        border-left: 4px solid var(--accent-orange);
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        font-style: italic;
+        color: var(--text-dark);
+    }
+
+    .story-content {
+        line-height: 1.8;
+        color: var(--text-dark);
+        margin-bottom: 1rem;
+        white-space: pre-line;
+    }
+
+    .story-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 2px solid rgba(43, 43, 43, 0.2);
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .story-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .action-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid var(--border-color);
+        background: white;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        text-decoration: none;
+        color: var(--text-dark);
+    }
+
+    .action-btn:hover {
+        background: #f9f9f9;
+    }
+
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+        padding: 1.5rem;
+    }
+
+    .pagination a, .pagination span {
+        padding: 0.75rem 1rem;
+        border: 2px solid var(--border-color);
+        background: white;
+        color: var(--text-dark);
+        text-decoration: none;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        transition: all 0.2s ease;
+    }
+
+    .pagination a:hover {
+        background: var(--accent-orange);
+        color: white;
+    }
+
+    .pagination .current {
+        background: var(--accent-orange);
+        color: white;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: var(--panel-bg);
+        border: 3px solid var(--border-color);
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        color: var(--text-dark);
+    }
+
+    .empty-state-text {
+        font-size: 1rem;
+        color: var(--text-gray);
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="history-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>📚 Historique des Histoires</h1>
+        <a href="{% url 'core:story_inspiration' %}" class="new-story-btn">✨ Nouvelle Histoire</a>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.total }}</div>
+            <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.favorites }}</div>
+            <div class="stat-label">Favorites</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.simulated }}</div>
+            <div class="stat-label">Simulées</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.ai_generated }}</div>
+            <div class="stat-label">IA Générées</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section">
+        <div class="filters-title">🔍 Filtrer les histoires</div>
+        <form method="get" action="{% url 'core:story_history' %}">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label for="search">Rechercher</label>
+                    <input type="text" id="search" name="search" class="filter-input" 
+                           placeholder="Célébrité, réflexion, contenu..." 
+                           value="{{ search_query }}">
+                </div>
+                <div class="filter-group">
+                    <label for="simulated">Type</label>
+                    <select id="simulated" name="simulated" class="filter-select">
+                        <option value="">Tous les types</option>
+                        <option value="true" {% if filter_simulated == 'true' %}selected{% endif %}>Simulées</option>
+                        <option value="false" {% if filter_simulated == 'false' %}selected{% endif %}>Générées par IA</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="favorite">Favorites</label>
+                    <select id="favorite" name="favorite" class="filter-select">
+                        <option value="">Toutes</option>
+                        <option value="true" {% if filter_favorite == 'true' %}selected{% endif %}>Favorites uniquement</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-buttons">
+                <button type="submit" class="filter-btn filter-btn-apply">Appliquer</button>
+                <a href="{% url 'core:story_history' %}" class="filter-btn filter-btn-clear">Réinitialiser</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Stories List -->
+    {% if histoires %}
+    <div class="stories-list">
+        {% for histoire in histoires %}
+        <div class="story-item">
+            <div class="story-header">
+                <div class="story-meta">
+                    <div class="story-celebrity">{{ histoire.celebrite }}</div>
+                    <div class="story-date">{{ histoire.created_at|date:"d/m/Y à H:i" }}</div>
+                </div>
+                <div class="story-badges">
+                    {% if histoire.est_simulee %}
+                    <span class="badge badge-simulated">💡 Simulée</span>
+                    {% else %}
+                    <span class="badge badge-ai">🤖 IA</span>
+                    {% endif %}
+                    <form method="post" action="{% url 'core:toggle_histoire_favorite' histoire.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="favorite-btn" title="{% if histoire.is_favorite %}Retirer des favorites{% else %}Ajouter aux favorites{% endif %}">
+                            {% if histoire.is_favorite %}⭐{% else %}☆{% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="story-reflexion">
+                <strong>💭 Votre réflexion :</strong><br>
+                "{{ histoire.reflexion_courte }}"
+            </div>
+
+            <div class="story-content">{{ histoire.histoire_generee|truncatewords:80 }}</div>
+
+            <div class="story-footer">
+                <div style="font-size: 0.85rem; color: var(--text-gray);">
+                    {% if histoire.modele_utilise %}
+                    Modèle : {{ histoire.modele_utilise }}
+                    {% endif %}
+                </div>
+                <div class="story-actions">
+                    <button class="action-btn" onclick="toggleFullStory('story-{{ histoire.id }}')">
+                        📖 Lire en entier
+                    </button>
+                </div>
+            </div>
+
+            <!-- Full Story (Hidden by default) -->
+            <div id="story-{{ histoire.id }}" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid rgba(43, 43, 43, 0.2);">
+                <div class="story-content">{{ histoire.histoire_generee }}</div>
+                <button class="action-btn" onclick="toggleFullStory('story-{{ histoire.id }}')">
+                    ⬆️ Réduire
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if histoires.has_other_pages %}
+    <div class="pagination">
+        {% if histoires.has_previous %}
+        <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if filter_favorite %}&favorite={{ filter_favorite }}{% endif %}{% if filter_simulated %}&simulated={{ filter_simulated }}{% endif %}">« Premier</a>
+        <a href="?page={{ histoires.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if filter_favorite %}&favorite={{ filter_favorite }}{% endif %}{% if filter_simulated %}&simulated={{ filter_simulated }}{% endif %}">‹ Précédent</a>
+        {% endif %}
+
+        <span class="current">Page {{ histoires.number }} / {{ histoires.paginator.num_pages }}</span>
+
+        {% if histoires.has_next %}
+        <a href="?page={{ histoires.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if filter_favorite %}&favorite={{ filter_favorite }}{% endif %}{% if filter_simulated %}&simulated={{ filter_simulated }}{% endif %}">Suivant ›</a>
+        <a href="?page={{ histoires.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if filter_favorite %}&favorite={{ filter_favorite }}{% endif %}{% if filter_simulated %}&simulated={{ filter_simulated }}{% endif %}">Dernier »</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+        <div class="empty-state-icon">📖</div>
+        <div class="empty-state-title">Aucune histoire pour le moment</div>
+        <div class="empty-state-text">
+            {% if search_query or filter_favorite or filter_simulated %}
+            Aucune histoire ne correspond à vos critères de recherche.
+            <br>Essayez de modifier vos filtres.
+            {% else %}
+            Vous n'avez pas encore créé d'histoires inspirantes.
+            <br>Commencez par partager une réflexion pour découvrir votre première histoire !
+            {% endif %}
+        </div>
+        <a href="{% url 'core:story_inspiration' %}" class="new-story-btn">✨ Créer ma première histoire</a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    function toggleFullStory(storyId) {
+        const element = document.getElementById(storyId);
+        if (element.style.display === 'none') {
+            element.style.display = 'block';
+            element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+            element.style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}

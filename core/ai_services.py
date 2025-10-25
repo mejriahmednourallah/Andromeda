@@ -964,3 +964,118 @@ class AIRecommendationService:
         ])
         
         return prompts[:5]  # Return top 5
+    
+    @staticmethod
+    def generate_inspirational_story(reflexion_text):
+        """
+        Generate an inspirational story based on a celebrity who overcame similar challenges
+        Returns a story in plain text format (150-250 words)
+        """
+        if not reflexion_text or not reflexion_text.strip():
+            return {
+                'story': "Parfois, il suffit d'un petit pas pour tout changer. Michael Jordan a été rejeté de l'équipe de basket de son lycée. Mais au lieu d'abandonner, il s'est entraîné chaque jour avec encore plus de détermination.\n\nCette déception est devenue son moteur. Il a transformé la frustration en force. Des années plus tard, il devenait l'un des plus grands joueurs de tous les temps.\n\nSon secret ? Ne jamais laisser un échec définir qui il était. Chaque obstacle était une opportunité d'apprendre, de grandir, de devenir plus fort.\n\nTu as en toi cette même force. Celle qui transforme les doutes en défis, et les défis en victoires. Crois en toi, même quand c'est difficile. Surtout quand c'est difficile.",
+                'celebrity': 'Michael Jordan',
+                'simulated': True
+            }
+        
+        if OPENAI_AVAILABLE and settings.OPENAI_API_KEY:
+            try:
+                client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+                
+                prompt = f"""Tu es un assistant d'inspiration et de bien-être intégré à une plateforme web moderne.
+L'utilisateur vient d'écrire une réflexion personnelle exprimant une émotion, un doute ou une difficulté.
+
+🎯 Ton rôle :
+Créer une **courte histoire inspirante** mettant en scène une **star ou personnalité réelle** 
+ayant traversé une situation similaire, pour lui montrer que tout le monde peut surmonter ses épreuves.
+
+💡 Objectif :
+- Donner espoir et motivation.
+- Relier l'histoire à l'émotion exprimée.
+- Conclure par une phrase positive, apaisante et mémorable.
+
+🎨 Style à respecter :
+- Ton bienveillant, sincère et motivant.
+- Style fluide, simple et naturel (langage humain, pas de jargon IA).
+- Structure claire :
+  1️⃣ Contexte rapide de la star.  
+  2️⃣ Son épreuve / difficulté.  
+  3️⃣ Comment elle s'en est sortie.  
+  4️⃣ Morale ou conseil final.  
+
+🧭 Format attendu :
+- Environ 150 à 250 mots.
+- Paragraphes courts (max 4 lignes chacun).
+- Pas de listes, pas de hashtags.
+- Aucune mention de "IA" ou "intelligence artificielle".
+- Aucune phrase d'introduction comme "Voici l'histoire…" — commence directement.
+- Sortie en texte brut (sans HTML).
+
+🌈 Contexte visuel :
+Le texte sera affiché dans une **carte de dashboard moderne**, avec un fond clair et des bordures arrondies.  
+Le style général de la plateforme est **calme, épuré et inspirant**, avec des nuances de bleu et de violet.  
+Évite les mots négatifs ou dramatiques, reste optimiste et léger.
+
+👤 Entrée de l'utilisateur :
+"{reflexion_text}"
+
+✍️ Ta tâche :
+Génère une histoire adaptée à ce texte en suivant parfaitement le style ci-dessus.
+Ne mentionne jamais le nom de l'utilisateur. 
+Termine toujours par une phrase motivante qui incite à croire en soi.
+Réponds uniquement avec l'histoire, rien d'autre."""
+
+                response = client.chat.completions.create(
+                    model=settings.AI_TEXT_MODEL,
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=500,
+                    temperature=0.8
+                )
+                
+                story = response.choices[0].message.content.strip()
+                
+                # Try to extract celebrity name from the story (basic heuristic)
+                celebrity = "Une personnalité inspirante"
+                
+                return {
+                    'story': story,
+                    'celebrity': celebrity,
+                    'simulated': False
+                }
+                
+            except Exception as e:
+                logger.error(f"Error generating inspirational story: {str(e)}")
+                # Fallback to simulated story
+        
+        # Simulated stories based on common themes
+        simulated_stories = [
+            {
+                'celebrity': 'J.K. Rowling',
+                'story': "J.K. Rowling vivait des moments très difficiles. Mère célibataire, elle touchait le chômage et devait élever sa fille seule dans un petit appartement.\n\nElle écrivait le premier tome d'Harry Potter dans des cafés, pour économiser le chauffage. Douze éditeurs ont refusé son manuscrit. Douze fois, elle a essuyé un \"non\".\n\nMais elle n'a jamais abandonné. Elle croyait en son histoire, en sa plume, en elle-même. Le treizième éditeur a dit oui.\n\nAujourd'hui, elle inspire des millions de personnes à travers le monde. Son parcours nous rappelle que chaque refus nous rapproche du \"oui\" qui changera tout. Continue d'avancer. Ton histoire mérite d'être racontée."
+            },
+            {
+                'celebrity': 'Oprah Winfrey',
+                'story': "Oprah Winfrey a grandi dans la pauvreté extrême. Elle a connu l'abandon, les abus, le rejet. À 17 ans, tout semblait perdu.\n\nMais elle avait une voix. Une histoire. Une force intérieure qu'elle refusait de laisser se briser. Elle a transformé sa douleur en pouvoir.\n\nElle a commencé à parler, à partager, à inspirer. Petit à petit, elle est devenue l'une des femmes les plus influentes au monde.\n\nSa force ? Elle n'a jamais laissé son passé définir son futur. Tu as cette même force. Tes épreuves ne te définissent pas. Elles te façonnent. Et tu es plus fort que tu ne le penses."
+            },
+            {
+                'celebrity': 'Nelson Mandela',
+                'story': "Nelson Mandela a passé 27 ans en prison. Vingt-sept années d'isolement, d'injustice, de douleur.\n\nMais il n'a jamais perdu espoir. Chaque jour, il choisissait de croire en un avenir meilleur. Il lisait, méditait, grandissait.\n\nÀ sa libération, il n'avait pas de rancœur. Seulement de la sagesse, de la compassion et une vision claire. Il est devenu président et a changé l'histoire de son pays.\n\nSon parcours nous enseigne que la résilience n'est pas l'absence de souffrance, mais le choix de transformer cette souffrance en lumière. Tu portes cette lumière en toi. Laisse-la briller."
+            },
+            {
+                'celebrity': 'Walt Disney',
+                'story': "Walt Disney a été licencié d'un journal parce qu'on lui disait qu'il manquait d'imagination et de bonnes idées.\n\nSa première entreprise a fait faillite. Il a été rejeté plus de 300 fois avant de trouver un financement pour Disneyland.\n\nMais il continuait de dessiner, de rêver, de créer. Il croyait en sa vision même quand personne d'autre n'y croyait.\n\nAujourd'hui, son nom évoque la magie, l'enfance et les rêves qui se réalisent. Il nous rappelle que les échecs ne sont que des détours vers le succès. Continue de croire en tes rêves. Ils méritent de prendre vie."
+            },
+            {
+                'celebrity': 'Lady Gaga',
+                'story': "Lady Gaga a été harcelée à l'école pour sa différence. On se moquait d'elle, on la rejetait. Elle se sentait seule et incomprise.\n\nMais elle a transformé sa différence en force. Elle a embrassé qui elle était vraiment, sans s'excuser.\n\nElle a créé sa propre voie, son propre style, sa propre musique. Aujourd'hui, elle inspire des millions de personnes à être authentiques.\n\nSon message est clair : ta différence n'est pas une faiblesse, c'est ta plus grande force. Ose être toi-même. Le monde a besoin de ta lumière unique."
+            }
+        ]
+        
+        import random
+        selected_story = random.choice(simulated_stories)
+        
+        return {
+            'story': selected_story['story'],
+            'celebrity': selected_story['celebrity'],
+            'simulated': True
+        }
