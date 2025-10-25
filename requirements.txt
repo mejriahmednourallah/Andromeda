@@ -5,6 +5,7 @@ whitenoise
 psycopg2-binary
 Pillow
 dj-database-url
+python-dotenv
 openai>=1.0.0
 google-cloud-vision>=3.0.0
 xhtml2pdf>=0.2.0
