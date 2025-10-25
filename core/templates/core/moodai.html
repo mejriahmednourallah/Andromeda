@@ -1,0 +1,278 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}MoodAI{% endblock %}
+
+{% block extra_css %}
+<style>
+ .mood-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 1.5rem; }
+ .mood-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+ .input-area { width: 100%; min-height: 140px; padding: 1rem; border: 2px solid var(--border-color); background: white; font-family: 'Courier New', monospace; }
+ .result-emotion { font-size: 2rem; font-weight: bold; }
+ .rec-list { list-style: none; padding-left: 0; display: grid; gap: 0.5rem; }
+ .history-list { display: grid; gap: 0.5rem; }
+ .history-item { display: flex; justify-content: space-between; border: 2px solid var(--border-color); background: white; padding: 0.5rem 0.75rem; }
+ @media (max-width: 968px) { .mood-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1rem;">
+  <h1 style="font-size: 2rem; font-weight: bold;">MoodAI</h1>
+  <p style="color: var(--text-gray);">Analyse émotionnelle de vos textes et recommandations personnalisées.</p>
+</div>
+
+<div class="mood-grid">
+  <div>
+    <div class="card">
+      <h2 class="card-title">Zone d’analyse</h2>
+      <textarea id="moodText" class="input-area" placeholder="Collez ou saisissez un message…"></textarea>
+      <div class="mood-actions" style="margin-top: 0.75rem;">
+        <button id="analyzeBtn" class="btn-primary">Analyser</button>
+        <button id="micBtn" class="btn-secondary">🎤 Voix</button>
+        <span id="micStatus" style="color: var(--text-gray);"></span>
+      </div>
+      <div style="display:flex; gap:1rem; align-items:center; margin-top:1rem;">
+        <div class="result-emotion" id="resultEmoji">😐</div>
+        <div>
+          <div id="resultLabel" style="font-weight:bold;">Neutre</div>
+          <div id="resultScore" style="color: var(--text-gray); font-size: 0.9rem;">Score 0.00</div>
+        </div>
+      </div>
+      <div style="margin-top:1rem;">
+        <canvas id="radarChart" height="180"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Historique / Insights</h2>
+      <div style="margin-bottom: 1rem;">
+        <canvas id="trendChart" height="120"></canvas>
+      </div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <h2 class="card-title">Recommandations</h2>
+      <ul id="recList" class="rec-list"></ul>
+      <button id="clearHistory" class="btn-secondary" style="margin-top: 0.75rem;">Effacer l’historique</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function(){
+  const txt = document.getElementById('moodText');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const micBtn = document.getElementById('micBtn');
+  const micStatus = document.getElementById('micStatus');
+  const resultEmoji = document.getElementById('resultEmoji');
+  const resultLabel = document.getElementById('resultLabel');
+  const resultScore = document.getElementById('resultScore');
+  const recList = document.getElementById('recList');
+  const historyList = document.getElementById('historyList');
+  const clearBtn = document.getElementById('clearHistory');
+
+  const labels = ['positif','neutre','negatif','colere','tristesse'];
+  let radarChart, trendChart;
+
+  // Normalize any API score keys (e.g., 'positive','neutral','negative','LABEL_0')
+  function normalizeScores(apiScores){
+    const s = { positif:0, neutre:0, negatif:0, colere:0, tristesse:0 };
+    if(!apiScores) return s;
+    for(const [kRaw,v] of Object.entries(apiScores)){
+      const k = String(kRaw).toLowerCase();
+      if(k.includes('pos')) s.positif = v;
+      else if(k.includes('neu')) s.neutre = v;
+      else if(k.includes('neg')) s.negatif = v;
+      else if(k.includes('col') || k.includes('anger')) s.colere = v;
+      else if(k.includes('tris') || k.includes('sad')) s.tristesse = v;
+      // Handle LABEL_0/1/2 mapping heuristically when present alone
+      else if(k === 'label_0') s.negatif = v;
+      else if(k === 'label_1') s.neutre = v;
+      else if(k === 'label_2') s.positif = v;
+    }
+    return s;
+  }
+
+  function loadHistory(){
+    try { return JSON.parse(localStorage.getItem('moodai_history')||'[]'); } catch(e){ return []; }
+  }
+  function saveHistory(h){ localStorage.setItem('moodai_history', JSON.stringify(h)); }
+
+  function tokenize(s){
+    return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z\s]/g,' ').split(/\s+/).filter(Boolean);
+  }
+
+  const lex = {
+    positif: ['super','bien','genial','excellent','parfait','heureux','cool','merci','bravo','fantastique','content','love','aime','satisfait','enthousiaste'],
+    negatif: ['mauvais','horrible','nul','decu','decevant','pire','triste','fatigue','mal','probleme','erreur','bug','rate','peur','anxieux'],
+    colere: ['colere','furieux','fache','rage','enervant','frustre','agace','mechant','inacceptable','critique','attaque','haine'],
+    tristesse: ['triste','deprime','chagrin','pleurer','solitaire','perdu','morose','melancolie','tristesse']
+  };
+
+  function analyze(text){
+    const toks = tokenize(text);
+    let scores = {positif:0, neutre:0.0001, negatif:0, colere:0, tristesse:0};
+    if(!toks.length){ scores.neutre = 1; return {scores, top:'neutre'}; }
+    toks.forEach(w=>{
+      if(lex.positif.includes(w)) scores.positif+=1;
+      if(lex.negatif.includes(w)) scores.negatif+=1;
+      if(lex.colere.includes(w)) scores.colere+=1;
+      if(lex.tristesse.includes(w)) scores.tristesse+=1;
+    });
+    const negFamily = scores.negatif + scores.colere + scores.tristesse;
+    if(scores.positif===0 && negFamily===0) scores.neutre = 1;
+    const maxKey = Object.keys(scores).reduce((a,b)=> scores[a]>scores[b]?a:b);
+    return {scores, top:maxKey};
+  }
+
+  function emojiFor(label){
+    switch(label){
+      case 'positif': return '😊';
+      case 'neutre': return '😐';
+      case 'negatif': return '😞';
+      case 'colere': return '😡';
+      case 'tristesse': return '😢';
+      default: return '😐';
+    }
+  }
+
+  function recsFor(label){
+    if(label==='positif') return [
+      "Detected enthusiasm — keep it up in your next message!",
+      "Renforcez les points positifs et remerciez votre interlocuteur."
+    ];
+    if(label==='neutre') return [
+      "Votre message est neutre. Ajoutez un détail positif pour engager davantage.",
+      "Précisez l'objectif pour clarifier l'intention."
+    ];
+    if(label==='negatif') return [
+      "Your communication feels tense. Try a calmer tone.",
+      "Proposez une solution concrète au lieu de souligner uniquement le problème."
+    ];
+    if(label==='colere') return [
+      "Respirez et reformulez avec des faits et des demandes claires.",
+      "Évitez les généralisations et focalisez-vous sur l'action suivante."
+    ];
+    return [
+      "Reconnaissez l'émotion puis exprimez un besoin ou une demande.",
+      "Proposez une étape positive pour aller de l'avant."
+    ];
+  }
+
+  function updateRadar(scores){
+    const data = labels.map(k=> scores[k]||0);
+    const cfg = {
+      type: 'radar',
+      data: { labels, datasets: [{ label: 'Carte émotionnelle', data, backgroundColor: 'rgba(255,107,53,0.2)', borderColor: 'rgba(43,43,43,1)', pointBackgroundColor: 'rgba(255,107,53,1)' }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { r: { angleLines: { color: '#d4c5b9' }, grid: { color: '#d4c5b9' }, pointLabels: { color: '#2b2b2b' } } } }
+    };
+    if(radarChart){ radarChart.data = cfg.data; radarChart.update(); }
+    else { radarChart = new Chart(document.getElementById('radarChart').getContext('2d'), cfg); }
+  }
+
+  function positivityIndex(scores){
+    const pos = scores.positif||0; const neg = (scores.negatif||0)+(scores.colere||0)+(scores.tristesse||0);
+    return pos - neg;
+  }
+
+  function renderHistory(){
+    const h = loadHistory();
+    historyList.innerHTML = '';
+    h.slice(-8).reverse().forEach(item=>{
+      const d = new Date(item.ts);
+      const el = document.createElement('div');
+      el.className = 'history-item';
+      el.innerHTML = `<span>${emojiFor(item.top)} ${item.top}</span><span style="color:var(--text-gray)">${d.toLocaleString()}</span>`;
+      historyList.appendChild(el);
+    });
+    const labelsT = h.slice(-12).map(x=> new Date(x.ts).toLocaleDateString());
+    const dataT = h.slice(-12).map(x=> positivityIndex(x.scores));
+    const cfgT = {
+      type: 'line',
+      data: { labels: labelsT, datasets: [{ label: 'Tendance de positivité', data: dataT, borderColor: 'rgba(255,107,53,1)', backgroundColor: 'rgba(255,107,53,0.2)', tension: 0.25 }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#2b2b2b' } }, y: { ticks: { color: '#2b2b2b' }, grid: { color: '#d4c5b9' } } } }
+    };
+    if(trendChart){ trendChart.data = cfgT.data; trendChart.update(); }
+    else { trendChart = new Chart(document.getElementById('trendChart').getContext('2d'), cfgT); }
+  }
+
+  function updateUI(result){
+    let {scores, top} = result;
+    // Normalize keys and recompute top if needed
+    const ns = normalizeScores(scores);
+    scores = ns;
+    if(!['positif','neutre','negatif','colere','tristesse'].includes(top)){
+      top = Object.keys(scores).reduce((a,b)=> scores[a]>scores[b]?a:b, 'neutre');
+    }
+    const total = Object.values(scores).reduce((a,b)=>a+b,0)||1;
+    const scoreTop = (scores[top]||0)/total;
+    resultEmoji.textContent = emojiFor(top);
+    resultLabel.textContent = top.charAt(0).toUpperCase()+top.slice(1);
+    resultScore.textContent = `Score ${(scoreTop).toFixed(2)}`;
+    recList.innerHTML = '';
+    recsFor(top).forEach(r=>{ const li = document.createElement('li'); li.textContent = '• '+r; recList.appendChild(li); });
+    updateRadar(scores);
+  }
+
+  function pushHistory(entry){
+    const h = loadHistory();
+    h.push(entry); saveHistory(h); renderHistory();
+  }
+
+  analyzeBtn.addEventListener('click', async () =>{
+    const text = txt.value.trim();
+    try {
+      const resp = await fetch("{% url 'core:moodai_analyze' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      const data = await resp.json();
+      const result = { scores: data.scores || {}, top: data.top || 'neutre' };
+      updateUI(result);
+      pushHistory({ ts: Date.now(), top: result.top, scores: result.scores, text, source: data.source || 'api' });
+    } catch (e) {
+      const result = analyze(text);
+      updateUI(result);
+      pushHistory({ ts: Date.now(), top: result.top, scores: result.scores, text, source: 'local-fallback' });
+    }
+  });
+
+  clearBtn.addEventListener('click', ()=>{ saveHistory([]); renderHistory(); });
+
+  // Voice: support SpeechRecognition and webkitSpeechRecognition with clear messages
+  let recognition; let listening = false;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(SR){
+    recognition = new SR();
+    recognition.lang = 'fr-FR';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (e)=>{
+      try{
+        const t = e.results[0][0].transcript;
+        txt.value = t;
+        micStatus.textContent = 'Transcrit.';
+      }catch{ micStatus.textContent = 'Aucun résultat.'; }
+    };
+    recognition.onstart = ()=>{ listening = true; micStatus.textContent = 'Écoute… (parlez)'; micBtn.disabled = true; };
+    recognition.onend = ()=>{ listening = false; micStatus.textContent = ''; micBtn.disabled = false; };
+    recognition.onerror = (ev)=>{ micStatus.textContent = 'Voix indisponible ou permission refusée.'; micBtn.disabled = false; };
+  }
+  micBtn.addEventListener('click', ()=>{
+    if(!recognition){ micStatus.textContent = 'La voix n’est pas supportée sur ce navigateur. Essayez Chrome/Edge (localhost autorisé).'; return; }
+    if(!listening){
+      try { recognition.start(); } catch { micStatus.textContent = 'Impossible de démarrer la reconnaissance.'; }
+    }
+  });
+
+  renderHistory();
+})();
+</script>
+{% endblock %}

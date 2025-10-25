@@ -250,6 +250,7 @@
             <li><a href="{% url 'core:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a></li>
             <li><a href="{% url 'core:index' %}" class="{% if request.resolver_match.url_name == 'index' %}active{% endif %}">Notes</a></li>
             <li><a href="{% url 'core:liste_souvenirs' %}" class="{% if request.resolver_match.url_name == 'liste_souvenirs' %}active{% endif %}">Souvenirs</a></li>
+            <li><a href="{% url 'core:moodai' %}" class="{% if request.resolver_match.url_name == 'moodai' %}active{% endif %}">MoodAI</a></li>
         </ul>
 
         <div class="navbar-user">

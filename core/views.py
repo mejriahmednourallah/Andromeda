@@ -5,7 +5,10 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-import logging
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import logging, os, json, requests
 
 logger = logging.getLogger(__name__)
 
@@ -164,3 +167,107 @@ def supprimer_souvenir(request, souvenir_id):
         return redirect('core:liste_souvenirs')
     
     return render(request, 'core/supprimer_souvenir.html', {'souvenir': souvenir})
+
+
+@login_required
+def moodai(request):
+    """
+    Page MoodAI: interface d'analyse émotionnelle côté client.
+    """
+    return render(request, 'core/moodai.html')
+
+
+def _local_emotion_scores(text: str):
+    """Heuristique locale de repli pour fournir un score par catégorie."""
+    t = (text or '').lower()
+    tokens = [w for w in ''.join([c if c.isalpha() or c.isspace() else ' ' for c in t]).split() if w]
+    lex = {
+        'positif': {'super','bien','genial','excellent','parfait','heureux','cool','merci','bravo','fantastique','content','love','aime','satisfait','enthousiaste'},
+        'negatif': {'mauvais','horrible','nul','decu','decevant','pire','fatigue','mal','probleme','erreur','bug','rate','peur','anxieux'},
+        'colere': {'colere','furieux','fache','rage','enervant','frustre','agace','mechant','inacceptable','critique','attaque','haine'},
+        'tristesse': {'triste','deprime','chagrin','pleurer','solitaire','perdu','morose','melancolie','tristesse'},
+    }
+    scores = { 'positif': 0.0, 'neutre': 0.0001, 'negatif': 0.0, 'colere': 0.0, 'tristesse': 0.0 }
+    if not tokens:
+        scores['neutre'] = 1.0
+        return scores
+    for w in tokens:
+        for k in ('positif','negatif','colere','tristesse'):
+            if w in lex[k]:
+                scores[k] += 1.0
+    if scores['positif']==0 and (scores['negatif']+scores['colere']+scores['tristesse'])==0:
+        scores['neutre'] = 1.0
+    return scores
+
+
+@csrf_exempt
+@login_required
+@require_POST
+def moodai_analyze(request):
+    """
+    Endpoint JSON: { text: "..." }
+    Appelle Hugging Face Inference API (modèle par défaut multilingue 3 classes) et
+    renvoie des scores normalisés sur nos catégories: positif, neutre, negatif, colere, tristesse.
+    Si la clé ou l'appel échoue, bascule sur l'heuristique locale.
+    """
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+        text = payload.get('text', '')
+    except Exception:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    hf_key = os.environ.get('HF_API_KEY') or os.environ.get('HUGGINGFACE_API_KEY')
+    model = os.environ.get('HF_MODEL', 'cardiffnlp/twitter-xlm-roberta-base-sentiment')
+
+    def normalize_sentiment(scores3):
+        # scores3: list of dicts with label and score
+        out = { 'positif': 0.0, 'neutre': 0.0, 'negatif': 0.0, 'colere': 0.0, 'tristesse': 0.0 }
+        for it in scores3:
+            lab = it.get('label','').lower()
+            if 'pos' in lab:
+                out['positif'] = it.get('score',0.0)
+            elif 'neu' in lab:
+                out['neutre'] = it.get('score',0.0)
+            elif 'neg' in lab:
+                # Répartir une partie vers colère/tristesse en restant simple
+                neg = it.get('score',0.0)
+                out['negatif'] = max(0.0, neg - 0.0001)
+            
+        # Petite redistribution négative basée sur mots-clés
+        local = _local_emotion_scores(text)
+        neg_family = local['negatif'] + local['colere'] + local['tristesse']
+        if neg_family > 0 and (out['negatif']>0 or out['neutre']>0 or out['positif']>0):
+            total_local_neg = neg_family
+            out['colere'] = out['negatif'] * (local['colere']/total_local_neg)
+            out['tristesse'] = out['negatif'] * (local['tristesse']/total_local_neg)
+            out['negatif'] = out['negatif'] * (local['negatif']/total_local_neg)
+        return out
+
+    if not hf_key:
+        scores = _local_emotion_scores(text)
+        top = max(scores, key=scores.get)
+        return JsonResponse({ 'source': 'local', 'top': top, 'scores': scores })
+
+    try:
+        resp = requests.post(
+            f'https://api-inference.huggingface.co/models/{model}',
+            headers={'Authorization': f'Bearer {hf_key}', 'Content-Type': 'application/json'},
+            json={ 'inputs': text },
+            timeout=20
+        )
+        if resp.status_code == 503:
+            # Le modèle est en chargement; bascule local
+            scores = _local_emotion_scores(text)
+            top = max(scores, key=scores.get)
+            return JsonResponse({ 'source': 'local', 'top': top, 'scores': scores, 'detail': 'model_loading' }, status=200)
+        resp.raise_for_status()
+        data = resp.json()
+        # data est généralement [[{label, score}...]]
+        flat = data[0] if isinstance(data, list) and data and isinstance(data[0], list) else data
+        scores = normalize_sentiment(flat)
+        top = max(scores, key=scores.get)
+        return JsonResponse({ 'source': 'huggingface', 'model': model, 'top': top, 'scores': scores })
+    except Exception as e:
+        scores = _local_emotion_scores(text)
+        top = max(scores, key=scores.get)
+        return JsonResponse({ 'source': 'local', 'top': top, 'scores': scores, 'error': str(e) }, status=200)
