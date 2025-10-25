@@ -1,0 +1,582 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Emotional Calendar{% endblock %}
+
+{% block content %}
+<div id="emotional-calendar" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; max-width: 1400px; margin: 0 auto; padding: 0 1rem; color: #374151;">
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 3rem; padding: 2rem 0;">
+        <h1 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Emotional Calendar</h1>
+        <p style="color: #6b7280; font-size: 1.1rem; margin-bottom: 2rem;">Track your emotional journey through time</p>
+
+        <!-- Year Navigation -->
+        <div style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+            <button id="prevYearBtn" style="background: #f3f4f6; border: none; border-radius: 12px; padding: 0.75rem 1rem; color: #6b7280; font-weight: 500; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 0.5rem;">
+                ← Previous Year
+            </button>
+            
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label for="yearSelector" style="font-weight: 600; color: #374151; font-size: 1.1rem;">Year:</label>
+                <select id="yearSelector" style="padding: 0.75rem 1rem; border: 2px solid #e5e7eb; border-radius: 12px; background: white; color: #374151; font-weight: 600; font-size: 1.1rem; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    {% for year in available_years %}
+                    <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <button id="nextYearBtn" style="background: #f3f4f6; border: none; border-radius: 12px; padding: 0.75rem 1rem; color: #6b7280; font-weight: 500; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 0.5rem;">
+                Next Year →
+            </button>
+        </div>
+
+        <!-- View Toggle -->
+        <div style="display: inline-flex; background: #f3f4f6; border-radius: 12px; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <button id="yearlyViewBtn" class="view-toggle active" style="padding: 8px 16px; border: none; border-radius: 8px; background: white; color: #374151; font-weight: 500; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">Year Overview</button>
+            <button id="monthlyViewBtn" class="view-toggle" style="padding: 8px 16px; border: none; border-radius: 8px; background: transparent; color: #6b7280; font-weight: 500; cursor: pointer; transition: all 0.2s ease;">Monthly View</button>
+        </div>
+    </div>
+
+    <!-- Emotion Legend -->
+    <div style="background: linear-gradient(135deg, #fef7ff 0%, #f0f9ff 100%); border-radius: 16px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+        <h3 style="text-align: center; margin-bottom: 1.5rem; font-size: 1.2rem; font-weight: 600; color: #374151;">Emotion Color Guide</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; max-width: 900px; margin: 0 auto;">
+            {% for emotion, color in emotion_colors.items %}
+            <div class="emotion-legend-item" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: transform 0.2s ease;">
+                <div style="width: 20px; height: 20px; background: {{ color }}; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                <span style="font-weight: 500; color: #374151; font-size: 0.9rem;">{{ emotion|title }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Yearly Overview -->
+    <div id="yearlyView" class="calendar-view">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+            {% for month_data in yearly_data %}
+            <div class="month-card" data-month="{{ month_data.month }}" data-year="{{ month_data.year }}" style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.3s ease; border: 2px solid transparent;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="font-size: 1.3rem; font-weight: 600; color: #374151; margin: 0;">{{ month_data.month_name }}</h3>
+                    <div style="background: {{ month_data.dominant_color|default:'#f3f4f6' }}; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                </div>
+
+                <!-- Mini calendar grid -->
+                <div class="mini-calendar" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 1rem;">
+                    {% for day in month_data.days %}
+                    <div class="mini-day {{ day.class }}" style="aspect-ratio: 1; border-radius: 4px; background: {{ day.color|default:'#f9fafb' }}; transition: opacity 0.2s ease;" title="{{ day.date }} - {{ day.emotion|default:'No data'|title }}"></div>
+                    {% endfor %}
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #6b7280;">
+                    <span>{{ month_data.memory_count }} memories</span>
+                    <span>{{ month_data.dominant_emotion|default:'No data'|title }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Monthly Detail View -->
+    <div id="monthlyView" class="calendar-view" style="display: none;">
+        <div style="background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <button id="backToYearly" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: #f3f4f6; border: none; border-radius: 12px; color: #6b7280; font-weight: 500; cursor: pointer; transition: all 0.2s ease;">
+                    ← Back to Year
+                </button>
+                <h2 id="currentMonthTitle" style="font-size: 1.8rem; font-weight: 600; color: #374151; margin: 0;">Current Month</h2>
+                <div style="width: 120px;"></div> <!-- Spacer -->
+            </div>
+
+            <!-- Month Calendar -->
+            <div id="monthCalendar" class="full-calendar">
+                <!-- Calendar will be generated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Monthly Analytics -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+        </div>
+    </div>
+
+    <!-- Day Detail Modal -->
+    <div id="dayModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+        <div class="modal-content" style="background: white; border-radius: 20px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.15); animation: modalSlideIn 0.3s ease;">
+            <!-- Modal Header -->
+            <div style="padding: 2rem 2rem 1rem 2rem; border-bottom: 1px solid #e5e7eb;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                            <div id="modalEmotionColor" style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                            <span id="modalEmotion" style="font-weight: 500; color: #6b7280; font-size: 0.9rem;"></span>
+                        </div>
+                        <h2 id="modalDate" style="margin: 0; font-size: 1.6rem; font-weight: 600; color: #374151;"></h2>
+                        <p id="modalMemoryCount" style="margin: 0.5rem 0 0 0; color: #6b7280; font-size: 0.95rem;"></p>
+                    </div>
+                    <button id="modalClose" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; padding: 0.5rem; border-radius: 12px; transition: background 0.2s ease;">&times;</button>
+                </div>
+            </div>
+
+            <!-- Modal Content -->
+            <div id="modalContent" style="padding: 0 2rem 2rem 2rem;">
+                <!-- Loading state -->
+                <div id="loadingState" style="text-align: center; padding: 3rem;">
+                    <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
+                    <p style="color: #6b7280;">Loading memories...</p>
+                </div>
+
+                <!-- Memories list -->
+                <div id="memoriesList">
+                    <!-- Memories will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FullCalendar CSS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.min.css" rel="stylesheet">
+
+<!-- FullCalendar JS -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const yearlyView = document.getElementById('yearlyView');
+    const monthlyView = document.getElementById('monthlyView');
+    const yearlyBtn = document.getElementById('yearlyViewBtn');
+    const monthlyBtn = document.getElementById('monthlyViewBtn');
+    const backToYearlyBtn = document.getElementById('backToYearly');
+    const dayModal = document.getElementById('dayModal');
+    const modalClose = document.getElementById('modalClose');
+    
+    // Year navigation elements
+    const yearSelector = document.getElementById('yearSelector');
+    const prevYearBtn = document.getElementById('prevYearBtn');
+    const nextYearBtn = document.getElementById('nextYearBtn');
+    
+    let currentCalendar = null;
+    let currentMonth = new Date().getMonth();
+    let currentYear = {{ selected_year }};
+    let availableYears = {{ available_years|safe }};
+
+    // Emotion colors mapping
+    const emotionColors = {{ emotion_colors|safe }};
+
+    // Year navigation functions
+    function changeYear(year) {
+        const url = new URL(window.location);
+        url.searchParams.set('year', year);
+        window.location.href = url.toString();
+    }
+
+    function updateNavigationButtons() {
+        const currentIndex = availableYears.indexOf(currentYear);
+        prevYearBtn.disabled = currentIndex <= 0;
+        nextYearBtn.disabled = currentIndex >= availableYears.length - 1;
+        
+        prevYearBtn.style.opacity = prevYearBtn.disabled ? '0.5' : '1';
+        nextYearBtn.style.opacity = nextYearBtn.disabled ? '0.5' : '1';
+        prevYearBtn.style.cursor = prevYearBtn.disabled ? 'not-allowed' : 'pointer';
+        nextYearBtn.style.cursor = nextYearBtn.disabled ? 'not-allowed' : 'pointer';
+    }
+
+    // Year navigation event listeners
+    yearSelector.addEventListener('change', function() {
+        changeYear(parseInt(this.value));
+    });
+
+    prevYearBtn.addEventListener('click', function() {
+        const currentIndex = availableYears.indexOf(currentYear);
+        if (currentIndex > 0) {
+            changeYear(availableYears[currentIndex - 1]);
+        }
+    });
+
+    nextYearBtn.addEventListener('click', function() {
+        const currentIndex = availableYears.indexOf(currentYear);
+        if (currentIndex < availableYears.length - 1) {
+            changeYear(availableYears[currentIndex + 1]);
+        }
+    });
+
+    // Initialize navigation buttons
+    updateNavigationButtons();
+
+    function switchToYearlyView() {
+        yearlyView.style.display = 'block';
+        monthlyView.style.display = 'none';
+        yearlyBtn.classList.add('active');
+        monthlyBtn.classList.remove('active');
+        if (currentCalendar) {
+            currentCalendar.destroy();
+            currentCalendar = null;
+        }
+    }
+
+    function switchToMonthlyView(month = currentMonth, year = currentYear) {
+        console.log('Switching to monthly view for month:', month, 'year:', year);
+        yearlyView.style.display = 'none';
+        monthlyView.style.display = 'block';
+        yearlyBtn.classList.remove('active');
+        monthlyBtn.classList.add('active');
+
+        currentMonth = month;
+        currentYear = year; // Update currentYear to the selected year
+
+        // Update month title
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        document.getElementById('currentMonthTitle').textContent = `${monthNames[month]} ${year}`;
+
+        // Initialize or update FullCalendar
+        initializeMonthlyCalendar(month, currentYear);
+        loadMonthlyAnalytics(month, currentYear);
+    }
+
+    function initializeMonthlyCalendar(month, year) {
+        const calendarEl = document.getElementById('monthCalendar');
+
+        if (currentCalendar) {
+            currentCalendar.destroy();
+        }
+
+        currentCalendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            initialDate: new Date(year, month, 1), // Use the passed year
+            events: '{% url "core:calendrier_emotionnel_events" %}',
+            height: 'auto',
+            headerToolbar: false, // Remove default header
+            dayMaxEvents: true,
+            moreLinkClick: 'popover',
+
+            // Custom day rendering
+            dayCellDidMount: function(info) {
+                // Add hover effects
+                info.el.style.transition = 'all 0.2s ease';
+                info.el.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.05)';
+                    this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                });
+                info.el.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1)';
+                    this.style.boxShadow = 'none';
+                });
+            },
+
+            // Handle day clicks
+            dateClick: function(info) {
+                showDayMemories(info.dateStr);
+            },
+
+            // Custom event rendering
+            eventDidMount: function(info) {
+                info.el.style.borderRadius = '8px';
+                info.el.style.border = 'none';
+                info.el.style.fontSize = '0.75rem';
+                info.el.style.fontWeight = '600';
+                info.el.style.padding = '2px 8px';
+                info.el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                info.el.style.transition = 'transform 0.2s ease';
+
+                info.el.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-1px)';
+                    this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+                });
+                info.el.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                });
+            }
+        });
+
+        currentCalendar.render();
+    }
+
+    function loadMonthlyAnalytics(month, year) {
+        console.log('Loading monthly analytics for month:', month, 'year:', year, 'currentYear:', currentYear);
+        
+        // Load emotion distribution data
+        const url = `/calendar/monthly-analytics/?month=${month + 1}&year=${year}`;
+        console.log('Fetching URL:', url);
+        
+        fetch(url)
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Received data:', data);
+            })
+            .catch(error => {
+                console.error('Error loading monthly analytics:', error);
+            });
+    }
+
+    // Month card interactions
+    document.querySelectorAll('.month-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const month = parseInt(this.dataset.month);
+            const year = parseInt(this.dataset.year);
+            switchToMonthlyView(month, year);
+        });
+
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px)';
+            this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.12)';
+            this.style.borderColor = '#667eea';
+        });
+
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 4px 20px rgba(0,0,0,0.08)';
+            this.style.borderColor = 'transparent';
+        });
+    });
+
+    // Emotion legend hover effects
+    document.querySelectorAll('.emotion-legend-item').forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+        });
+
+        item.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
+        });
+    });
+
+    // Day memories modal
+    function showDayMemories(dateStr) {
+        const date = new Date(dateStr);
+        const formattedDate = date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        document.getElementById('modalDate').textContent = formattedDate;
+        document.getElementById('modalMemoryCount').textContent = 'Loading...';
+
+        // Show modal
+        dayModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+
+        // Show loading state
+        document.getElementById('loadingState').style.display = 'block';
+        document.getElementById('memoriesList').style.display = 'none';
+
+        // Fetch memories for this day
+        fetch(`/calendar/day-memories/?date=${dateStr}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('memoriesList').style.display = 'block';
+
+                if (data.memories && data.memories.length > 0) {
+                    document.getElementById('modalMemoryCount').textContent = `${data.memories.length} memory(ies)`;
+
+                    const memoriesHtml = data.memories.map(memory => {
+                        const emotionColor = emotionColors[memory.emotion] || '#e5e7eb';
+                        return `
+                            <div style="display: flex; align-items: center; gap: 1rem; padding: 1.5rem; background: #fef7ff; border-radius: 12px; border-left: 4px solid ${emotionColor}; margin-bottom: 1rem; transition: transform 0.2s ease; cursor: pointer;" onclick="window.location.href='/memories/${memory.id}/'">
+                                <!-- Date Circle -->
+                                <div style="flex-shrink: 0; width: 50px; height: 50px; background: ${emotionColor}; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                    ${new Date(memory.date_evenement).getDate()}
+                                </div>
+
+                                <!-- Content -->
+                                <div style="flex: 1; min-width: 0;">
+                                    <h4 style="font-weight: 600; color: #374151; margin: 0 0 0.5rem 0; font-size: 1.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        ${memory.titre}
+                                    </h4>
+                                    <p style="color: #6b7280; font-size: 0.9rem; margin: 0 0 0.75rem 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        ${memory.description.length > 100 ? memory.description.substring(0, 100) + '...' : memory.description}
+                                    </p>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="background: ${emotionColor}; color: white; padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;">
+                                            ${memory.emotion_display}
+                                        </span>
+                                        ${memory.photo ? '<span style="color: #667eea; font-size: 0.9rem;">📷</span>' : ''}
+                                        ${memory.video ? '<span style="color: #667eea; font-size: 0.9rem;">🎥</span>' : ''}
+                                    </div>
+                                </div>
+
+                                <!-- Arrow -->
+                                <div style="color: #6b7280; font-size: 1.5rem;">→</div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    document.getElementById('memoriesList').innerHTML = memoriesHtml;
+                } else {
+                    document.getElementById('modalMemoryCount').textContent = 'No memories for this day';
+                    document.getElementById('memoriesList').innerHTML = `
+                        <div style="text-align: center; padding: 3rem; color: #6b7280;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
+                            <p style="margin: 0; font-size: 1.1rem;">No memories found for this day.</p>
+                            <p style="margin: 0.5rem 0 1.5rem 0; font-size: 0.9rem;">Why not create one?</p>
+                            <a href="/memories/add/" style="display: inline-block; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 12px; font-weight: 500; transition: transform 0.2s ease;">Add Memory</a>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading memories:', error);
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('memoriesList').innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: #dc2626;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">❌</div>
+                        <p style="margin: 0;">Error loading memories. Please try again.</p>
+                    </div>
+                `;
+            });
+    }
+
+    // Modal close handlers
+    modalClose.addEventListener('click', function() {
+        dayModal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    });
+
+    dayModal.addEventListener('click', function(e) {
+        if (e.target === dayModal) {
+            dayModal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+    });
+
+    // Initialize with yearly view
+    switchToYearlyView();
+});
+</script>
+
+<style>
+/* View Toggle Styles */
+.view-toggle.active {
+    background: white !important;
+    color: #374151 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+}
+
+.view-toggle:hover {
+    background: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Month Card Styles */
+.month-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    border-color: #667eea;
+}
+
+/* Mini Calendar Styles */
+.mini-day {
+    border-radius: 4px;
+    transition: opacity 0.2s ease;
+}
+
+.mini-day.has-memory {
+    opacity: 1;
+}
+
+.mini-day.empty {
+    opacity: 0.3;
+}
+
+/* Full Calendar Styles */
+#monthCalendar {
+    font-family: inherit;
+}
+
+#monthCalendar .fc-daygrid-day {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+#monthCalendar .fc-daygrid-day:hover {
+    background: rgba(102, 126, 234, 0.05) !important;
+    transform: scale(1.05);
+}
+
+#monthCalendar .fc-daygrid-day-number {
+    font-weight: 600;
+    color: #374151;
+    font-size: 1.1rem;
+}
+
+#monthCalendar .fc-event {
+    border-radius: 8px !important;
+    border: none !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    padding: 2px 8px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    transition: transform 0.2s ease !important;
+}
+
+#monthCalendar .fc-event:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+}
+
+/* Modal Animations */
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #emotional-calendar {
+        padding: 0 0.5rem;
+    }
+
+    .month-card {
+        padding: 1rem;
+    }
+
+    #monthCalendar .fc-daygrid-day:hover {
+        transform: none;
+    }
+
+    .modal-content {
+        width: 95%;
+        margin: 1rem;
+    }
+
+    .modal-content > div:first-child {
+        padding: 1.5rem 1.5rem 1rem 1.5rem;
+    }
+
+    .modal-content > div:last-child {
+        padding: 0 1.5rem 1.5rem 1.5rem;
+    }
+}
+
+/* Custom Scrollbar */
+.modal-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+</style>
+{% endblock %}

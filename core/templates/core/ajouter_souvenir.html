@@ -1,16 +1,59 @@
 {% extends "core/dashboard_base.html" %}
 
-{% block title %}Ajouter un souvenir{% endblock %}
+{% block title %}Add a Memory{% endblock %}
 
 {% block content %}
+<style>
+ul.errorlist {
+    display: none;
+}
+
+/* Styles pour agrandir les textarea */
+textarea.form-input {
+    min-height: 120px !important;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+/* Styles spécifiques pour les champs de formulaire */
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--accent-orange);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.form-checkbox {
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: var(--accent-orange);
+}
+</style>
 <div style="max-width: 800px; margin: 0 auto;">
     <div style="margin-bottom: 2rem;">
-        <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Ajouter un Souvenir</h1>
-        <p style="color: var(--text-gray); font-size: 1rem;">Capturez vos précieux moments</p>
+        <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Add a Memory</h1>
+        <p style="color: #6b7280; font-size: 1rem;">Capture your precious moments</p>
     </div>
 
     <form method="post" enctype="multipart/form-data" class="card">
         {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 0.375rem;">
+                {% for error in form.non_field_errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin: 0;">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
         
         <!-- Titre -->
         <div style="margin-bottom: 1.5rem;">
@@ -19,7 +62,9 @@
             </label>
             {{ form.titre }}
             {% if form.titre.errors %}
-                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.titre.errors.0 }}</p>
+                {% for error in form.titre.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
             {% endif %}
         </div>
 
@@ -30,7 +75,9 @@
             </label>
             {{ form.description }}
             {% if form.description.errors %}
-                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.description.errors.0 }}</p>
+                {% for error in form.description.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
             {% endif %}
         </div>
 
@@ -42,7 +89,9 @@
             </label>
             {{ form.date_evenement }}
             {% if form.date_evenement.errors %}
-                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.date_evenement.errors.0 }}</p>
+                {% for error in form.date_evenement.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
             {% endif %}
         </div>
 
@@ -52,10 +101,12 @@
                 {{ form.emotion.label }}
             </label>
             {{ form.emotion }}
-            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">{{ form.emotion.help_text }}</p>
             {% if form.emotion.errors %}
-                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.emotion.errors.0 }}</p>
+                {% for error in form.emotion.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
             {% endif %}
+            <p style="color: #6b7280; font-size: 0.85rem; margin-top: 0.5rem;">{{ form.emotion.help_text }}</p>
         </div>
 
         <!-- Theme -->
@@ -64,10 +115,12 @@
                 {{ form.theme.label }}
             </label>
             {{ form.theme }}
-            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">{{ form.theme.help_text }}</p>
             {% if form.theme.errors %}
-                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.theme.errors.0 }}</p>
+                {% for error in form.theme.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
             {% endif %}
+            <p style="color: #6b7280; font-size: 0.85rem; margin-top: 0.5rem;">{{ form.theme.help_text }}</p>
         </div>
 
         <!-- Photo -->
@@ -76,10 +129,12 @@
                 {{ form.photo.label }}
             </label>
             {{ form.photo }}
-            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">Formats acceptés: JPG, PNG, GIF, WebP (max 10 MB)</p>
             {% if form.photo.errors %}
-                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.photo.errors.0 }}</p>
+                {% for error in form.photo.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
             {% endif %}
+            <p style="color: #6b7280; font-size: 0.85rem; margin-top: 0.5rem;">Accepted formats: JPG, PNG, GIF, WebP (max 10 MB)</p>
         </div>
 
         <!-- Vidéo -->
@@ -88,17 +143,75 @@
                 {{ form.video.label }}
             </label>
             {{ form.video }}
-            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">Formats acceptés: MP4, AVI, MOV, WMV (max 100 MB)</p>
             {% if form.video.errors %}
-                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.video.errors.0 }}</p>
+                {% for error in form.video.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+            <p style="color: #6b7280; font-size: 0.85rem; margin-top: 0.5rem;">Accepted formats: MP4, AVI, MOV, WMV (max 100 MB)</p>
+        </div>
+
+        <!-- Lieu -->
+        <div style="margin-bottom: 1.5rem;">
+            <label for="{{ form.lieu.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                {{ form.lieu.label }}
+            </label>
+            {{ form.lieu }}
+            {% if form.lieu.errors %}
+                {% for error in form.lieu.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+            <p style="color: #6b7280; font-size: 0.85rem; margin-top: 0.5rem;">{{ form.lieu.help_text }}</p>
+        </div>
+
+        <!-- Personnes présentes -->
+        <div style="margin-bottom: 1.5rem;">
+            <label for="{{ form.personnes_presentes.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                {{ form.personnes_presentes.label }}
+            </label>
+            {{ form.personnes_presentes }}
+            {% if form.personnes_presentes.errors %}
+                {% for error in form.personnes_presentes.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+            <p style="color: #6b7280; font-size: 0.85rem; margin-top: 0.5rem;">{{ form.personnes_presentes.help_text }}</p>
+        </div>
+
+        <!-- Favori -->
+        <div style="margin-bottom: 1.5rem;">
+            <label for="{{ form.is_favorite.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                {{ form.is_favorite.label }}
+            </label>
+            {{ form.is_favorite }}
+            {% if form.is_favorite.errors %}
+                {% for error in form.is_favorite.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
             {% endif %}
         </div>
 
+        <!-- Public -->
+        <div style="margin-bottom: 1.5rem;">
+            <label for="{{ form.is_public.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                {{ form.is_public.label }}
+            </label>
+            {{ form.is_public }}
+            {% if form.is_public.errors %}
+                {% for error in form.is_public.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+            <p style="color: #6b7280; font-size: 0.85rem; margin-top: 0.5rem;">{{ form.is_public.help_text }}</p>
+        </div>
+
         <!-- Action Buttons -->
-        <div style="display: flex; gap: 1rem; padding-top: 1rem; border-top: 2px solid var(--separator-color);">
+        <div style="display: flex; gap: 1rem; padding-top: 1rem; border-top: 2px solid #e5e7eb;">
             <button type="submit" class="btn-primary" style="flex: 1;">Save</button>
             <a href="{% url 'core:liste_souvenirs' %}" class="btn-secondary" style="flex: 1; text-align: center; line-height: 2.5;">Cancel</a>
         </div>
     </form>
 </div>
+
 {% endblock %}

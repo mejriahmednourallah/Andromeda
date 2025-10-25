@@ -7,4 +7,4 @@ Pillow
 dj-database-url
 openai>=1.0.0
 google-cloud-vision>=3.0.0
-python-dotenv
+xhtml2pdf>=0.2.0

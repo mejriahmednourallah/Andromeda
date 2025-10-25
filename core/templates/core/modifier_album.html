@@ -26,7 +26,7 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                 <div>
                     <label for="id_titre" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Album Title *</label>
-                    <input type="text" name="titre" id="id_titre" class="form-input" placeholder="e.g., Summer 2024 Adventures" value="{{ album.titre }}" required>
+                    <input type="text" name="titre" id="id_titre" class="form-input" placeholder="e.g., Summer 2024 Adventures" value="{{ album.titre }}">
                 </div>
                 <div>
                     <label for="id_description" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Description (optional)</label>
@@ -78,4 +78,71 @@
         {% endif %}
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    
+    // Function to show error message above a field
+    function showError(fieldId, message) {
+        const fieldElement = document.getElementById(fieldId);
+        if (!fieldElement) return;
+        
+        // Find the parent div by walking up the DOM
+        let fieldDiv = fieldElement.parentElement;
+        while (fieldDiv && (!fieldDiv.style || !fieldDiv.style.marginBottom)) {
+            fieldDiv = fieldDiv.parentElement;
+        }
+        if (!fieldDiv) return;
+        
+        // Remove existing error if present
+        const existingError = fieldDiv.querySelector('.client-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Add error message above the label
+        const label = fieldDiv.querySelector('label');
+        if (label) {
+            const errorDiv = document.createElement('p');
+            errorDiv.className = 'client-error';
+            errorDiv.style.color = '#dc2626';
+            errorDiv.style.fontSize = '0.9rem';
+            errorDiv.style.marginBottom = '0.5rem';
+            errorDiv.textContent = message;
+            label.parentNode.insertBefore(errorDiv, label);
+        }
+    }
+    
+    // Function to clear all client errors
+    function clearErrors() {
+        document.querySelectorAll('.client-error').forEach(error => error.remove());
+    }
+    
+    // Form validation on submit
+    form.addEventListener('submit', function(e) {
+        clearErrors();
+        let hasErrors = false;
+        
+        // Validate required fields
+        const titreField = document.getElementById('id_titre');
+        if (!titreField.value.trim()) {
+            showError('id_titre', 'Album title is required.');
+            hasErrors = true;
+        }
+        
+        // If there are client-side errors, prevent form submission
+        if (hasErrors) {
+            e.preventDefault();
+            // Scroll to first error
+            const firstError = document.querySelector('.client-error');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return false;
+        }
+    });
+});
+</script>
+
 {% endblock %}

@@ -9,9 +9,16 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('notes/<uuid:note_id>/', views.note_detail, name='note_detail'),
     path('accounts/signup/', views.signup, name='signup'),
+    path('profile/', views.profile, name='profile'),
     
     # === MEMORIES DASHBOARD (UNIFIED) ===
     path('memories/dashboard/', views.memories_dashboard, name='memories_dashboard'),
+    
+    # === EMOTIONAL CALENDAR ===
+    path('calendar/', views.calendrier_emotionnel, name='calendrier_emotionnel'),
+    path('calendar/events/', views.calendrier_emotionnel_events, name='calendrier_emotionnel_events'),
+    path('calendar/day-memories/', views.calendrier_emotionnel_day_memories, name='calendrier_emotionnel_day_memories'),
+    path('calendar/monthly-analytics/', views.calendrier_emotionnel_monthly_analytics, name='calendrier_emotionnel_monthly_analytics'),
     
     # === LEGACY REDIRECTS ===
     path('memories/', views.memories_dashboard, name='liste_souvenirs'),  # Redirect old URL
@@ -39,7 +46,13 @@ urlpatterns = [
     # === ALBUMS ===
     path('albums/', views.liste_albums, name='liste_albums'),
     path('albums/create/', views.creer_album, name='creer_album'),
+    path('albums/create-from-suggestion/', views.creer_album_depuis_suggestion, name='creer_album_depuis_suggestion'),
     path('albums/<int:album_id>/', views.detail_album, name='detail_album'),
     path('albums/<int:album_id>/edit/', views.modifier_album, name='modifier_album'),
     path('albums/<int:album_id>/delete/', views.supprimer_album, name='supprimer_album'),
+    
+    # === PDF EXPORTS ===
+    path('exports/pdf/', views.liste_exports_pdf, name='liste_exports_pdf'),
+    path('exports/pdf/create/', views.exporter_pdf, name='exporter_pdf'),
+    path('exports/pdf/<int:export_id>/download/', views.telecharger_pdf, name='telecharger_pdf'),
 ]

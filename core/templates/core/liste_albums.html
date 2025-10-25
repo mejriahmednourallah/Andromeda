@@ -3,6 +3,10 @@
 {% block title %}Memory Albums{% endblock %}
 
 {% block content %}
+<!-- Hidden CSRF token for JavaScript -->
+<form id="csrf-form" style="display: none;">
+    {% csrf_token %}
+</form>
 <style>
 .album-cover-placeholder {
     width: 100%;
@@ -40,7 +44,7 @@
             <h4 style="font-weight: bold; margin-bottom: 0.75rem; color: #0277bd;">{{ suggestion.title }}</h4>
             <p style="color: var(--text-gray); font-size: 0.9rem; margin-bottom: 1rem;">{{ suggestion.description }}</p>
             <p style="font-size: 0.85rem; margin-bottom: 1rem;"><strong>Memories:</strong> {{ suggestion.memory_count }}</p>
-            <button class="btn-primary" style="width: 100%;" onclick="createSuggestedAlbum('{{ suggestion.title }}', '{{ suggestion.description }}')">
+            <button class="btn-primary" style="width: 100%;" onclick="createSuggestedAlbum('{{ suggestion.title }}', '{{ suggestion.description }}', '{{ suggestion.type }}', '{{ suggestion.theme|default:"" }}', '{{ suggestion.year|default:"" }}')">
                 Create This Album
             </button>
         </div>
@@ -102,11 +106,75 @@
 {% endif %}
 
 <script>
-function createSuggestedAlbum(title, description) {
-    // This would typically make an AJAX call to create the album
-    // For now, redirect to create album page with pre-filled data
-    const url = `{% url 'core:creer_album' %}?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}`;
-    window.location.href = url;
+function createSuggestedAlbum(title, description, suggestionType, theme, year) {
+    // Create a form to submit album creation from suggestion
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{% url "core:creer_album_depuis_suggestion" %}';
+
+    // Add CSRF token - try multiple methods to find it
+    let csrfToken = null;
+
+    // Method 1: Look for hidden form
+    const hiddenForm = document.getElementById('csrf-form');
+    if (hiddenForm) {
+        const tokenInput = hiddenForm.querySelector('[name=csrfmiddlewaretoken]');
+        if (tokenInput) {
+            csrfToken = tokenInput.value;
+        }
+    }
+
+    // Method 2: Look in any form on the page
+    if (!csrfToken) {
+        const anyForm = document.querySelector('form');
+        if (anyForm) {
+            const tokenInput = anyForm.querySelector('[name=csrfmiddlewaretoken]');
+            if (tokenInput) {
+                csrfToken = tokenInput.value;
+            }
+        }
+    }
+
+    // Method 3: Look in meta tag (if exists)
+    if (!csrfToken) {
+        const metaToken = document.querySelector('meta[name="csrf-token"]');
+        if (metaToken) {
+            csrfToken = metaToken.getAttribute('content');
+        }
+    }
+
+    if (csrfToken) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+    } else {
+        console.error('CSRF token not found!');
+        alert('Security error: CSRF token not found. Please refresh the page.');
+        return;
+    }
+
+    // Add form fields
+    const fields = [
+        { name: 'titre', value: title },
+        { name: 'description', value: description },
+        { name: 'suggestion_type', value: suggestionType },
+        { name: 'theme', value: theme || '' },
+        { name: 'year', value: year || '' }
+    ];
+
+    fields.forEach(field => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = field.name;
+        input.value = field.value;
+        form.appendChild(input);
+    });
+
+    // Submit the form
+    document.body.appendChild(form);
+    form.submit();
 }
 </script>
 

@@ -3,6 +3,9 @@
 {% block title %}My Memories{% endblock %}
 
 {% block content %}
+<!-- CSRF Token for AJAX requests -->
+{% csrf_token %}
+
 <div style="margin-bottom: 2rem;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <div>
@@ -15,7 +18,7 @@
     </div>
 </div>
 
-<!-- Vue d'ensemble : Statistiques -->
+<!-- Overview: Statistics -->
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
     <div class="card" style="text-align: center;">
         <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ stats.total_memories }}</p>
@@ -135,20 +138,85 @@
         </div>
     </div>
     {% endif %}
-</div>
 
-<!-- Actions rapides -->
+    <!-- Facettes interactives -->
+    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+        <p style="font-weight: bold; margin-bottom: 0.75rem;">Quick Filters:</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+            <!-- Émotions -->
+            {% if facet_counts.emotions %}
+            <div>
+                <p style="font-size: 0.9rem; font-weight: bold; margin-bottom: 0.5rem; color: var(--text-gray);">Emotions</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                    {% for emotion_code, emotion_data in facet_counts.emotions.items %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'emotion' and key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}emotion={{ emotion_code }}"
+                       style="background: {% if filtres_actifs.emotion == emotion_code %}#f3e5f5{% else %}#f9fafb{% endif %}; color: {% if filtres_actifs.emotion == emotion_code %}#7b1fa2{% else %}#374151{% endif %}; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; text-decoration: none; border: 1px solid {% if filtres_actifs.emotion == emotion_code %}#7b1fa2{% else %}#e5e7eb{% endif %};">
+                        {{ emotion_data.name }} ({{ emotion_data.count }})
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Thèmes -->
+            {% if facet_counts.themes %}
+            <div>
+                <p style="font-size: 0.9rem; font-weight: bold; margin-bottom: 0.5rem; color: var(--text-gray);">Themes</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                    {% for theme_code, theme_data in facet_counts.themes.items %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'theme' and key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}theme={{ theme_code }}"
+                       style="background: {% if filtres_actifs.theme == theme_code %}#e8f5e8{% else %}#f9fafb{% endif %}; color: {% if filtres_actifs.theme == theme_code %}#2e7d32{% else %}#374151{% endif %}; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; text-decoration: none; border: 1px solid {% if filtres_actifs.theme == theme_code %}#2e7d32{% else %}#e5e7eb{% endif %};">
+                        {{ theme_data.name }} ({{ theme_data.count }})
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Années -->
+            {% if facet_counts.years %}
+            <div>
+                <p style="font-size: 0.9rem; font-weight: bold; margin-bottom: 0.5rem; color: var(--text-gray);">Years</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                    {% for year, count in facet_counts.years.items %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'annee' and key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}annee={{ year }}"
+                       style="background: {% if filtres_actifs.annee == year|stringformat:"s" %}#fff3e0{% else %}#f9fafb{% endif %}; color: {% if filtres_actifs.annee == year|stringformat:"s" %}#ef6c00{% else %}#374151{% endif %}; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; text-decoration: none; border: 1px solid {% if filtres_actifs.annee == year|stringformat:"s" %}#ef6c00{% else %}#e5e7eb{% endif %};">
+                        {{ year }} ({{ count }})
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Statut IA -->
+            <div>
+                <p style="font-size: 0.9rem; font-weight: bold; margin-bottom: 0.5rem; color: var(--text-gray);">AI Status</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'ai_status' and key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}ai_status=analyzed"
+                       style="background: {% if filtres_actifs.ai_status == 'analyzed' %}#fce4ec{% else %}#f9fafb{% endif %}; color: {% if filtres_actifs.ai_status == 'analyzed' %}#c2185b{% else %}#374151{% endif %}; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; text-decoration: none; border: 1px solid {% if filtres_actifs.ai_status == 'analyzed' %}#c2185b{% else %}#e5e7eb{% endif %};">
+                        AI Analyzed ({{ facet_counts.ai_status.analyzed }})
+                    </a>
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'ai_status' and key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}ai_status=pending"
+                       style="background: {% if filtres_actifs.ai_status == 'pending' %}#fce4ec{% else %}#f9fafb{% endif %}; color: {% if filtres_actifs.ai_status == 'pending' %}#c2185b{% else %}#374151{% endif %}; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; text-decoration: none; border: 1px solid {% if filtres_actifs.ai_status == 'pending' %}#c2185b{% else %}#e5e7eb{% endif %};">
+                        Pending ({{ facet_counts.ai_status.pending }})
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Quick Actions -->
 <div class="card" style="margin-bottom: 2rem;">
     <h2 class="card-title">⚡ Quick Actions</h2>
     <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
         <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary">Add Memory</a>
+        <a href="{% url 'core:calendrier_emotionnel' %}" class="btn-primary">Emotional Calendar</a>
         {% if stats.pending > 0 %}
         <form method="post" style="display: inline;">
             {% csrf_token %}
             <button type="submit" name="analyze_all" class="btn-secondary">Analyze All Pending ({{ stats.pending }})</button>
         </form>
         {% endif %}
-        <a href="#" onclick="exportMemories()" class="btn-secondary">Export PDF</a>
         <a href="{% url 'core:liste_albums' %}" class="btn-secondary">View Albums</a>
     </div>
 </div>
@@ -204,11 +272,14 @@
 <div class="card" style="margin-bottom: 2rem;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
         <h2 class="card-title">📚 Memories ({{ stats.filtered_count }} results)</h2>
-        {% if page_obj.has_other_pages %}
-        <div style="font-size: 0.9rem; color: var(--text-gray);">
-            Page {{ page_obj.number }} of {{ paginator.num_pages }}
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="#" onclick="exportMemories()" class="btn-secondary" style="font-size: 0.9rem;">📄 Export PDF</a>
+            {% if page_obj.has_other_pages %}
+            <div style="font-size: 0.9rem; color: var(--text-gray);">
+                Page {{ page_obj.number }} of {{ paginator.num_pages }}
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
 
     {% if souvenirs %}
@@ -238,7 +309,11 @@
                     <!-- Contenu -->
                     <div style="padding: 1.5rem;">
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
-                            <h3 style="font-size: 1.25rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">{{ souvenir.titre }}</h3>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" name="memory_select" value="{{ souvenir.id }}" 
+                                       style="width: 16px; height: 16px;" title="Select for export">
+                                <h3 style="font-size: 1.25rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">{{ souvenir.titre }}</h3>
+                            </div>
                             {% if souvenir.is_favorite %}
                                 <span style="color: #f59e0b; font-size: 1.25rem; cursor: pointer;" onclick="toggleFavorite({{ souvenir.id }})">⭐</span>
                             {% else %}
@@ -277,6 +352,7 @@
                         <div style="display: flex; gap: 0.5rem;">
                             <a href="{% url 'core:detail_souvenir' souvenir.id %}" class="btn-primary" style="flex: 1; text-align: center; font-size: 0.9rem;">View</a>
                             <a href="{% url 'core:modifier_souvenir' souvenir.id %}" class="btn-secondary" style="flex: 1; text-align: center; font-size: 0.9rem;">Edit</a>
+                            <a href="{% url 'core:supprimer_souvenir' souvenir.id %}" style="flex: 1; padding: 0.6rem 1rem; background: #dc2626; color: white; border: 2px solid var(--border-color); font-weight: bold; text-decoration: none; text-align: center; font-family: 'Courier New', monospace; font-size: 0.9rem;">Delete</a>
                             {% if not souvenir.ai_analyzed %}
                             <a href="{% url 'core:analyser_souvenir_ia' souvenir.id %}" class="btn-secondary" style="flex: 1; text-align: center; font-size: 0.9rem;">AI</a>
                             {% endif %}
@@ -372,10 +448,16 @@
 
 <script>
 function toggleFavorite(souvenirId) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfToken) {
+        console.error('CSRF token not found');
+        return;
+    }
+    
     fetch(`/memories/${souvenirId}/favorite/`, {
         method: 'POST',
         headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-CSRFToken': csrfToken.value,
             'Content-Type': 'application/json',
         },
     })
@@ -397,8 +479,147 @@ function toggleFavorite(souvenirId) {
 }
 
 function exportMemories() {
-    // Simple PDF export placeholder
-    alert('PDF export feature coming soon! For now, you can manually save your memories.');
+    // Get selected memories or all filtered memories
+    const selectedCheckboxes = document.querySelectorAll('input[name="memory_select"]:checked');
+    let souvenirIds = [];
+    
+    if (selectedCheckboxes.length > 0) {
+        // Use selected memories
+        selectedCheckboxes.forEach(checkbox => {
+            souvenirIds.push(checkbox.value);
+        });
+    } else {
+        // Use all currently displayed memories
+        const memoryCards = document.querySelectorAll('.memory-card');
+        memoryCards.forEach(card => {
+            const memoryId = card.querySelector('input[name="memory_select"]')?.value;
+            if (memoryId) {
+                souvenirIds.push(memoryId);
+            }
+        });
+    }
+    
+    if (souvenirIds.length === 0) {
+        alert('Please select memories to export or ensure memories are loaded.');
+        return;
+    }
+    
+    // Show export modal
+    showExportModal(souvenirIds);
+}
+
+function showExportModal(souvenirIds) {
+    // Create modal HTML
+    const modalHtml = `
+        <div id="exportModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+            <div style="background: white; padding: 2rem; border-radius: 0.5rem; max-width: 500px; width: 90%;">
+                <h3 style="margin-top: 0; margin-bottom: 1rem;">📄 Export Memories to PDF</h3>
+                
+                <form id="exportForm">
+                    <div style="margin-bottom: 1rem;">
+                        <label for="exportTitle" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Export Title:</label>
+                        <input type="text" id="exportTitle" name="titre_export" 
+                               value="My Memories - ${new Date().toLocaleDateString()}" 
+                               style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem;" required>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Style Template:</label>
+                        <select name="style_template" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem;">
+                            <option value="modern">Modern</option>
+                            <option value="classic">Classic</option>
+                            <option value="minimal">Minimal</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: flex; align-items: center;">
+                            <input type="checkbox" name="inclure_photos" checked style="margin-right: 0.5rem;">
+                            Include photos in export
+                        </label>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" onclick="closeExportModal()" 
+                                style="flex: 1; padding: 0.75rem; background: #6b7280; color: white; border: none; border-radius: 0.25rem; cursor: pointer;">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                style="flex: 1; padding: 0.75rem; background: var(--accent-orange); color: white; border: none; border-radius: 0.25rem; cursor: pointer;">
+                            Export PDF
+                        </button>
+                    </div>
+                </form>
+                
+                <div id="exportStatus" style="margin-top: 1rem; display: none;">
+                    <p style="margin: 0; color: #059669;">⏳ Generating PDF... Please wait.</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Handle form submission
+    document.getElementById('exportForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitExportForm(souvenirIds);
+    });
+}
+
+function closeExportModal() {
+    const modal = document.getElementById('exportModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function submitExportForm(souvenirIds) {
+    const formData = new FormData(document.getElementById('exportForm'));
+    
+    // Add souvenir IDs
+    souvenirIds.forEach(id => {
+        formData.append('souvenirs[]', id);
+    });
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfToken) {
+        alert('CSRF token not found. Please refresh the page.');
+        return;
+    }
+    
+    // Show loading status
+    document.getElementById('exportStatus').style.display = 'block';
+    document.querySelector('#exportForm button[type="submit"]').disabled = true;
+    
+    // Submit export request
+    fetch('/exports/pdf/create/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': csrfToken.value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Success - redirect to download
+            window.location.href = data.download_url;
+            closeExportModal();
+        } else {
+            // Error
+            alert('Export failed: ' + (data.error || 'Unknown error'));
+            document.getElementById('exportStatus').style.display = 'none';
+            document.querySelector('#exportForm button[type="submit"]').disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Export failed. Please try again.');
+        document.getElementById('exportStatus').style.display = 'none';
+        document.querySelector('#exportForm button[type="submit"]').disabled = false;
+    });
 }
 
 // Reflection modal functions
@@ -428,18 +649,6 @@ function saveReflection() {
     alert('Reflection saved! Your thoughtful response has been recorded.');
     closeReflectionModal();
 }
-
-// Close modal when clicking outside
-document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('reflectionModal');
-    if (modal) {
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                closeReflectionModal();
-            }
-        });
-    }
-});
 </script>
 
 <style>

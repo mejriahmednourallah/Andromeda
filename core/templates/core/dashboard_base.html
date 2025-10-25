@@ -250,6 +250,7 @@
             <li><a href="{% url 'core:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a></li>
             <li><a href="{% url 'core:index' %}" class="{% if request.resolver_match.url_name == 'index' %}active{% endif %}">Notes</a></li>
             <li><a href="{% url 'core:memories_dashboard' %}" class="{% if request.resolver_match.url_name == 'memories_dashboard' %}active{% endif %}">Souvenirs</a></li>
+            <li><a href="{% url 'core:profile' %}" class="{% if request.resolver_match.url_name == 'profile' %}active{% endif %}">Profile</a></li>
         </ul>
 
         <div class="navbar-user">

@@ -39,10 +39,12 @@ class AIAnalysisService:
         Returns: AnalyseIASouvenir instance
         """
         try:
-            # Check if already analyzed
-            if hasattr(souvenir, 'analyse_ia'):
+            # Check if already analyzed by querying the database
+            from .models import AnalyseIASouvenir
+            existing_analysis = AnalyseIASouvenir.objects.filter(souvenir=souvenir).first()
+            if existing_analysis:
                 logger.info(f"Memory {souvenir.id} already has AI analysis")
-                return souvenir.analyse_ia
+                return existing_analysis
 
             # Perform text analysis
             text_analysis = AIAnalysisService._analyze_text(souvenir.description, souvenir.titre)
