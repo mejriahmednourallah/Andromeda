@@ -72,7 +72,7 @@ class SouvenirForm(forms.ModelForm):
             'titre', 'description', 'date_evenement',
             'photo', 'video',
             'emotion', 'theme', 'lieu', 'personnes_presentes',
-            'is_favorite', 'is_public'
+            'is_favorite'
         ]
         widgets = {
             'titre': forms.TextInput(attrs={
@@ -111,9 +111,6 @@ class SouvenirForm(forms.ModelForm):
             }),
             'is_favorite': forms.CheckboxInput(attrs={
                 'class': 'form-checkbox'
-            }),
-            'is_public': forms.CheckboxInput(attrs={
-                'class': 'form-checkbox'
             })
         }
         labels = {
@@ -124,13 +121,11 @@ class SouvenirForm(forms.ModelForm):
             'video': 'Video (optional)',
             'lieu': 'Location',
             'personnes_presentes': 'People Present',
-            'is_favorite': 'Mark as favorite',
-            'is_public': 'Make public'
+            'is_favorite': 'Mark as favorite'
         }
         help_texts = {
             'lieu': 'Where did this happen?',
-            'personnes_presentes': 'Who was there with you?',
-            'is_public': 'Public memories can be seen by others'
+            'personnes_presentes': 'Who was there with you?'
         }
     
     def clean_titre(self):
