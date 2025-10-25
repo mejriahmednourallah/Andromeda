@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+        }
+        h1 {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .meta {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .content {
+            text-align: justify;
+            margin-bottom: 30px;
+            white-space: pre-wrap;
+        }
+        .tags, .moods {
+            margin-top: 20px;
+        }
+        .tag, .mood {
+            display: inline-block;
+            background: #e5e7eb;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        .footer {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 0.8em;
+            margin-top: 50px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ entree.titre }}</h1>
+    
+    <div class="meta">
+        <p><strong>Date:</strong> {{ entree.date_creation|date:"d/m/Y à H:i" }}</p>
+        <p><strong>Nombre de mots:</strong> {{ entree.nombre_mots }}</p>
+        {% if entree.lieu %}
+        <p><strong>Lieu:</strong> {{ entree.lieu }}</p>
+        {% endif %}
+        {% if entree.meteo %}
+        <p><strong>Météo:</strong> {{ entree.meteo }}</p>
+        {% endif %}
+    </div>
+    
+    <div class="content">
+        {{ entree.contenu_texte }}
+    </div>
+    
+    {% if tags %}
+    <div class="tags">
+        <p><strong>Tags:</strong></p>
+        {% for tag in tags %}
+        <span class="tag">{{ tag.nom }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% if humeurs %}
+    <div class="moods">
+        <p><strong>Humeurs:</strong></p>
+        {% for humeur in humeurs %}
+        <span class="mood">{{ humeur.emoji }} {{ humeur.nom }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="footer">
+        <p>Exporté le {{ date_export|date:"d/m/Y à H:i" }}</p>
+        <p>Généré par Andromeda - Votre journal personnel</p>
+    </div>
+</body>
+</html>

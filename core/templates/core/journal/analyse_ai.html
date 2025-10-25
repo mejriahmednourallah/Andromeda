@@ -1,0 +1,571 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Analyse IA - Journal{% endblock %}
+
+{% block extra_head %}
+<style>
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    .ai-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.03);
+        border: 2px solid rgba(255,255,255,0.8);
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    .ai-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 50px rgba(102,126,234,0.15);
+        transition: all 0.4s ease;
+    }
+    
+    .ai-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .feature-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 2rem;
+        cursor: pointer;
+        transition: all 0.4s ease;
+        border: none;
+        width: 100%;
+        text-align: left;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 15px 40px rgba(102,126,234,0.4);
+    }
+    
+    .feature-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .feature-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
+    
+    .feature-desc {
+        opacity: 0.95;
+        font-size: 1rem;
+    }
+    
+    .result-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    
+    .emotion-badge {
+        display: inline-block;
+        padding: 0.5rem 1.2rem;
+        border-radius: 50px;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        font-weight: 700;
+        margin: 0.25rem;
+    }
+    
+    .tag-suggestion {
+        display: inline-block;
+        padding: 0.5rem 1.2rem;
+        border-radius: 50px;
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        font-weight: 700;
+        margin: 0.25rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .tag-suggestion:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(79,172,254,0.4);
+    }
+    
+    .insight-item {
+        padding: 1rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 12px;
+        margin-bottom: 0.75rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(102,126,234,0.2);
+        border-top-color: #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .btn-ai {
+        padding: 1.2rem 2.5rem;
+        border-radius: 50px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        color: white;
+        font-weight: 800;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+        box-shadow: 0 12px 30px rgba(102,126,234,0.4);
+        transition: all 0.4s ease;
+    }
+    
+    .btn-ai:hover {
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: 0 20px 50px rgba(102,126,234,0.5);
+    }
+    
+    .btn-ai:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Animated Background -->
+<div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: -1; overflow: hidden; background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #fce7f3 100%);">
+    <div style="position: absolute; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(102,126,234,0.15) 0%, transparent 70%); top: -250px; right: -250px; animation: float 20s ease-in-out infinite;"></div>
+    <div style="position: absolute; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(245,87,108,0.12) 0%, transparent 70%); bottom: -200px; left: -200px; animation: float 25s ease-in-out infinite reverse;"></div>
+    <div style="position: absolute; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, rgba(79,172,254,0.1) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); animation: float 30s ease-in-out infinite;"></div>
+</div>
+
+<div style="max-width: 1400px; margin: 0 auto; padding: 2rem;">
+    <!-- Header -->
+    <div style="background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); border-radius: 32px; padding: 3rem; margin-bottom: 3rem; box-shadow: 0 20px 60px rgba(0,0,0,0.08); border: 2px solid rgba(255,255,255,0.9); text-align: center;">
+        <div class="ai-icon">🤖</div>
+        <h1 style="font-size: 3rem; font-weight: 900; margin-bottom: 0.75rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -1px;">Analyse IA Avancée</h1>
+        <p style="color: #64748b; font-size: 1.2rem; font-weight: 500;">Propulsé par Groq & LLaMA 3 - Analyse ultra-rapide de votre journal</p>
+        <p style="color: #94a3b8; font-size: 1rem; margin-top: 0.5rem;">{{ total_entrees }} entrée(s) dans votre journal</p>
+    </div>
+
+    <!-- Fonctionnalités IA -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
+        <!-- Analyse Émotionnelle -->
+        <div class="ai-card">
+            <div class="feature-icon">😊</div>
+            <h3 class="feature-title" style="color: #1f2937;">Analyse Émotionnelle</h3>
+            <p style="color: #64748b; margin-bottom: 1.5rem;">Détection automatique des émotions, sentiment et intensité</p>
+            
+            {% if dernieres_entrees %}
+            <select id="entree-select-emotion" class="form-control" style="margin-bottom: 1rem; padding: 0.75rem; border-radius: 12px; border: 2px solid #e2e8f0;">
+                <option value="">Sélectionnez une entrée</option>
+                {% for entree in dernieres_entrees %}
+                <option value="{{ entree.pk }}">{{ entree.titre }} - {{ entree.date_creation|date:"d/m/Y" }}</option>
+                {% endfor %}
+            </select>
+            <button onclick="analyserEmotions()" class="btn-ai" style="width: 100%;">
+                🔍 Analyser les Émotions
+            </button>
+            <div id="result-emotions" class="result-card" style="display: none;"></div>
+            {% else %}
+            <p style="color: #94a3b8; font-style: italic;">Aucune entrée disponible</p>
+            {% endif %}
+        </div>
+
+        <!-- Suggestions de Tags -->
+        <div class="ai-card">
+            <div class="feature-icon">🏷️</div>
+            <h3 class="feature-title" style="color: #1f2937;">Tags Intelligents</h3>
+            <p style="color: #64748b; margin-bottom: 1.5rem;">Suggestions automatiques de tags pertinents</p>
+            
+            {% if dernieres_entrees %}
+            <select id="entree-select-tags" class="form-control" style="margin-bottom: 1rem; padding: 0.75rem; border-radius: 12px; border: 2px solid #e2e8f0;">
+                <option value="">Sélectionnez une entrée</option>
+                {% for entree in dernieres_entrees %}
+                <option value="{{ entree.pk }}">{{ entree.titre }} - {{ entree.date_creation|date:"d/m/Y" }}</option>
+                {% endfor %}
+            </select>
+            <button onclick="suggererTags()" class="btn-ai" style="width: 100%;">
+                ✨ Suggérer des Tags
+            </button>
+            <div id="result-tags" class="result-card" style="display: none;"></div>
+            {% else %}
+            <p style="color: #94a3b8; font-style: italic;">Aucune entrée disponible</p>
+            {% endif %}
+        </div>
+
+        <!-- Insights -->
+        <div class="ai-card">
+            <div class="feature-icon">💡</div>
+            <h3 class="feature-title" style="color: #1f2937;">Insights & Conseils</h3>
+            <p style="color: #64748b; margin-bottom: 1.5rem;">Observations et suggestions personnalisées</p>
+            
+            {% if dernieres_entrees %}
+            <select id="entree-select-insights" class="form-control" style="margin-bottom: 1rem; padding: 0.75rem; border-radius: 12px; border: 2px solid #e2e8f0;">
+                <option value="">Sélectionnez une entrée</option>
+                {% for entree in dernieres_entrees %}
+                <option value="{{ entree.pk }}">{{ entree.titre }} - {{ entree.date_creation|date:"d/m/Y" }}</option>
+                {% endfor %}
+            </select>
+            <button onclick="genererInsights()" class="btn-ai" style="width: 100%;">
+                🎯 Générer des Insights
+            </button>
+            <div id="result-insights" class="result-card" style="display: none;"></div>
+            {% else %}
+            <p style="color: #94a3b8; font-style: italic;">Aucune entrée disponible</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Analyse de Tendances -->
+    <div class="ai-card" style="text-align: center;">
+        <div class="feature-icon">📈</div>
+        <h3 class="feature-title" style="color: #1f2937;">Analyse de Tendances</h3>
+        <p style="color: #64748b; margin-bottom: 1.5rem;">Évolution émotionnelle sur vos 10 dernières entrées</p>
+        
+        {% if total_entrees >= 3 %}
+        <button onclick="analyserTendances()" class="btn-ai">
+            📊 Analyser mes Tendances
+        </button>
+        <div id="result-tendances" class="result-card" style="display: none; text-align: left;"></div>
+        {% else %}
+        <p style="color: #94a3b8; font-style: italic;">Minimum 3 entrées requises pour l'analyse de tendances</p>
+        {% endif %}
+    </div>
+
+    <!-- Prompt d'Écriture -->
+    <div class="ai-card" style="text-align: center;">
+        <div class="feature-icon">✍️</div>
+        <h3 class="feature-title" style="color: #1f2937;">Prompt d'Écriture</h3>
+        <p style="color: #64748b; margin-bottom: 1.5rem;">Générez une question inspirante pour votre prochaine entrée</p>
+        
+        <button onclick="genererPrompt()" class="btn-ai">
+            🎲 Générer un Prompt
+        </button>
+        <div id="result-prompt" class="result-card" style="display: none; text-align: left;"></div>
+    </div>
+
+    <!-- Chatbot Section -->
+    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 28px; padding: 3rem; text-align: center; color: white; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.05\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'); opacity: 0.3;"></div>
+        <div style="position: relative; z-index: 1;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">💬</div>
+            <h3 style="font-size: 2rem; font-weight: 800; margin-bottom: 1rem;">Nouveau: Chatbot Journal</h3>
+            <p style="font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.95;">Discutez avec l'IA sur vos entrées de journal. Posez des questions, obtenez des conseils personnalisés!</p>
+            <a href="{% url 'core:page_chatbot' %}" style="padding: 1.2rem 3rem; border-radius: 50px; background: white; color: #4facfe; font-weight: 800; text-decoration: none; box-shadow: 0 12px 30px rgba(0,0,0,0.2); transition: all 0.4s ease; display: inline-flex; align-items: center; gap: 0.75rem; font-size: 1.1rem;" onmouseover="this.style.transform='translateY(-5px) scale(1.05)'; this.style.boxShadow='0 20px 50px rgba(0,0,0,0.3)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.2)'">
+                💬 Ouvrir le Chatbot
+            </a>
+        </div>
+    </div>
+
+    <!-- Retour -->
+    <div style="text-align: center; margin-top: 3rem;">
+        <a href="{% url 'core:liste_entrees_journal' %}" style="padding: 1rem 2.5rem; border-radius: 50px; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); color: #475569; font-weight: 700; text-decoration: none; box-shadow: 0 8px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'">← Retour au Journal</a>
+    </div>
+</div>
+
+<script>
+// Fonction utilitaire pour afficher le loading
+function showLoading(elementId) {
+    const element = document.getElementById(elementId);
+    element.style.display = 'block';
+    element.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="loading-spinner"></div><p style="margin-top: 1rem; color: #64748b;">Analyse en cours...</p></div>';
+}
+
+// Fonction utilitaire pour afficher une erreur
+function showError(elementId, message) {
+    const element = document.getElementById(elementId);
+    element.style.display = 'block';
+    element.innerHTML = `<div style="color: #ef4444; padding: 1rem; background: #fee2e2; border-radius: 12px;">❌ ${message}</div>`;
+}
+
+// Analyser les émotions
+function analyserEmotions() {
+    const entreeId = document.getElementById('entree-select-emotion').value;
+    if (!entreeId) {
+        alert('Veuillez sélectionner une entrée');
+        return;
+    }
+    
+    showLoading('result-emotions');
+    
+    fetch(`/journal/ai/analyser/${entreeId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const emotions = data.analyse.emotions;
+            let html = '<h4 style="color: #1f2937; margin-bottom: 1rem;">📊 Résultats de l\'Analyse</h4>';
+            
+            // Émotions principales
+            html += '<div style="margin-bottom: 1.5rem;"><strong>Émotions détectées:</strong><br>';
+            emotions.emotions_principales.forEach(emotion => {
+                html += `<span class="emotion-badge">${emotion}</span>`;
+            });
+            html += '</div>';
+            
+            // Score de sentiment
+            const sentimentPercent = (emotions.sentiment_score * 100).toFixed(0);
+            const sentimentColor = emotions.sentiment_score > 0.6 ? '#10b981' : emotions.sentiment_score < 0.4 ? '#ef4444' : '#f59e0b';
+            html += `<div style="margin-bottom: 1.5rem;">
+                <strong>Score de sentiment:</strong>
+                <div style="background: #e2e8f0; border-radius: 50px; height: 30px; margin-top: 0.5rem; overflow: hidden;">
+                    <div style="background: ${sentimentColor}; height: 100%; width: ${sentimentPercent}%; border-radius: 50px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">${sentimentPercent}%</div>
+                </div>
+            </div>`;
+            
+            // Intensité
+            html += `<div style="margin-bottom: 1.5rem;"><strong>Intensité émotionnelle:</strong> ${emotions.intensite_emotionnelle}</div>`;
+            
+            // Résumé
+            html += `<div style="padding: 1rem; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border-left: 4px solid #667eea;"><strong>Résumé:</strong><br>${emotions.resume_emotionnel}</div>`;
+            
+            document.getElementById('result-emotions').innerHTML = html;
+        } else {
+            showError('result-emotions', data.error);
+        }
+    })
+    .catch(error => {
+        showError('result-emotions', 'Erreur de connexion');
+    });
+}
+
+// Suggérer des tags
+function suggererTags() {
+    const entreeId = document.getElementById('entree-select-tags').value;
+    if (!entreeId) {
+        alert('Veuillez sélectionner une entrée');
+        return;
+    }
+    
+    showLoading('result-tags');
+    
+    fetch(`/journal/ai/analyser/${entreeId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const tags = data.analyse.tags_suggeres;
+            let html = '<h4 style="color: #1f2937; margin-bottom: 1rem;">🏷️ Tags Suggérés</h4>';
+            html += '<p style="color: #64748b; margin-bottom: 1rem;">Cliquez sur un tag pour l\'ajouter à l\'entrée:</p>';
+            
+            tags.forEach(tag => {
+                html += `<span class="tag-suggestion" onclick="appliquerTag('${entreeId}', '${tag}')">${tag}</span>`;
+            });
+            
+            document.getElementById('result-tags').innerHTML = html;
+        } else {
+            showError('result-tags', data.error);
+        }
+    })
+    .catch(error => {
+        showError('result-tags', 'Erreur de connexion');
+    });
+}
+
+// Appliquer un tag
+function appliquerTag(entreeId, tagNom) {
+    fetch(`/journal/ai/appliquer-tags/${entreeId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tags: [tagNom] })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✓ Tag "${tagNom}" ajouté !`);
+        }
+    });
+}
+
+// Générer des insights
+function genererInsights() {
+    const entreeId = document.getElementById('entree-select-insights').value;
+    if (!entreeId) {
+        alert('Veuillez sélectionner une entrée');
+        return;
+    }
+    
+    showLoading('result-insights');
+    
+    fetch(`/journal/ai/analyser/${entreeId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const insights = data.analyse.insights;
+            let html = '<h4 style="color: #1f2937; margin-bottom: 1rem;">💡 Insights & Conseils</h4>';
+            
+            // Observation principale
+            html += `<div class="insight-item"><strong>📌 Observation:</strong><br>${insights.observation_principale}</div>`;
+            
+            // Suggestions
+            if (insights.suggestions && insights.suggestions.length > 0) {
+                html += '<div class="insight-item"><strong>💡 Suggestions:</strong><ul style="margin: 0.5rem 0 0 1.5rem;">';
+                insights.suggestions.forEach(suggestion => {
+                    html += `<li>${suggestion}</li>`;
+                });
+                html += '</ul></div>';
+            }
+            
+            // Questions de réflexion
+            if (insights.questions_reflexion && insights.questions_reflexion.length > 0) {
+                html += '<div class="insight-item"><strong>🤔 Questions de réflexion:</strong><ul style="margin: 0.5rem 0 0 1.5rem;">';
+                insights.questions_reflexion.forEach(question => {
+                    html += `<li>${question}</li>`;
+                });
+                html += '</ul></div>';
+            }
+            
+            document.getElementById('result-insights').innerHTML = html;
+        } else {
+            showError('result-insights', data.error);
+        }
+    })
+    .catch(error => {
+        showError('result-insights', 'Erreur de connexion');
+    });
+}
+
+// Analyser les tendances
+function analyserTendances() {
+    showLoading('result-tendances');
+    
+    fetch('/journal/ai/tendances/', {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const tendances = data.tendances;
+            let html = '<h4 style="color: #1f2937; margin-bottom: 1rem;">📈 Analyse de Tendances</h4>';
+            html += `<p style="color: #64748b; margin-bottom: 1.5rem;">Basé sur ${data.nombre_entrees_analysees} entrée(s)</p>`;
+            
+            // Évolution
+            const evolutionColors = {
+                'positive': '#10b981',
+                'stable': '#f59e0b',
+                'negative': '#ef4444'
+            };
+            const evolutionIcons = {
+                'positive': '📈',
+                'stable': '➡️',
+                'negative': '📉'
+            };
+            html += `<div class="insight-item" style="border-left-color: ${evolutionColors[tendances.evolution]};">
+                <strong>${evolutionIcons[tendances.evolution]} Évolution:</strong> ${tendances.evolution}<br>
+                <span style="color: #64748b;">${tendances.tendance_emotionnelle}</span>
+            </div>`;
+            
+            // Thèmes récurrents
+            if (tendances.themes_recurrents && tendances.themes_recurrents.length > 0) {
+                html += '<div class="insight-item"><strong>🎯 Thèmes récurrents:</strong><br>';
+                tendances.themes_recurrents.forEach(theme => {
+                    html += `<span class="emotion-badge" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">${theme}</span>`;
+                });
+                html += '</div>';
+            }
+            
+            // Recommandations
+            if (tendances.recommandations && tendances.recommandations.length > 0) {
+                html += '<div class="insight-item"><strong>💡 Recommandations:</strong><ul style="margin: 0.5rem 0 0 1.5rem;">';
+                tendances.recommandations.forEach(reco => {
+                    html += `<li>${reco}</li>`;
+                });
+                html += '</ul></div>';
+            }
+            
+            document.getElementById('result-tendances').innerHTML = html;
+        } else {
+            showError('result-tendances', data.error);
+        }
+    })
+    .catch(error => {
+        showError('result-tendances', 'Erreur de connexion');
+    });
+}
+
+// Générer un prompt
+function genererPrompt() {
+    showLoading('result-prompt');
+    
+    fetch('/journal/ai/prompt/', {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = `<div style="padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; text-align: center; font-size: 1.3rem; font-weight: 600; line-height: 1.6;">
+                "${data.prompt}"
+            </div>`;
+            html += '<p style="text-align: center; margin-top: 1rem; color: #64748b;">Utilisez ce prompt pour votre prochaine entrée ✍️</p>';
+            
+            document.getElementById('result-prompt').innerHTML = html;
+        } else {
+            showError('result-prompt', data.error);
+        }
+    })
+    .catch(error => {
+        showError('result-prompt', 'Erreur de connexion');
+    });
+}
+</script>
+{% endblock %}

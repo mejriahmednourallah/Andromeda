@@ -1,0 +1,238 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}{{ entree.titre }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .entry-detail {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .entry-header {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .entry-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        color: #1f2937;
+    }
+    
+    .entry-meta {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        color: #6b7280;
+        font-size: 1rem;
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+    
+    .entry-content {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        line-height: 1.8;
+        font-size: 1.1rem;
+        color: #374151;
+        white-space: pre-wrap;
+    }
+    
+    .tags-section, .moods-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        color: #1f2937;
+    }
+    
+    .tag-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .mood-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 1rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .delete-btn {
+        background: #ef4444;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
+    }
+    
+    .delete-btn:hover {
+        background: #dc2626;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="entry-detail">
+    <!-- Back Button -->
+    <div style="margin-bottom: 1.5rem;">
+        <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary">← Retour au journal</a>
+    </div>
+    
+    <!-- Entry Header -->
+    <div class="entry-header">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
+            <h1 class="entry-title">{{ entree.titre }}</h1>
+            <button onclick="toggleFavorite()" style="background: none; border: none; font-size: 2rem; cursor: pointer;">
+                <span id="favoriteIcon">{% if entree.is_favorite %}⭐{% else %}☆{% endif %}</span>
+            </button>
+        </div>
+        
+        <div class="entry-meta">
+            <span>📅 {{ entree.date_creation|date:"d M Y" }}</span>
+            <span>⏰ {{ entree.date_creation|date:"H:i" }}</span>
+            <span>📝 {{ entree.nombre_mots }} mots</span>
+            {% if entree.lieu %}
+            <span>📍 {{ entree.lieu }}</span>
+            {% endif %}
+            {% if entree.meteo %}
+            <span>🌤️ {{ entree.meteo }}</span>
+            {% endif %}
+            {% if entree.is_public %}
+            <span>🌍 Public</span>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- AI Summary Section -->
+    {% if entree.auto_summary %}
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; color: white; box-shadow: 0 8px 20px rgba(102,126,234,0.3);">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+            <span style="font-size: 2rem;">🤖</span>
+            <h3 style="font-size: 1.5rem; font-weight: 800; margin: 0;">Résumé Automatique (IA)</h3>
+        </div>
+        <p style="font-size: 1.1rem; line-height: 1.6; margin: 0; opacity: 0.95;">{{ entree.auto_summary }}</p>
+    </div>
+    {% endif %}
+    
+    <!-- Entry Content -->
+    <div class="entry-content">
+        {{ entree.contenu_texte }}
+    </div>
+    
+    <!-- Tags Section -->
+    {% if tags %}
+    <div class="tags-section">
+        <h3 class="section-title">🏷️ Tags</h3>
+        <div>
+            {% for tag in tags %}
+            <span class="tag-badge" style="background-color: {{ tag.couleur }}20; color: {{ tag.couleur }}; border: 2px solid {{ tag.couleur }};">
+                {{ tag.nom }}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Moods Section -->
+    {% if humeurs %}
+    <div class="moods-section">
+        <h3 class="section-title">😊 Humeurs</h3>
+        <div>
+            {% for humeur in humeurs %}
+            <span class="mood-badge" style="background-color: {{ humeur.couleur }}20; color: {{ humeur.couleur }}; border: 2px solid {{ humeur.couleur }};">
+                <span style="font-size: 1.5rem;">{{ humeur.emoji }}</span>
+                <span>{{ humeur.nom }}</span>
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <a href="{% url 'core:modifier_entree_journal' entree.pk %}" class="btn-primary">✏️ Modifier</a>
+        <button onclick="exportEntry()" class="btn-secondary">📥 Exporter en PDF</button>
+        <button onclick="shareEntry()" class="btn-secondary">🔗 Partager</button>
+        <button onclick="confirmDelete()" class="delete-btn">🗑️ Supprimer</button>
+    </div>
+</div>
+
+<script>
+function toggleFavorite() {
+    fetch('/journal/{{ entree.pk }}/favorite/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('favoriteIcon').textContent = data.is_favorite ? '⭐' : '☆';
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function exportEntry() {
+    window.location.href = '/journal/{{ entree.pk }}/export-pdf/';
+}
+
+function shareEntry() {
+    const url = window.location.href;
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ entree.titre }}',
+            text: 'Découvrez mon entrée de journal',
+            url: url
+        });
+    } else {
+        navigator.clipboard.writeText(url);
+        alert('Lien copié dans le presse-papier !');
+    }
+}
+
+function confirmDelete() {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette entrée ? Cette action est irréversible.')) {
+        window.location.href = '{% url "core:supprimer_entree_journal" entree.pk %}';
+    }
+}
+</script>
+{% endblock %}

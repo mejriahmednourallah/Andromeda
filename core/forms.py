@@ -1,7 +1,8 @@
 
 from django import forms
 from django.contrib.auth.forms import UserCreationForm as BaseUserCreationForm
-from .models import User, Souvenir, CapsuleTemporelle
+from django.db import models
+from .models import User, Souvenir, CapsuleTemporelle, EntreeJournal, Tag, Humeur
 from django.core.exceptions import ValidationError
 import os
 
@@ -227,3 +228,205 @@ class CapsuleTemporelleForm(forms.ModelForm):
         label='Opening Date',
         help_text='When should this capsule unlock?'
     )
+
+
+class EntreeJournalForm(forms.ModelForm):
+    """Formulaire pour créer/modifier une entrée de journal"""
+    
+    tags = forms.ModelMultipleChoiceField(
+        queryset=Tag.objects.none(),  # Will be set in __init__
+        required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-checkbox-list'}),
+        label='Tags',
+        help_text='Sélectionnez les tags pour catégoriser cette entrée'
+    )
+    
+    humeurs = forms.ModelMultipleChoiceField(
+        queryset=Humeur.objects.all(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-checkbox-list'}),
+        label='Humeurs',
+        help_text='Sélectionnez vos humeurs du moment'
+    )
+    
+    class Meta:
+        model = EntreeJournal
+        fields = ['titre', 'contenu_texte', 'lieu', 'meteo', 'is_favorite', 'is_public']
+        widgets = {
+            'titre': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Titre de votre entrée',
+                'maxlength': 200,
+                'id': 'id_titre'
+            }),
+            'contenu_texte': forms.Textarea(attrs={
+                'class': 'form-textarea',
+                'placeholder': 'Écrivez votre journal ici...',
+                'rows': 10,
+                'id': 'id_contenu_texte'
+            }),
+            'lieu': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Où êtes-vous ? (optionnel)'
+            }),
+            'meteo': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Quel temps fait-il ? (optionnel)'
+            }),
+            'is_favorite': forms.CheckboxInput(attrs={
+                'class': 'form-checkbox'
+            }),
+            'is_public': forms.CheckboxInput(attrs={
+                'class': 'form-checkbox'
+            })
+        }
+        labels = {
+            'titre': 'Titre',
+            'contenu_texte': 'Contenu',
+            'lieu': 'Lieu',
+            'meteo': 'Météo',
+            'is_favorite': 'Marquer comme favori',
+            'is_public': 'Rendre public'
+        }
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filter tags by user (user's tags + global tags)
+        if user:
+            self.fields['tags'].queryset = Tag.objects.filter(
+                models.Q(utilisateur=user) | models.Q(utilisateur__isnull=True)
+            )
+        else:
+            self.fields['tags'].queryset = Tag.objects.filter(utilisateur__isnull=True)
+        
+        # If editing, pre-select existing tags and humeurs
+        if self.instance.pk:
+            self.fields['tags'].initial = [et.tag for et in self.instance.entree_tags.all()]
+            self.fields['humeurs'].initial = [eh.humeur for eh in self.instance.entree_humeurs.all()]
+    
+    def clean_titre(self):
+        """Validation du titre"""
+        titre = self.cleaned_data.get('titre')
+        if not titre or titre.strip() == '':
+            raise ValidationError('Le titre ne peut pas être vide.')
+        if len(titre) < 3:
+            raise ValidationError('Le titre doit contenir au moins 3 caractères.')
+        return titre.strip()
+    
+    def clean_contenu_texte(self):
+        """Validation du contenu"""
+        contenu = self.cleaned_data.get('contenu_texte')
+        if not contenu or contenu.strip() == '':
+            raise ValidationError('Le contenu ne peut pas être vide.')
+        if len(contenu) < 10:
+            raise ValidationError('Le contenu doit contenir au moins 10 caractères.')
+        return contenu.strip()
+
+
+class TagForm(forms.ModelForm):
+    """Formulaire pour créer/modifier un tag"""
+    
+    class Meta:
+        model = Tag
+        fields = ['nom', 'couleur', 'description']
+        widgets = {
+            'nom': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Nom du tag',
+                'maxlength': 50
+            }),
+            'couleur': forms.TextInput(attrs={
+                'class': 'form-input',
+                'type': 'color',
+                'value': '#3498db'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-input',
+                'placeholder': 'Description (optionnel)',
+                'rows': 3
+            })
+        }
+        labels = {
+            'nom': 'Nom du tag',
+            'couleur': 'Couleur',
+            'description': 'Description'
+        }
+    
+    def clean_nom(self):
+        """Validation du nom"""
+        nom = self.cleaned_data.get('nom')
+        if not nom or nom.strip() == '':
+            raise ValidationError('Le nom ne peut pas être vide.')
+        if len(nom) < 2:
+            raise ValidationError('Le nom doit contenir au moins 2 caractères.')
+        return nom.strip()
+
+
+class HumeurForm(forms.ModelForm):
+    """Formulaire pour créer/modifier une humeur (admin uniquement)"""
+    
+    class Meta:
+        model = Humeur
+        fields = ['nom', 'emoji', 'couleur', 'description']
+        widgets = {
+            'nom': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Nom de l\'humeur',
+                'maxlength': 50
+            }),
+            'emoji': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': '😊',
+                'maxlength': 10
+            }),
+            'couleur': forms.TextInput(attrs={
+                'class': 'form-input',
+                'type': 'color',
+                'value': '#FFD700'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-input',
+                'placeholder': 'Description (optionnel)',
+                'rows': 3
+            })
+        }
+        labels = {
+            'nom': 'Nom de l\'humeur',
+            'emoji': 'Emoji',
+            'couleur': 'Couleur',
+            'description': 'Description'
+        }
+
+
+class UserProfileForm(forms.ModelForm):
+    """Formulaire pour modifier le profil utilisateur"""
+    
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'avatar_url']
+        widgets = {
+            'first_name': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Prénom'
+            }),
+            'last_name': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Nom'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Email'
+            }),
+            'avatar_url': forms.URLInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'URL de l\'avatar (optionnel)'
+            })
+        }
+        labels = {
+            'first_name': 'Prénom',
+            'last_name': 'Nom',
+            'email': 'Email',
+            'avatar_url': 'Avatar URL'
+        }

@@ -1,0 +1,22 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Supprimer le tag{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto;">
+    <div style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
+        <h1 style="font-size: 2rem; margin-bottom: 1rem; color: #ef4444;">Confirmer la suppression</h1>
+        <p style="color: #6b7280; margin-bottom: 2rem;">
+            Êtes-vous sûr de vouloir supprimer le tag <strong style="color: {{ tag.couleur }};">"{{ tag.nom }}"</strong> ?<br>
+            Il sera retiré de toutes les entrées associées.
+        </p>
+        
+        <form method="post" style="display: flex; gap: 1rem; justify-content: center;">
+            {% csrf_token %}
+            <a href="{% url 'core:liste_tags' %}" class="btn-secondary">Annuler</a>
+            <button type="submit" class="btn-primary" style="background: #ef4444;">🗑️ Supprimer</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
