@@ -308,10 +308,13 @@ def memories_dashboard(request):
     if favoris_only:
         filtered_souvenirs = filtered_souvenirs.filter(is_favorite=True)
     if search_query:
+        # Recherche full-text étendue
         filtered_souvenirs = filtered_souvenirs.filter(
             Q(titre__icontains=search_query) |
             Q(description__icontains=search_query) |
-            Q(lieu__icontains=search_query)
+            Q(lieu__icontains=search_query) |
+            Q(personnes_presentes__icontains=search_query) |
+            Q(ai_tags__icontains=search_query)
         )
     if ai_status == 'analyzed':
         filtered_souvenirs = filtered_souvenirs.filter(ai_analyzed=True)
@@ -352,6 +355,40 @@ def memories_dashboard(request):
 
     # Get available years for filter
     available_years = souvenirs.dates('date_evenement', 'year', order='DESC')
+
+    # Calculate facet counts for interactive filters
+    facet_counts = {
+        'emotions': {},
+        'themes': {},
+        'years': {},
+        'ai_status': {
+            'analyzed': souvenirs.filter(ai_analyzed=True).count(),
+            'pending': souvenirs.filter(ai_analyzed=False).count(),
+        }
+    }
+
+    # Count emotions
+    for emotion_code, emotion_name in Souvenir.EMOTION_CHOICES:
+        count = souvenirs.filter(emotion=emotion_code).count()
+        if count > 0:
+            facet_counts['emotions'][emotion_code] = {
+                'name': emotion_name,
+                'count': count
+            }
+
+    # Count themes
+    for theme_code, theme_name in Souvenir.THEME_CHOICES:
+        count = souvenirs.filter(theme=theme_code).count()
+        if count > 0:
+            facet_counts['themes'][theme_code] = {
+                'name': theme_name,
+                'count': count
+            }
+
+    # Count years
+    for year in available_years:
+        count = souvenirs.filter(date_evenement__year=year.year).count()
+        facet_counts['years'][year.year] = count
 
     # Handle batch AI analysis
     if request.method == 'POST' and 'analyze_all' in request.POST:
@@ -403,6 +440,7 @@ def memories_dashboard(request):
         'available_years': available_years,
         'emotion_choices': Souvenir.EMOTION_CHOICES,
         'theme_choices': Souvenir.THEME_CHOICES,
+        'facet_counts': facet_counts,
 
         # Pagination
         'paginator': paginator,

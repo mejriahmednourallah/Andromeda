@@ -7,6 +7,36 @@
 ul.errorlist {
     display: none;
 }
+
+/* Styles pour agrandir les textarea */
+textarea.form-input {
+    min-height: 120px !important;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+/* Styles spécifiques pour les champs de formulaire */
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--accent-orange);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.form-checkbox {
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: var(--accent-orange);
+}
 </style>
 <div style="max-width: 800px; margin: 0 auto;">
     <div style="margin-bottom: 2rem;">
@@ -123,24 +153,74 @@ ul.errorlist {
             </p>
         </div>
 
-        <!-- Favori -->
+        <!-- Emotion -->
         <div style="margin-bottom: 1.5rem;">
-            <label for="{{ form.is_favorite.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
-                {{ form.is_favorite.label }}
-                <span id="favorite-star" style="font-size: 1.2em;">
-                    {% if souvenir.is_favorite %}
-                        <span style="color: #fbbf24;">⭐</span>
-                    {% else %}
-                        <span style="color: #9ca3af;">☆</span>
-                    {% endif %}
-                </span>
+            <label for="{{ form.emotion.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                {{ form.emotion.label }}
             </label>
-            {{ form.is_favorite }}
-            {% if form.is_favorite.errors %}
-                {% for error in form.is_favorite.errors %}
+            {{ form.emotion }}
+            {% if form.emotion.errors %}
+                {% for error in form.emotion.errors %}
                     <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
                 {% endfor %}
             {% endif %}
+            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">{{ form.emotion.help_text }}</p>
+        </div>
+
+        <!-- Theme -->
+        <div style="margin-bottom: 1.5rem;">
+            <label for="{{ form.theme.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                {{ form.theme.label }}
+            </label>
+            {{ form.theme }}
+            {% if form.theme.errors %}
+                {% for error in form.theme.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">{{ form.theme.help_text }}</p>
+        </div>
+
+        <!-- Lieu -->
+        <div style="margin-bottom: 1.5rem;">
+            <label for="{{ form.lieu.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                {{ form.lieu.label }}
+            </label>
+            {{ form.lieu }}
+            {% if form.lieu.errors %}
+                {% for error in form.lieu.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">{{ form.lieu.help_text }}</p>
+        </div>
+
+        <!-- Personnes présentes -->
+        <div style="margin-bottom: 1.5rem;">
+            <label for="{{ form.personnes_presentes.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                {{ form.personnes_presentes.label }}
+            </label>
+            {{ form.personnes_presentes }}
+            {% if form.personnes_presentes.errors %}
+                {% for error in form.personnes_presentes.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">{{ form.personnes_presentes.help_text }}</p>
+        </div>
+
+        <!-- Public -->
+        <div style="margin-bottom: 1.5rem;">
+            <label for="{{ form.is_public.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                {{ form.is_public.label }}
+            </label>
+            {{ form.is_public }}
+            {% if form.is_public.errors %}
+                {% for error in form.is_public.errors %}
+                    <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.25rem;">{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+            <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 0.5rem;">{{ form.is_public.help_text }}</p>
         </div>
 
         <!-- Action Buttons -->

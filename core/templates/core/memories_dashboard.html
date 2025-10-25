@@ -138,7 +138,72 @@
         </div>
     </div>
     {% endif %}
-</div>
+
+    <!-- Facettes interactives -->
+    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+        <p style="font-weight: bold; margin-bottom: 0.75rem;">Quick Filters:</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+            <!-- Émotions -->
+            {% if facet_counts.emotions %}
+            <div>
+                <p style="font-size: 0.9rem; font-weight: bold; margin-bottom: 0.5rem; color: var(--text-gray);">Emotions</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                    {% for emotion_code, emotion_data in facet_counts.emotions.items %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'emotion' and key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}emotion={{ emotion_code }}"
+                       style="background: {% if filtres_actifs.emotion == emotion_code %}#f3e5f5{% else %}#f9fafb{% endif %}; color: {% if filtres_actifs.emotion == emotion_code %}#7b1fa2{% else %}#374151{% endif %}; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; text-decoration: none; border: 1px solid {% if filtres_actifs.emotion == emotion_code %}#7b1fa2{% else %}#e5e7eb{% endif %};">
+                        {{ emotion_data.name }} ({{ emotion_data.count }})
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Thèmes -->
+            {% if facet_counts.themes %}
+            <div>
+                <p style="font-size: 0.9rem; font-weight: bold; margin-bottom: 0.5rem; color: var(--text-gray);">Themes</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                    {% for theme_code, theme_data in facet_counts.themes.items %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'theme' and key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}theme={{ theme_code }}"
+                       style="background: {% if filtres_actifs.theme == theme_code %}#e8f5e8{% else %}#f9fafb{% endif %}; color: {% if filtres_actifs.theme == theme_code %}#2e7d32{% else %}#374151{% endif %}; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; text-decoration: none; border: 1px solid {% if filtres_actifs.theme == theme_code %}#2e7d32{% else %}#e5e7eb{% endif %};">
+                        {{ theme_data.name }} ({{ theme_data.count }})
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Années -->
+            {% if facet_counts.years %}
+            <div>
+                <p style="font-size: 0.9rem; font-weight: bold; margin-bottom: 0.5rem; color: var(--text-gray);">Years</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                    {% for year, count in facet_counts.years.items %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'annee' and key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}annee={{ year }}"
+                       style="background: {% if filtres_actifs.annee == year|stringformat:"s" %}#fff3e0{% else %}#f9fafb{% endif %}; color: {% if filtres_actifs.annee == year|stringformat:"s" %}#ef6c00{% else %}#374151{% endif %}; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; text-decoration: none; border: 1px solid {% if filtres_actifs.annee == year|stringformat:"s" %}#ef6c00{% else %}#e5e7eb{% endif %};">
+                        {{ year }} ({{ count }})
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Statut IA -->
+            <div>
+                <p style="font-size: 0.9rem; font-weight: bold; margin-bottom: 0.5rem; color: var(--text-gray);">AI Status</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'ai_status' and key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}ai_status=analyzed"
+                       style="background: {% if filtres_actifs.ai_status == 'analyzed' %}#fce4ec{% else %}#f9fafb{% endif %}; color: {% if filtres_actifs.ai_status == 'analyzed' %}#c2185b{% else %}#374151{% endif %}; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; text-decoration: none; border: 1px solid {% if filtres_actifs.ai_status == 'analyzed' %}#c2185b{% else %}#e5e7eb{% endif %};">
+                        AI Analyzed ({{ facet_counts.ai_status.analyzed }})
+                    </a>
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'ai_status' and key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}ai_status=pending"
+                       style="background: {% if filtres_actifs.ai_status == 'pending' %}#fce4ec{% else %}#f9fafb{% endif %}; color: {% if filtres_actifs.ai_status == 'pending' %}#c2185b{% else %}#374151{% endif %}; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; text-decoration: none; border: 1px solid {% if filtres_actifs.ai_status == 'pending' %}#c2185b{% else %}#e5e7eb{% endif %};">
+                        Pending ({{ facet_counts.ai_status.pending }})
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
 <!-- Quick Actions -->
 <div class="card" style="margin-bottom: 2rem;">
@@ -286,6 +351,7 @@
                         <div style="display: flex; gap: 0.5rem;">
                             <a href="{% url 'core:detail_souvenir' souvenir.id %}" class="btn-primary" style="flex: 1; text-align: center; font-size: 0.9rem;">View</a>
                             <a href="{% url 'core:modifier_souvenir' souvenir.id %}" class="btn-secondary" style="flex: 1; text-align: center; font-size: 0.9rem;">Edit</a>
+                            <a href="{% url 'core:supprimer_souvenir' souvenir.id %}" style="flex: 1; padding: 0.6rem 1rem; background: #dc2626; color: white; border: 2px solid var(--border-color); font-weight: bold; text-decoration: none; text-align: center; font-family: 'Courier New', monospace; font-size: 0.9rem;">Delete</a>
                             {% if not souvenir.ai_analyzed %}
                             <a href="{% url 'core:analyser_souvenir_ia' souvenir.id %}" class="btn-secondary" style="flex: 1; text-align: center; font-size: 0.9rem;">AI</a>
                             {% endif %}
@@ -583,16 +649,75 @@ function saveReflection() {
     closeReflectionModal();
 }
 
-// Close modal when clicking outside
-document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('reflectionModal');
-    if (modal) {
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                closeReflectionModal();
-            }
-        });
+<script>
+// Recherche en temps réel
+let searchTimeout;
+const searchInput = document.querySelector('input[name="q"]');
+
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            updateSearchResults();
+        }, 300); // Délai de 300ms pour éviter trop de requêtes
+    });
+}
+
+function updateSearchResults() {
+    const formData = new FormData(document.querySelector('form'));
+    const params = new URLSearchParams();
+    
+    // Ajouter tous les paramètres du formulaire
+    for (let [key, value] of formData.entries()) {
+        if (value.trim() !== '') {
+            params.append(key, value);
+        }
     }
+    
+    // Mettre à jour l'URL sans recharger la page
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState({}, '', newUrl);
+    
+    // Afficher un indicateur de chargement
+    const resultsContainer = document.querySelector('.card:has(h2:contains("📚 Memories"))');
+    if (resultsContainer) {
+        const originalContent = resultsContainer.innerHTML;
+        resultsContainer.innerHTML = '<div style="text-align: center; padding: 2rem;"><p>🔍 Searching...</p></div>';
+        
+        // Recharger la page pour mettre à jour les résultats
+        // Note: Pour une vraie implémentation AJAX, il faudrait une API séparée
+        setTimeout(() => {
+            window.location.reload();
+        }, 100);
+    }
+}
+
+// Mise à jour des statistiques en temps réel
+function updateStats() {
+    const searchQuery = searchInput ? searchInput.value : '';
+    if (searchQuery.length > 2) {
+        // Mettre à jour le compteur de résultats
+        const resultsCount = document.querySelector('h2:contains("📚 Memories")');
+        if (resultsCount) {
+            resultsCount.textContent = `📚 Memories (${searchQuery ? 'Searching...' : '{{ stats.filtered_count }} results'})`;
+        }
+    }
+}
+
+// Améliorer l'expérience utilisateur pour les facettes
+document.addEventListener('DOMContentLoaded', function() {
+    // Ajouter des tooltips aux liens de facettes
+    const facetLinks = document.querySelectorAll('.facet-link');
+    facetLinks.forEach(link => {
+        link.title = `Click to filter by ${link.textContent.trim()}`;
+    });
+    
+    // Animation pour les facettes actives
+    const activeFacets = document.querySelectorAll('a[style*="background: #f3e5f5"], a[style*="background: #e8f5e8"], a[style*="background: #fff3e0"], a[style*="background: #fce4ec"]');
+    activeFacets.forEach(facet => {
+        facet.style.transform = 'scale(1.05)';
+        facet.style.fontWeight = 'bold';
+    });
 });
 </script>
 

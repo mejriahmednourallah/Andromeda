@@ -84,7 +84,7 @@ class SouvenirForm(forms.ModelForm):
             'description': forms.Textarea(attrs={
                 'class': 'form-input',
                 'placeholder': 'Describe your memory...',
-                'rows': 5,
+                'rows': 8,
                 'required': False
             }),
             'date_evenement': forms.DateInput(attrs={
@@ -104,9 +104,10 @@ class SouvenirForm(forms.ModelForm):
                 'class': 'form-input',
                 'placeholder': 'e.g., Paris, France'
             }),
-            'personnes_presentes': forms.TextInput(attrs={
+            'personnes_presentes': forms.Textarea(attrs={
                 'class': 'form-input',
-                'placeholder': 'e.g., Marie, Paul, Sophie (comma-separated)'
+                'placeholder': 'e.g., Marie, Paul, Sophie (comma-separated)',
+                'rows': 3
             }),
             'is_favorite': forms.CheckboxInput(attrs={
                 'class': 'form-checkbox'
@@ -198,7 +199,7 @@ class CapsuleTemporelleForm(forms.ModelForm):
             'description': forms.Textarea(attrs={
                 'class': 'form-input',
                 'placeholder': 'What do you want to remember?',
-                'rows': 5,
+                'rows': 8,
                 'required': False
             }),
             'date_evenement': forms.DateInput(attrs={
@@ -220,7 +221,7 @@ class CapsuleTemporelleForm(forms.ModelForm):
         widget=forms.Textarea(attrs={
             'class': 'form-input',
             'placeholder': 'Write a message to your future self...',
-            'rows': 4
+            'rows': 6
         }),
         label='Message to Future Self',
         help_text='This will be shown when the capsule opens. Leave empty for AI-generated message.',

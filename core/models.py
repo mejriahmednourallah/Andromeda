@@ -165,6 +165,7 @@ class Souvenir(models.Model):
     theme = models.CharField(max_length=50, choices=THEME_CHOICES, default='other', help_text="Memory theme")
     lieu = models.CharField(max_length=200, blank=True, default='', help_text="Location of the memory")
     personnes_presentes = models.CharField(max_length=500, blank=True, default='', help_text="People present (comma-separated)")
+    tags_personnalises = models.JSONField(default=list, blank=True, help_text="User-defined custom tags")
     
     # User Preferences
     is_favorite = models.BooleanField(default=False, help_text="Mark as favorite")
