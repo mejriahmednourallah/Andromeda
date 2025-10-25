@@ -40,7 +40,13 @@ urlpatterns = [
     # === ALBUMS ===
     path('albums/', views.liste_albums, name='liste_albums'),
     path('albums/create/', views.creer_album, name='creer_album'),
+    path('albums/create-from-suggestion/', views.creer_album_depuis_suggestion, name='creer_album_depuis_suggestion'),
     path('albums/<int:album_id>/', views.detail_album, name='detail_album'),
     path('albums/<int:album_id>/edit/', views.modifier_album, name='modifier_album'),
     path('albums/<int:album_id>/delete/', views.supprimer_album, name='supprimer_album'),
+    
+    # === PDF EXPORTS ===
+    path('exports/pdf/', views.liste_exports_pdf, name='liste_exports_pdf'),
+    path('exports/pdf/create/', views.exporter_pdf, name='exporter_pdf'),
+    path('exports/pdf/<int:export_id>/download/', views.telecharger_pdf, name='telecharger_pdf'),
 ]

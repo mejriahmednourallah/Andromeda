@@ -3,6 +3,9 @@
 {% block title %}My Memories{% endblock %}
 
 {% block content %}
+<!-- CSRF Token for AJAX requests -->
+{% csrf_token %}
+
 <div style="margin-bottom: 2rem;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <div>
@@ -148,7 +151,6 @@
             <button type="submit" name="analyze_all" class="btn-secondary">Analyze All Pending ({{ stats.pending }})</button>
         </form>
         {% endif %}
-        <a href="#" onclick="exportMemories()" class="btn-secondary">Export PDF</a>
         <a href="{% url 'core:liste_albums' %}" class="btn-secondary">View Albums</a>
     </div>
 </div>
@@ -204,11 +206,14 @@
 <div class="card" style="margin-bottom: 2rem;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
         <h2 class="card-title">📚 Memories ({{ stats.filtered_count }} results)</h2>
-        {% if page_obj.has_other_pages %}
-        <div style="font-size: 0.9rem; color: var(--text-gray);">
-            Page {{ page_obj.number }} of {{ paginator.num_pages }}
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="#" onclick="exportMemories()" class="btn-secondary" style="font-size: 0.9rem;">📄 Export PDF</a>
+            {% if page_obj.has_other_pages %}
+            <div style="font-size: 0.9rem; color: var(--text-gray);">
+                Page {{ page_obj.number }} of {{ paginator.num_pages }}
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
 
     {% if souvenirs %}
@@ -238,7 +243,11 @@
                     <!-- Contenu -->
                     <div style="padding: 1.5rem;">
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
-                            <h3 style="font-size: 1.25rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">{{ souvenir.titre }}</h3>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" name="memory_select" value="{{ souvenir.id }}" 
+                                       style="width: 16px; height: 16px;" title="Select for export">
+                                <h3 style="font-size: 1.25rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">{{ souvenir.titre }}</h3>
+                            </div>
                             {% if souvenir.is_favorite %}
                                 <span style="color: #f59e0b; font-size: 1.25rem; cursor: pointer;" onclick="toggleFavorite({{ souvenir.id }})">⭐</span>
                             {% else %}
@@ -372,10 +381,16 @@
 
 <script>
 function toggleFavorite(souvenirId) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfToken) {
+        console.error('CSRF token not found');
+        return;
+    }
+    
     fetch(`/memories/${souvenirId}/favorite/`, {
         method: 'POST',
         headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-CSRFToken': csrfToken.value,
             'Content-Type': 'application/json',
         },
     })
@@ -397,8 +412,147 @@ function toggleFavorite(souvenirId) {
 }
 
 function exportMemories() {
-    // Simple PDF export placeholder
-    alert('PDF export feature coming soon! For now, you can manually save your memories.');
+    // Get selected memories or all filtered memories
+    const selectedCheckboxes = document.querySelectorAll('input[name="memory_select"]:checked');
+    let souvenirIds = [];
+    
+    if (selectedCheckboxes.length > 0) {
+        // Use selected memories
+        selectedCheckboxes.forEach(checkbox => {
+            souvenirIds.push(checkbox.value);
+        });
+    } else {
+        // Use all currently displayed memories
+        const memoryCards = document.querySelectorAll('.memory-card');
+        memoryCards.forEach(card => {
+            const memoryId = card.querySelector('input[name="memory_select"]')?.value;
+            if (memoryId) {
+                souvenirIds.push(memoryId);
+            }
+        });
+    }
+    
+    if (souvenirIds.length === 0) {
+        alert('Please select memories to export or ensure memories are loaded.');
+        return;
+    }
+    
+    // Show export modal
+    showExportModal(souvenirIds);
+}
+
+function showExportModal(souvenirIds) {
+    // Create modal HTML
+    const modalHtml = `
+        <div id="exportModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+            <div style="background: white; padding: 2rem; border-radius: 0.5rem; max-width: 500px; width: 90%;">
+                <h3 style="margin-top: 0; margin-bottom: 1rem;">📄 Export Memories to PDF</h3>
+                
+                <form id="exportForm">
+                    <div style="margin-bottom: 1rem;">
+                        <label for="exportTitle" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Export Title:</label>
+                        <input type="text" id="exportTitle" name="titre_export" 
+                               value="My Memories - ${new Date().toLocaleDateString()}" 
+                               style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem;" required>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Style Template:</label>
+                        <select name="style_template" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem;">
+                            <option value="modern">Modern</option>
+                            <option value="classic">Classic</option>
+                            <option value="minimal">Minimal</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: flex; align-items: center;">
+                            <input type="checkbox" name="inclure_photos" checked style="margin-right: 0.5rem;">
+                            Include photos in export
+                        </label>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" onclick="closeExportModal()" 
+                                style="flex: 1; padding: 0.75rem; background: #6b7280; color: white; border: none; border-radius: 0.25rem; cursor: pointer;">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                style="flex: 1; padding: 0.75rem; background: var(--accent-orange); color: white; border: none; border-radius: 0.25rem; cursor: pointer;">
+                            Export PDF
+                        </button>
+                    </div>
+                </form>
+                
+                <div id="exportStatus" style="margin-top: 1rem; display: none;">
+                    <p style="margin: 0; color: #059669;">⏳ Generating PDF... Please wait.</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Handle form submission
+    document.getElementById('exportForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitExportForm(souvenirIds);
+    });
+}
+
+function closeExportModal() {
+    const modal = document.getElementById('exportModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function submitExportForm(souvenirIds) {
+    const formData = new FormData(document.getElementById('exportForm'));
+    
+    // Add souvenir IDs
+    souvenirIds.forEach(id => {
+        formData.append('souvenirs[]', id);
+    });
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfToken) {
+        alert('CSRF token not found. Please refresh the page.');
+        return;
+    }
+    
+    // Show loading status
+    document.getElementById('exportStatus').style.display = 'block';
+    document.querySelector('#exportForm button[type="submit"]').disabled = true;
+    
+    // Submit export request
+    fetch('/exports/pdf/create/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': csrfToken.value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Success - redirect to download
+            window.location.href = data.download_url;
+            closeExportModal();
+        } else {
+            // Error
+            alert('Export failed: ' + (data.error || 'Unknown error'));
+            document.getElementById('exportStatus').style.display = 'none';
+            document.querySelector('#exportForm button[type="submit"]').disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Export failed. Please try again.');
+        document.getElementById('exportStatus').style.display = 'none';
+        document.querySelector('#exportForm button[type="submit"]').disabled = false;
+    });
 }
 
 // Reflection modal functions

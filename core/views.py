@@ -5,14 +5,16 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.utils import timezone
+from django.template.loader import render_to_string
 import logging
+from io import BytesIO
 
 from .models import (
     Note, User, Souvenir, AnalyseIASouvenir, AlbumSouvenir,
-    CapsuleTemporelle, PartageSouvenir, SuiviMotivationnel
+    CapsuleTemporelle, PartageSouvenir, SuiviMotivationnel, ExportPDF
 )
 from .forms import UserCreationForm, SouvenirForm, CapsuleTemporelleForm, UserProfileForm
 from .ai_services import AIAnalysisService, AIRecommendationService
@@ -785,6 +787,45 @@ def creer_album(request):
 
 
 @login_required
+def creer_album_depuis_suggestion(request):
+    """
+    Create a new album from an AI suggestion
+    """
+    if request.method == 'POST':
+        suggestion_type = request.POST.get('suggestion_type')
+        theme = request.POST.get('theme')
+        year = request.POST.get('year')
+        titre = request.POST.get('titre')
+        description = request.POST.get('description')
+
+        # Get souvenir IDs based on suggestion parameters
+        souvenir_ids = AIAnalysisService.get_souvenir_ids_for_suggestion(
+            user=request.user,
+            suggestion_type=suggestion_type,
+            theme=theme,
+            year=year
+        )
+
+        # Create the album
+        album = AlbumSouvenir.objects.create(
+            utilisateur=request.user,
+            titre=titre,
+            description=description,
+            is_auto_generated=True  # Mark as AI-generated
+        )
+
+        # Add the souvenirs to the album
+        if souvenir_ids:
+            album.souvenirs.set(souvenir_ids)
+
+        messages.success(request, f'📚 Album "{titre}" created successfully with {len(souvenir_ids)} memories!')
+        return redirect('core:detail_album', album_id=album.id)
+
+    # If not POST, redirect to album list
+    return redirect('core:liste_albums')
+
+
+@login_required
 def detail_album(request, album_id):
     """
     View album details
@@ -853,3 +894,138 @@ def supprimer_album(request, album_id):
     }
     
     return render(request, 'core/supprimer_album.html', context)
+
+
+# ============================================
+# PDF EXPORT VIEWS
+# ============================================
+
+@login_required
+def exporter_pdf(request):
+    """
+    AJAX endpoint to start PDF export process
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        # Get export parameters from POST data
+        titre_export = request.POST.get('titre_export', f'My Memories - {timezone.now().strftime("%Y-%m-%d")}')
+        souvenir_ids = request.POST.getlist('souvenirs[]')
+        inclure_photos = request.POST.get('inclure_photos', 'true').lower() == 'true'
+        style_template = request.POST.get('style_template', 'modern')
+        
+        if not souvenir_ids:
+            return JsonResponse({'error': 'No memories selected for export'}, status=400)
+        
+        # Get the selected souvenirs
+        souvenirs = Souvenir.objects.filter(
+            id__in=souvenir_ids,
+            utilisateur=request.user
+        ).order_by('-date_evenement')
+        
+        if not souvenirs.exists():
+            return JsonResponse({'error': 'No valid memories found'}, status=400)
+        
+        # Create export record
+        export_pdf = ExportPDF.objects.create(
+            utilisateur=request.user,
+            titre_export=titre_export,
+            inclure_photos=inclure_photos,
+            style_template=style_template,
+            status='processing'
+        )
+        
+        # Add souvenirs to export
+        export_pdf.souvenirs.set(souvenirs)
+        
+        # Generate PDF asynchronously (for now, do it synchronously)
+        try:
+            pdf_buffer = generate_pdf_content(export_pdf)
+            
+            # Save PDF file
+            filename = f"memories_export_{export_pdf.id}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            export_pdf.fichier_pdf.save(filename, pdf_buffer)
+            export_pdf.status = 'ready'
+            export_pdf.nombre_pages = 1  # We'll calculate this properly later
+            export_pdf.save()
+            
+            return JsonResponse({
+                'success': True,
+                'export_id': export_pdf.id,
+                'download_url': reverse('core:telecharger_pdf', args=[export_pdf.id]),
+                'message': f'PDF export "{titre_export}" created successfully!'
+            })
+            
+        except Exception as e:
+            export_pdf.status = 'error'
+            export_pdf.save()
+            logger.error(f'PDF generation failed for export {export_pdf.id}: {str(e)}')
+            return JsonResponse({'error': f'PDF generation failed: {str(e)}'}, status=500)
+    
+    except Exception as e:
+        logger.error(f'PDF export creation failed: {str(e)}')
+        return JsonResponse({'error': 'Failed to create PDF export'}, status=500)
+
+
+@login_required
+def telecharger_pdf(request, export_id):
+    """
+    Download a completed PDF export
+    """
+    export_pdf = get_object_or_404(
+        ExportPDF,
+        id=export_id,
+        utilisateur=request.user,
+        status='ready'
+    )
+    
+    if not export_pdf.fichier_pdf:
+        messages.error(request, 'PDF file not found')
+        return redirect('core:memories_dashboard')
+    
+    # Return PDF file
+    response = HttpResponse(export_pdf.fichier_pdf.read(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{export_pdf.titre_export}.pdf"'
+    return response
+
+
+@login_required
+def liste_exports_pdf(request):
+    """
+    List user's PDF exports
+    """
+    exports = ExportPDF.objects.filter(utilisateur=request.user).order_by('-date_export')
+    return render(request, 'core/liste_exports_pdf.html', {'exports': exports})
+
+
+def generate_pdf_content(export_pdf):
+    """
+    Generate PDF content using xhtml2pdf
+    """
+    from xhtml2pdf import pisa
+    from io import BytesIO
+    
+    # Get souvenirs with related data
+    souvenirs = export_pdf.souvenirs.all().prefetch_related('analyse_ia').order_by('-date_evenement')
+    
+    # Prepare context for template
+    context = {
+        'export': export_pdf,
+        'souvenirs': souvenirs,
+        'user': export_pdf.utilisateur,
+        'generated_at': timezone.now(),
+    }
+    
+    # Render HTML template
+    html_content = render_to_string('core/pdf_export_template.html', context)
+    
+    # Create PDF
+    pdf_buffer = BytesIO()
+    pisa_status = pisa.CreatePDF(html_content, dest=pdf_buffer)
+    
+    if pisa_status.err:
+        raise Exception('PDF generation failed')
+    
+    pdf_buffer.seek(0)
+    return pdf_buffer
