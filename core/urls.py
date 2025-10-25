@@ -7,6 +7,9 @@ urlpatterns = [
     # Home & Dashboard
     path('', views.index, name='index'),
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('story/', views.story_inspiration, name='story_inspiration'),
+    path('story/history/', views.story_history, name='story_history'),
+    path('story/<uuid:histoire_id>/favorite/', views.toggle_histoire_favorite, name='toggle_histoire_favorite'),
     path('notes/<uuid:note_id>/', views.note_detail, name='note_detail'),
     path('accounts/signup/', views.signup, name='signup'),
     
