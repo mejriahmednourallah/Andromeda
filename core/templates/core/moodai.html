@@ -143,6 +143,40 @@
   }
 
   function recsFor(label){
+    return recsForWithTokens(label, []);
+  }
+
+  function recsForWithTokens(label, toks){
+    const has = (...words)=> words.some(w=> toks.includes(w));
+
+    // Contexte: Accident / urgence
+    if(has('accident', 'choc', 'collision')){
+      return [
+        "Assurez d'abord votre sécurité et celle des autres. Éloignez-vous du danger si possible.",
+        "Appelez les secours si nécessaire et prévenez votre assurance (constat, photos, témoins).",
+        "Respirez, notez les faits calmes et précis avant d'écrire un message supplémentaire."
+      ];
+    }
+
+    // Contexte: Défaite sportive / match perdu
+    if((has('match','partie','jeu') && has('perdu','perdue','defaite','défaite')) || has('perdu','perdue') && has('match')){
+      return [
+        "Analysez 1 à 2 points concrets à améliorer plutôt que de ruminer la défaite.",
+        "Félicitez l'effort fourni, planifiez un court entraînement ciblé (technique ou mental).",
+        "Fixez un objectif simple et mesurable pour la prochaine rencontre."
+      ];
+    }
+
+    // Contexte: études / examen
+    if(has('examen','controle','concours','test') && has('perdu','rate','raté','echec','échec')){
+      return [
+        "Listez rapidement les chapitres faibles et planifiez des sessions courtes (25 min).",
+        "Demandez un retour (corrigé, prof/ami) pour identifier 1-2 erreurs récurrentes.",
+        "Dormez suffisamment et espacez les révisions (méthode espacée)."
+      ];
+    }
+
+    // Fallback par étiquette émotionnelle
     if(label==='positif') return [
       "Detected enthusiasm — keep it up in your next message!",
       "Renforcez les points positifs et remerciez votre interlocuteur."
@@ -202,7 +236,7 @@
     else { trendChart = new Chart(document.getElementById('trendChart').getContext('2d'), cfgT); }
   }
 
-  function updateUI(result){
+  function updateUI(result, text){
     let {scores, top} = result;
     // Normalize keys and recompute top if needed
     const ns = normalizeScores(scores);
@@ -216,7 +250,8 @@
     resultLabel.textContent = top.charAt(0).toUpperCase()+top.slice(1);
     resultScore.textContent = `Score ${(scoreTop).toFixed(2)}`;
     recList.innerHTML = '';
-    recsFor(top).forEach(r=>{ const li = document.createElement('li'); li.textContent = '• '+r; recList.appendChild(li); });
+    const toks = tokenize((text||'').toLowerCase());
+    recsForWithTokens(top, toks).forEach(r=>{ const li = document.createElement('li'); li.textContent = '• '+r; recList.appendChild(li); });
     updateRadar(scores);
   }
 
@@ -235,11 +270,11 @@
       });
       const data = await resp.json();
       const result = { scores: data.scores || {}, top: data.top || 'neutre' };
-      updateUI(result);
+      updateUI(result, text);
       pushHistory({ ts: Date.now(), top: result.top, scores: result.scores, text, source: data.source || 'api' });
     } catch (e) {
       const result = analyze(text);
-      updateUI(result);
+      updateUI(result, text);
       pushHistory({ ts: Date.now(), top: result.top, scores: result.scores, text, source: 'local-fallback' });
     }
   });
