@@ -14,6 +14,10 @@ urlpatterns = [
     path('notes/<uuid:note_id>/', views.note_detail, name='note_detail'),
     path('accounts/signup/', views.signup, name='signup'),
     path('profile/', views.profile, name='profile'),
+
+    # === Mood ===
+    path('mood/', views.mood, name='mood'),
+    path('api/mood/analyze/', views.mood_analyze, name='mood_analyze'),
     
     # === PASSWORD RESET ===
     path('accounts/password_reset/', auth_views.PasswordResetView.as_view(

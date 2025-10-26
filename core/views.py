@@ -9,12 +9,16 @@ from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.utils import timezone
 from django.template.loader import render_to_string
+from django.conf import settings
 import logging
 from io import BytesIO
+import os
+import json
 
 from .models import (
     Note, User, Souvenir, AnalyseIASouvenir, AlbumSouvenir,
-    CapsuleTemporelle, PartageSouvenir, SuiviMotivationnel, ExportPDF , HistoireInspirante
+    CapsuleTemporelle, PartageSouvenir, SuiviMotivationnel, ExportPDF , HistoireInspirante,
+    MoodAnalysis, MoodRecommendation
 )
 from .forms import UserCreationForm, SouvenirForm, CapsuleTemporelleForm, UserProfileForm
 from .ai_services import AIAnalysisService, AIRecommendationService
@@ -155,6 +159,169 @@ def profile(request):
 
     return render(request, 'core/profile.html', context)
 
+
+@login_required
+def mood(request):
+    """
+    Mood page: simple textarea -> analyze -> save MoodAnalysis and MoodRecommendation
+    """
+    def _local_scores(txt: str):
+        t = (txt or '').lower()
+        pos = ['super', 'bien', 'génial', 'genial', 'heureux', 'joie', 'content', 'love', 'aime', 'fier']
+        neg = ['mauvais', 'nul', 'triste', 'déprimé', 'deprime', 'peur', 'anxieux', 'stress', 'mal']
+        anger = ['colère', 'colere', 'furieux', 'énervé', 'enerve', 'rage', 'agacé', 'agace']
+        sad = ['triste', 'tristesse', 'chagrin', 'pleurer', 'solitaire']
+        scores = {'positif': 0.0, 'neutre': 0.1, 'negatif': 0.0, 'colere': 0.0, 'tristesse': 0.0}
+        for w in pos:
+            if w in t: scores['positif'] += 1
+        for w in neg:
+            if w in t: scores['negatif'] += 1
+        for w in anger:
+            if w in t: scores['colere'] += 1
+        for w in sad:
+            if w in t: scores['tristesse'] += 1
+        if scores['positif']==0 and scores['negatif']==0 and scores['colere']==0 and scores['tristesse']==0:
+            scores['neutre'] = 1.0
+        return scores
+
+    def _ai_scores(txt: str):
+        """Use the same internal analysis method as Story (AIAnalysisService._detect_emotion_smart)."""
+        emo = AIAnalysisService._detect_emotion_smart(txt)
+        mapping = {
+            'joy': 'positif',
+            'gratitude': 'positif',
+            'love': 'positif',
+            'peace': 'neutre',
+            'excitement': 'positif',
+            'pride': 'positif',
+            'sadness': 'tristesse',
+            'anger': 'colere',
+            'fear': 'negatif',
+            'nostalgia': 'neutre',
+            'neutral': 'neutre'
+        }
+        top = mapping.get(emo, 'neutre')
+        scores = {'positif': 0.0, 'neutre': 0.0, 'negatif': 0.0, 'colere': 0.0, 'tristesse': 0.0}
+        scores[top] = 1.0
+        return scores
+
+    def _recommend(top: str) -> str:
+        mapping = {
+            'positif': "Garde cette énergie: note 3 gratitudes et planifie une petite action qui te fait plaisir.",
+            'neutre': "Prends 2 minutes pour respirer et écrire une intention simple pour aujourd’hui.",
+            'negatif': "Fais une pause courte (5 min), respire 4-7-8 et écris ce qui te pèse pour l’externaliser.",
+            'colere': "Évite d’agir à chaud. 10 respirations profondes ou une marche brève pour apaiser la tension.",
+            'tristesse': "Autorise-toi à ressentir. Appelle une personne de confiance ou écoute une musique douce."
+        }
+        return mapping.get((top or '').lower(), mapping['neutre'])
+
+
+    result = None
+    recommendation = None
+
+    if request.method == 'POST':
+        text = request.POST.get('text', '').strip()
+        if not text:
+            messages.error(request, "Veuillez saisir un texte.")
+            return redirect('core:mood')
+        # Use internal AI method (same spirit as Story), fallback to simple heuristic if needed
+        try:
+            scores = _ai_scores(text)
+            source = 'internal_ai'
+            model_used = 'ai_services._detect_emotion_smart'
+        except Exception:
+            scores = _local_scores(text)
+            source = 'local'
+            model_used = 'lexicon'
+        top = max(scores, key=scores.get)
+        recommendation = _recommend(top)
+        analysis = MoodAnalysis.objects.create(
+            user=request.user,
+            text=text,
+            top=top,
+            scores=scores,
+            source=source,
+            model=model_used
+        )
+        MoodRecommendation.objects.create(user=request.user, analysis=analysis, recommendation=recommendation)
+        result = {'top': top, 'scores': scores, 'text': text}
+
+    history = MoodAnalysis.objects.filter(user=request.user).order_by('-created_at')[:10]
+    return render(request, 'core/mood.html', {
+        'result': result,
+        'recommendation': recommendation,
+        'history': history,
+    })
+
+
+@login_required
+def mood_analyze(request):
+    """JSON endpoint: analyze text and persist MoodAnalysis + MoodRecommendation."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    def _local_scores(txt: str):
+        t = (txt or '').lower()
+        pos = ['super', 'bien', 'génial', 'genial', 'heureux', 'joie', 'content', 'love', 'aime', 'fier']
+        neg = ['mauvais', 'nul', 'triste', 'déprimé', 'deprime', 'peur', 'anxieux', 'stress', 'mal']
+        anger = ['colère', 'colere', 'furieux', 'énervé', 'enerve', 'rage', 'agacé', 'agace']
+        sad = ['triste', 'tristesse', 'chagrin', 'pleurer', 'solitaire']
+        scores = {'positif': 0.0, 'neutre': 0.1, 'negatif': 0.0, 'colere': 0.0, 'tristesse': 0.0}
+        for w in pos:
+            if w in t: scores['positif'] += 1
+        for w in neg:
+            if w in t: scores['negatif'] += 1
+        for w in anger:
+            if w in t: scores['colere'] += 1
+        for w in sad:
+            if w in t: scores['tristesse'] += 1
+        if scores['positif']==0 and scores['negatif']==0 and scores['colere']==0 and scores['tristesse']==0:
+            scores['neutre'] = 1.0
+        return scores
+
+    def _recommend(top: str) -> str:
+        mapping = {
+            'positif': "Garde cette énergie: note 3 gratitudes et planifie une petite action qui te fait plaisir.",
+            'neutre': "Prends 2 minutes pour respirer et écrire une intention simple pour aujourd’hui.",
+            'negatif': "Fais une pause courte (5 min), respire 4-7-8 et écris ce qui te pèse pour l’externaliser.",
+            'colere': "Évite d’agir à chaud. 10 respirations profondes ou une marche brève pour apaiser la tension.",
+            'tristesse': "Autorise-toi à ressentir. Appelle une personne de confiance ou écoute une musique douce."
+        }
+        return mapping.get((top or '').lower(), mapping['neutre'])
+
+    text = request.POST.get('text', '').strip()
+    if not text:
+        return JsonResponse({'error': 'text required'}, status=400)
+
+    try:
+        emo = AIAnalysisService._detect_emotion_smart(text)
+        mapping = {
+            'joy': 'positif', 'gratitude': 'positif', 'love': 'positif', 'excitement': 'positif', 'pride': 'positif',
+            'sadness': 'tristesse', 'anger': 'colere', 'fear': 'negatif', 'nostalgia': 'neutre', 'peace': 'neutre', 'neutral': 'neutre'
+        }
+        top = mapping.get(emo, 'neutre')
+        scores = {'positif': 0.0, 'neutre': 0.0, 'negatif': 0.0, 'colere': 0.0, 'tristesse': 0.0}
+        scores[top] = 1.0
+        source = 'internal_ai'
+        model_used = 'ai_services._detect_emotion_smart'
+    except Exception:
+        scores = _local_scores(text)
+        source = 'local'
+        model_used = 'lexicon'
+    top = max(scores, key=scores.get)
+    recommendation = _recommend(top)
+
+    analysis = MoodAnalysis.objects.create(
+        user=request.user,
+        text=text,
+        top=top,
+        scores=scores,
+        source=source,
+        model=model_used
+    )
+    MoodRecommendation.objects.create(user=request.user, analysis=analysis, recommendation=recommendation)
+
+    return JsonResponse({'top': top, 'scores': scores, 'recommendation': recommendation, 'source': source, 'model': model_used})
 
 @login_required
 def ajouter_souvenir(request):
