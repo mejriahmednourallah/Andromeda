@@ -87,7 +87,7 @@ def dashboard(request):
     notes_count = Note.objects.filter(owner=request.user).count()
     souvenirs_count = Souvenir.objects.filter(utilisateur=request.user).count()
     
-    # Activités récentes
+    # Recent activities
     recent_souvenirs = Souvenir.objects.filter(utilisateur=request.user).order_by('-created_at')[:6]
     recent_notes = Note.objects.filter(owner=request.user).order_by('-created_at')[:5]
     
@@ -207,7 +207,7 @@ def mood(request):
         )
         
         result = {'top': top, 'scores': scores, 'text': text}
-        messages.success(request, f"✨ Analyse effectuée avec {source.upper()}")
+        messages.success(request, f"✨ Analysis completed with {source.upper()}")
 
     # Get history and statistics
     history = MoodAnalysis.objects.filter(user=request.user).order_by('-created_at')[:10]
@@ -323,7 +323,7 @@ def ajouter_souvenir(request):
                     messages.warning(request, f'⚠️ AI analysis not available: {str(e)}')
                     logger.warning(f'AI analysis failed for new memory {souvenir.id}: {str(e)}')
                 
-                logger.info(f'Souvenir créé: {souvenir.id} par utilisateur {request.user.username}')
+                logger.info(f'Memory created: {souvenir.id} by user {request.user.username}')
                 
                 # Rediriger vers la liste des souvenirs
                 return redirect('core:liste_souvenirs')
