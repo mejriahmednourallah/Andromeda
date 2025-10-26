@@ -1,0 +1,311 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Mon Journal{% endblock %}
+
+{% block extra_head %}
+<style>
+.journal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 3px solid var(--border-color);
+    padding-bottom: 1rem;
+}
+
+.search-filter-section {
+    background: var(--panel-bg);
+    border: 3px solid var(--border-color);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.search-box {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.search-input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+}
+
+.filter-chips {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.chip {
+    padding: 0.5rem 1rem;
+    background: var(--panel-bg);
+    border: 2px solid var(--border-color);
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    text-decoration: none;
+    color: var(--text-dark);
+}
+
+.chip.active {
+    background: var(--accent-orange);
+    color: white;
+    border-color: var(--accent-orange);
+}
+
+.entry-card {
+    background: var(--panel-bg);
+    border: 3px solid var(--border-color);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+}
+
+.entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+.entry-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.entry-meta {
+    display: flex;
+    gap: 1rem;
+    color: var(--text-gray);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.entry-preview {
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.entry-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+}
+
+.tag-badge {
+    padding: 0.25rem 0.75rem;
+    border: 2px solid var(--border-color);
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.favorite-btn {
+    background: var(--panel-bg);
+    border: 2px solid var(--border-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.stats-bar {
+    display: flex;
+    gap: 2rem;
+    background: var(--panel-bg);
+    border: 3px solid var(--border-color);
+    color: var(--text-dark);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-gray);
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Mon Journal</h1>
+            <p style="color: var(--text-gray); font-size: 1rem;">Explorez vos pensées et émotions</p>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <a href="{% url 'core:statistiques_journal' %}" class="btn-secondary">📊 Statistiques</a>
+            <a href="{% url 'core:liste_tags' %}" class="btn-secondary">🏷️ Tags</a>
+            <a href="{% url 'core:page_analyse_ai' %}" class="btn-secondary">🤖 Analyse IA</a>
+            <a href="{% url 'core:ajouter_entree_journal' %}" class="btn-primary">+ Nouvelle Entrée</a>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+{% if entrees %}
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+    <div class="card" style="text-align: center;">
+        <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ page_obj.paginator.count }}</p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">Total des entrées</p>
+    </div>
+    <div class="card" style="text-align: center;">
+        <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ user_tags.count }}</p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">Tags utilisés</p>
+    </div>
+    <div class="card" style="text-align: center;">
+        <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ humeurs.count }}</p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">Humeurs</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Search and Filters -->
+<div class="card" style="margin-bottom: 2rem;">
+    <h2 class="card-title">Recherche et Filtres</h2>
+    <form method="get" action="{% url 'core:liste_entrees_journal' %}">
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+            <input type="text" name="q" style="flex: 1; padding: 0.75rem; border: 2px solid var(--border-color); font-family: 'Courier New', monospace;" placeholder="🔍 Rechercher dans vos entrées..." value="{{ query|default:'' }}">
+            <button type="submit" class="btn-primary">Rechercher</button>
+            {% if query %}
+            <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary">Effacer</a>
+            {% endif %}
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <label style="font-weight: bold; margin-bottom: 0.5rem; display: block;">Filtrer par tag:</label>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary" style="{% if not selected_tag %}background: var(--accent-orange); color: white;{% endif %}">Tous</a>
+                {% for tag in user_tags %}
+                <a href="?tag={{ tag.id }}" class="btn-secondary" style="{% if selected_tag == tag.id|stringformat:'s' %}background: var(--accent-orange); color: white;{% endif %}">{{ tag.nom }}</a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div>
+            <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" name="favorites" value="true" {% if request.GET.favorites %}checked{% endif %} onchange="this.form.submit()">
+                <span>Afficher uniquement les favoris</span>
+            </label>
+        </div>
+    </form>
+</div>
+
+<!-- Entries -->
+{% if entrees %}
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+    {% for entree in entrees %}
+    <div class="card" onclick="window.location.href='{% url 'core:detail_entree_journal' entree.pk %}'" style="cursor: pointer;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.25rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
+                {% if entree.is_favorite %}⭐ {% endif %}{{ entree.titre }}
+            </h3>
+            <button onclick="event.stopPropagation(); toggleFavorite({{ entree.pk }}, this)" style="background: none; border: none; font-size: 1.25rem; cursor: pointer;">
+                {% if entree.is_favorite %}⭐{% else %}☆{% endif %}
+            </button>
+        </div>
+
+        <p style="color: var(--text-gray); font-size: 0.95rem; margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+            {{ entree.contenu_texte|truncatewords:50 }}
+        </p>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <p style="color: var(--text-gray); font-size: 0.9rem;">
+                📅 {{ entree.date_creation|date:"d/m/Y" }} • 📝 {{ entree.nombre_mots }} mots
+            </p>
+        </div>
+
+        {% if entree.tags_list %}
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+            {% for tag in entree.tags_list %}
+            <span style="background: {{ tag.couleur }}; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: bold;">{{ tag.nom }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div style="display: flex;">
+            <a href="{% url 'core:detail_entree_journal' entree.pk %}" class="btn-primary" style="width: 100%; text-align: center;">Voir les détails</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem;">
+    {% if page_obj.has_previous %}
+    <a href="?page=1{% if query %}&q={{ query }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}" class="btn-secondary">« Première</a>
+    <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}" class="btn-secondary">‹ Précédente</a>
+    {% endif %}
+
+    <span class="btn-secondary" style="background: var(--accent-orange); color: white;">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}" class="btn-secondary">Suivante ›</a>
+    <a href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}" class="btn-secondary">Dernière »</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="card" style="text-align: center; padding: 4rem;">
+    <p style="font-size: 1.25rem; color: var(--text-gray); margin-bottom: 1.5rem;">Votre journal est vide</p>
+    <a href="{% url 'core:ajouter_entree_journal' %}" class="btn-primary" style="display: inline-block;">
+        Écrire votre première entrée
+    </a>
+</div>
+{% endif %}
+
+<script>
+function toggleFavorite(entreeId, button) {
+    fetch(`/journal/${entreeId}/favorite/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            button.textContent = data.is_favorite ? '⭐' : '☆';
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+{% endblock %}

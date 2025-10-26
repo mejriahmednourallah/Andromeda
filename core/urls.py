@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
+from . import views_journal
+from . import views_ai
 
 app_name = 'core'
 
@@ -75,4 +77,39 @@ urlpatterns = [
     path('exports/pdf/', views.liste_exports_pdf, name='liste_exports_pdf'),
     path('exports/pdf/create/', views.exporter_pdf, name='exporter_pdf'),
     path('exports/pdf/<int:export_id>/download/', views.telecharger_pdf, name='telecharger_pdf'),
+        # === JOURNAL (CRUD) ===
+    path('journal/', views_journal.liste_entrees_journal, name='liste_entrees_journal'),
+    path('journal/add/', views_journal.ajouter_entree_journal, name='ajouter_entree_journal'),
+    path('journal/<int:pk>/', views_journal.detail_entree_journal, name='detail_entree_journal'),
+    path('journal/<int:pk>/edit/', views_journal.modifier_entree_journal, name='modifier_entree_journal'),
+    path('journal/<int:pk>/delete/', views_journal.supprimer_entree_journal, name='supprimer_entree_journal'),
+    path('journal/<int:pk>/favorite/', views_journal.toggle_favori_entree, name='toggle_favori_entree'),
+    
+    # === TAGS ===
+    path('journal/tags/', views_journal.liste_tags, name='liste_tags'),
+    path('journal/tags/add/', views_journal.ajouter_tag, name='ajouter_tag'),
+    path('journal/tags/<int:pk>/edit/', views_journal.modifier_tag, name='modifier_tag'),
+    path('journal/tags/<int:pk>/delete/', views_journal.supprimer_tag, name='supprimer_tag'),
+    
+    # === STATISTIQUES JOURNAL ===
+    path('journal/stats/', views_journal.statistiques_journal, name='statistiques_journal'),
+    
+    # === EXPORT PDF ===
+    path('journal/export-pdf/', views_journal.export_journal_pdf, name='export_journal_pdf'),
+    path('journal/<int:pk>/export-pdf/', views_journal.export_entree_pdf, name='export_entree_pdf'),
+    
+    # === ANALYSE IA (OLD) ===
+    path('journal/analyze-ai/', views_journal.analyser_entree_ia, name='analyser_entree_ia'),
+    
+    # === ANALYSE IA GROQ (NEW) ===
+    path('journal/ai/', views_ai.page_analyse_ai, name='page_analyse_ai'),
+    path('journal/ai/analyser/<int:pk>/', views_ai.analyser_entree_ai, name='analyser_entree_ai_groq'),
+    path('journal/ai/tendances/', views_ai.analyse_tendances_ai, name='analyse_tendances_ai'),
+    path('journal/ai/prompt/', views_ai.generer_prompt_ai, name='generer_prompt_ai'),
+    path('journal/ai/appliquer-tags/<int:pk>/', views_ai.appliquer_tags_suggeres, name='appliquer_tags_suggeres'),
+    
+    # === CHATBOT ===
+    path('journal/chatbot/', views_ai.page_chatbot, name='page_chatbot'),
+    path('journal/chatbot/message/', views_ai.chatbot_message, name='chatbot_message'),
+    path('journal/chatbot/questions/<int:pk>/', views_ai.chatbot_questions_suggerees, name='chatbot_questions_suggerees'),
 ]

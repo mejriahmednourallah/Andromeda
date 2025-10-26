@@ -1,0 +1,315 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}{{ action }} un journal{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ action }} un journal</h1>
+        <p style="color: var(--text-gray); font-size: 1rem;">Exprimez vos pensées et émotions</p>
+    </div>
+
+    <!-- Templates Section -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <h2 class="card-title">Modèles de Journal</h2>
+        <p style="color: var(--text-gray); margin-bottom: 1.5rem;">Commencez rapidement avec un modèle prédéfini</p>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+            <button type="button" onclick="applyTemplate('gratitude')" class="btn-secondary">Gratitude</button>
+            <button type="button" onclick="applyTemplate('reflection')" class="btn-secondary">Réflexion</button>
+            <button type="button" onclick="applyTemplate('goals')" class="btn-secondary">Objectifs</button>
+            <button type="button" onclick="applyTemplate('dream')" class="btn-secondary">Rêve</button>
+            <button type="button" onclick="applyTemplate('achievement')" class="btn-secondary">Réussite</button>
+        </div>
+    </div>
+
+    <!-- AI Analysis Section -->
+    <div class="card" style="margin-bottom: 2rem; text-align: center;">
+        <h2 class="card-title">Analyse IA Avancée</h2>
+        <a href="{% url 'core:page_analyse_ai' %}" class="btn-primary" style="display: inline-block;">Ouvrir l'Analyse IA</a>
+        <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-gray);">
+            <em>Sauvegardez d'abord votre journal, puis analysez-le sur la page dédiée</em>
+        </p>
+    </div>
+
+    <!-- Auto-save indicator -->
+    <div id="autoSaveIndicator" style="position: fixed; top: 2rem; right: 2rem; background: var(--panel-bg); border: 2px solid var(--border-color); color: var(--text-dark); padding: 0.75rem 1.5rem; font-weight: bold; z-index: 1000; display: none;">
+        ✓ Sauvegardé automatiquement
+    </div>
+
+    <form method="post" id="entryForm" class="card">
+        {% csrf_token %}
+
+        <!-- Title -->
+        <div style="margin-bottom: 1.5rem;">
+            <label for="{{ form.titre.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                {{ form.titre.label }} <span style="color: #dc2626;">*</span>
+            </label>
+            {{ form.titre }}
+            {% if form.titre.errors %}
+                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.titre.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Content -->
+        <div style="margin-bottom: 1.5rem;">
+            <label for="{{ form.contenu_texte.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                {{ form.contenu_texte.label }} <span style="color: #dc2626;">*</span>
+            </label>
+
+            <!-- Formatting Toolbar -->
+            <div style="display: flex; gap: 0.5rem; padding: 0.75rem; background: var(--panel-bg); border: 2px solid var(--border-color); margin-bottom: 0.5rem; flex-wrap: wrap;">
+                <button type="button" onclick="formatText('bold')" title="Gras (Ctrl+B)" style="padding: 0.5rem 0.75rem; background: white; border: 2px solid var(--border-color); cursor: pointer; font-weight: bold; color: var(--text-dark); font-size: 0.9rem;">
+                    <strong>B</strong>
+                </button>
+                <button type="button" onclick="formatText('italic')" title="Italique (Ctrl+I)" style="padding: 0.5rem 0.75rem; background: white; border: 2px solid var(--border-color); cursor: pointer; font-weight: bold; color: var(--text-dark); font-size: 0.9rem;">
+                    <em>I</em>
+                </button>
+                <button type="button" onclick="formatText('underline')" title="Souligné (Ctrl+U)" style="padding: 0.5rem 0.75rem; background: white; border: 2px solid var(--border-color); cursor: pointer; font-weight: bold; color: var(--text-dark); font-size: 0.9rem;">
+                    <u>U</u>
+                </button>
+                <button type="button" onclick="formatText('heading')" title="Titre" style="padding: 0.5rem 0.75rem; background: white; border: 2px solid var(--border-color); cursor: pointer; font-weight: bold; color: var(--text-dark); font-size: 0.9rem;">
+                    H1
+                </button>
+                <button type="button" onclick="formatText('list')" title="Liste" style="padding: 0.5rem 0.75rem; background: white; border: 2px solid var(--border-color); cursor: pointer; font-weight: bold; color: var(--text-dark); font-size: 0.9rem;">
+                    • Liste
+                </button>
+                <button type="button" onclick="formatText('quote')" title="Citation" style="padding: 0.5rem 0.75rem; background: white; border: 2px solid var(--border-color); cursor: pointer; font-weight: bold; color: var(--text-dark); font-size: 0.9rem;">
+                    " Citation
+                </button>
+                <button type="button" onclick="formatText('link')" title="Lien" style="padding: 0.5rem 0.75rem; background: white; border: 2px solid var(--border-color); cursor: pointer; font-weight: bold; color: var(--text-dark); font-size: 0.9rem;">
+                    🔗 Lien
+                </button>
+            </div>
+
+            {{ form.contenu_texte }}
+            {% if form.contenu_texte.errors %}
+                <p style="color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.contenu_texte.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Tags -->
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Tags</label>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.5rem; margin-top: 0.5rem;">
+                {% for tag in form.tags %}
+                <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 2px solid var(--border-color); background: var(--panel-bg); cursor: pointer;">
+                    {{ tag.tag }}
+                    <span>{{ tag.choice_label }}</span>
+                </label>
+                {% endfor %}
+            </div>
+            <a href="{% url 'core:liste_tags' %}" style="display: inline-block; margin-top: 0.5rem; color: var(--accent-orange);">+ Gérer les tags</a>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 1rem; padding-top: 1rem; border-top: 2px solid var(--separator-color);">
+            <button type="submit" class="btn-primary" style="flex: 1;">{{ action }}</button>
+            <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary" style="flex: 1; text-align: center; line-height: 2.5;">Annuler</a>
+        </div>
+    </form>
+
+    <!-- Word Counter -->
+    <div id="wordCount" style="position: fixed; bottom: 2rem; right: 2rem; background: var(--panel-bg); border: 2px solid var(--border-color); color: var(--text-dark); padding: 1rem; font-weight: bold; font-size: 1rem; z-index: 100;">
+        0 mots
+    </div>
+</div>
+
+<script>
+// Word counter
+const textarea = document.getElementById('id_contenu_texte');
+const wordCountEl = document.getElementById('wordCount');
+
+function updateWordCount() {
+    const text = textarea.value.trim();
+    const words = text ? text.split(/\s+/).length : 0;
+    wordCountEl.textContent = words + ' mot' + (words > 1 ? 's' : '');
+}
+
+textarea.addEventListener('input', updateWordCount);
+updateWordCount();
+
+// Note: L'analyse IA est maintenant disponible sur la page dédiée /journal/ai/
+// avec Groq (LLaMA 3) pour des analyses plus avancées et rapides
+
+// Templates
+const templates = {
+    gratitude: {
+        title: "Gratitude du jour",
+        content: "Aujourd'hui, je suis reconnaissant(e) pour...\n\n1. \n2. \n3. \n\nCes moments/personnes/choses ont rendu ma journée spéciale parce que..."
+    },
+    reflection: {
+        title: "Réflexion quotidienne",
+        content: "Ce que j'ai appris aujourd'hui :\n\n\nCe qui m'a surpris :\n\n\nCe que je pourrais améliorer demain :\n\n\nMes pensées principales :"
+    },
+    goals: {
+        title: "Mes objectifs",
+        content: "Objectifs à court terme :\n• \n• \n• \n\nObjectifs à long terme :\n• \n• \n\nActions concrètes pour aujourd'hui :\n1. \n2. \n3. "
+    },
+    dream: {
+        title: "Journal de rêves",
+        content: "Date du rêve : \n\nRésumé du rêve :\n\n\nÉmotions ressenties :\n\n\nSymboles ou éléments marquants :\n\n\nInterprétation personnelle :"
+    },
+    achievement: {
+        title: "Réussite du jour",
+        content: "Ce que j'ai accompli aujourd'hui :\n\n\nLes défis que j'ai surmontés :\n\n\nCe dont je suis fier(e) :\n\n\nCe que cela signifie pour moi :"
+    }
+};
+
+function applyTemplate(templateName) {
+    const template = templates[templateName];
+    if (template) {
+        document.getElementById('id_titre').value = template.title;
+        document.getElementById('id_contenu_texte').value = template.content;
+        updateWordCount();
+        showNotification('✓ Modèle appliqué !', 'success');
+    }
+}
+
+// Text Formatting
+function formatText(format) {
+    const textarea = document.getElementById('id_contenu_texte');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    let formattedText = selectedText;
+    
+    switch(format) {
+        case 'bold':
+            formattedText = `**${selectedText}**`;
+            break;
+        case 'italic':
+            formattedText = `*${selectedText}*`;
+            break;
+        case 'underline':
+            formattedText = `__${selectedText}__`;
+            break;
+        case 'heading':
+            formattedText = `# ${selectedText}`;
+            break;
+        case 'list':
+            formattedText = selectedText.split('\n').map(line => `• ${line}`).join('\n');
+            break;
+        case 'quote':
+            formattedText = `> ${selectedText}`;
+            break;
+        case 'link':
+            const url = prompt('Entrez l\'URL:');
+            if (url) formattedText = `[${selectedText}](${url})`;
+            break;
+    }
+    
+    textarea.value = textarea.value.substring(0, start) + formattedText + textarea.value.substring(end);
+    textarea.focus();
+    textarea.setSelectionRange(start, start + formattedText.length);
+    updateWordCount();
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        const textarea = document.getElementById('id_contenu_texte');
+        if (document.activeElement === textarea) {
+            if (e.key === 'b') {
+                e.preventDefault();
+                formatText('bold');
+            } else if (e.key === 'i') {
+                e.preventDefault();
+                formatText('italic');
+            } else if (e.key === 'u') {
+                e.preventDefault();
+                formatText('underline');
+            }
+        }
+    }
+});
+
+// Auto-save functionality
+let autoSaveTimeout;
+let lastSavedContent = '';
+
+function autoSave() {
+    const titre = document.getElementById('id_titre').value;
+    const contenu = document.getElementById('id_contenu_texte').value;
+    
+    // Only save if there's content and it's different from last save
+    if ((titre || contenu) && (titre + contenu) !== lastSavedContent) {
+        lastSavedContent = titre + contenu;
+        
+        // Save to localStorage
+        localStorage.setItem('journal_draft', JSON.stringify({
+            titre: titre,
+            contenu: contenu,
+            timestamp: new Date().toISOString()
+        }));
+        
+        // Show indicator
+        const indicator = document.getElementById('autoSaveIndicator');
+        indicator.style.display = 'block';
+        setTimeout(() => {
+            indicator.style.display = 'none';
+        }, 2000);
+    }
+}
+
+// Trigger auto-save on input
+document.getElementById('id_titre').addEventListener('input', function() {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(autoSave, 2000); // Save after 2 seconds of inactivity
+});
+
+document.getElementById('id_contenu_texte').addEventListener('input', function() {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(autoSave, 2000);
+});
+
+// Load draft on page load
+window.addEventListener('load', function() {
+    const draft = localStorage.getItem('journal_draft');
+    if (draft) {
+        const data = JSON.parse(draft);
+        const draftAge = (new Date() - new Date(data.timestamp)) / 1000 / 60; // minutes
+        
+        // Only restore if draft is less than 24 hours old and fields are empty
+        if (draftAge < 1440 && !document.getElementById('id_titre').value && !document.getElementById('id_contenu_texte').value) {
+            if (confirm('Un brouillon a été trouvé. Voulez-vous le restaurer ?')) {
+                document.getElementById('id_titre').value = data.titre;
+                document.getElementById('id_contenu_texte').value = data.contenu;
+                updateWordCount();
+                showNotification('✓ Brouillon restauré !', 'success');
+            }
+        }
+    }
+});
+
+// Clear draft on successful submit
+document.getElementById('entryForm').addEventListener('submit', function() {
+    localStorage.removeItem('journal_draft');
+});
+
+// Notification helper
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${type === 'success' ? 'rgba(16, 185, 129, 0.95)' : 'rgba(239, 68, 68, 0.95)'};
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        font-weight: 700;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease-out;
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.style.animation = 'fadeOut 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+    }, 2500);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,445 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Statistiques du Journal{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem;">
+        <div>
+            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">📊 Statistiques du Journal</h1>
+            <p style="color: var(--text-gray); font-size: 1rem;">Analysez vos habitudes d'écriture et vos émotions</p>
+        </div>
+        <div style="margin-top: 1rem;">
+            <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary">← Retour au journal</a>
+        </div>
+    </div>
+
+    <!-- Export Section -->
+    <div class="card" style="margin-bottom: 2rem; text-align: center;">
+        <h2 class="card-title">📄 Exporter votre journal</h2>
+        <p style="color: var(--text-gray); margin-bottom: 1.5rem;">Téléchargez toutes vos entrées au format PDF</p>
+        <button onclick="exportToPDF()" class="btn-primary">📥 Télécharger en PDF</button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📝</div>
+            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ total_entrees }}</div>
+            <div style="color: var(--text-gray); font-size: 0.9rem;">Entrées totales</div>
+        </div>
+
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">✍️</div>
+            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ total_mots|floatformat:0 }}</div>
+            <div style="color: var(--text-gray); font-size: 0.9rem;">Mots écrits</div>
+        </div>
+
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">⭐</div>
+            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ entrees_favorites }}</div>
+            <div style="color: var(--text-gray); font-size: 0.9rem;">Entrées favorites</div>
+        </div>
+
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ moyenne_mots }}</div>
+            <div style="color: var(--text-gray); font-size: 0.9rem;">Mots par entrée</div>
+        </div>
+
+        <div class="card" style="text-align: center; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔥</div>
+            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ current_streak }}</div>
+            <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Série actuelle (jours)</div>
+        </div>
+
+        <div class="card" style="text-align: center; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🏆</div>
+            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ longest_streak }}</div>
+            <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Meilleure série</div>
+        </div>
+    </div>
+
+    <!-- Sentiment Timeline Chart -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <h2 class="card-title">📈 Évolution des émotions (30 derniers jours)</h2>
+        <canvas id="sentimentChart" style="max-height: 300px;"></canvas>
+    </div>
+
+    <!-- Charts Row -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <!-- Tags Chart -->
+        <div class="card">
+            <h2 class="card-title">🏷️ Tags les plus utilisés</h2>
+            <canvas id="tagsChart"></canvas>
+        </div>
+
+        <!-- Moods Chart -->
+        <div class="card">
+            <h2 class="card-title">😊 Humeurs les plus fréquentes</h2>
+            <canvas id="moodsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Top Lists -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <!-- Top Tags List -->
+        <div class="card">
+            <h2 class="card-title">🏆 Top 10 Tags</h2>
+            {% if tags_populaires %}
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                {% for tag in tags_populaires %}
+                <li style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color);">
+                    <div style="display: flex; align-items: center;">
+                        <span style="font-size: 1.5rem; font-weight: bold; margin-right: 1rem; min-width: 30px; text-align: center; {% if forloop.counter == 1 %}color: #ffd700;{% elif forloop.counter == 2 %}color: #c0c0c0;{% elif forloop.counter == 3 %}color: #cd7f32;{% endif %}">
+                            #{{ forloop.counter }}
+                        </span>
+                        <span style="background: {{ tag.couleur }}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.9rem; font-weight: 500;">
+                            {{ tag.nom }}
+                        </span>
+                    </div>
+                    <span style="font-weight: bold; color: #3b82f6;">{{ tag.nb_utilisations }} fois</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p style="text-align: center; color: var(--text-gray); padding: 2rem;">Aucun tag utilisé pour le moment</p>
+            {% endif %}
+        </div>
+
+        <!-- Top Moods List -->
+        <div class="card">
+            <h2 class="card-title">🎭 Top 10 Humeurs</h2>
+            {% if humeurs_frequentes %}
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                {% for humeur in humeurs_frequentes %}
+                <li style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color);">
+                    <div style="display: flex; align-items: center;">
+                        <span style="font-size: 1.5rem; font-weight: bold; margin-right: 1rem; min-width: 30px; text-align: center; {% if forloop.counter == 1 %}color: #ffd700;{% elif forloop.counter == 2 %}color: #c0c0c0;{% elif forloop.counter == 3 %}color: #cd7f32;{% endif %}">
+                            #{{ forloop.counter }}
+                        </span>
+                        <span style="font-size: 1.2rem;">{{ humeur.emoji }} {{ humeur.nom }}</span>
+                    </div>
+                    <span style="font-weight: bold; color: #3b82f6;">{{ humeur.nb_utilisations }} fois</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p style="text-align: center; color: var(--text-gray); padding: 2rem;">Aucune humeur enregistrée pour le moment</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Entries -->
+    <div class="card" style="margin-top: 2rem;">
+        <h2 class="card-title">📖 Entrées récentes</h2>
+        {% if entrees_recentes %}
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for entree in entrees_recentes %}
+            <a href="{% url 'core:detail_entree_journal' entree.pk %}" style="text-decoration: none; color: inherit;">
+                <div style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; transition: all 0.2s;">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <h4 style="font-weight: bold; margin-bottom: 0.5rem;">{{ entree.titre }}</h4>
+                            <p style="color: var(--text-gray); font-size: 0.9rem;">
+                                📅 {{ entree.date_creation|date:"d M Y" }} • 📝 {{ entree.nombre_mots }} mots
+                            </p>
+                        </div>
+                        {% if entree.is_favorite %}
+                        <span style="font-size: 1.5rem;">⭐</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="text-align: center; color: var(--text-gray); padding: 2rem;">Aucune entrée pour le moment</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Sentiment Timeline Chart
+const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
+const sentimentData = {
+    labels: [{% for item in timeline_data %}'{{ item.date }}',{% endfor %}],
+    datasets: [
+        {
+            label: 'Émotions Positives',
+            data: [{% for item in timeline_data %}{{ item.positive }},{% endfor %}],
+            backgroundColor: 'rgba(16, 185, 129, 0.2)',
+            borderColor: 'rgba(16, 185, 129, 1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: 'rgba(16, 185, 129, 1)',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2
+        },
+        {
+            label: 'Émotions Négatives',
+            data: [{% for item in timeline_data %}{{ item.negative }},{% endfor %}],
+            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+            borderColor: 'rgba(239, 68, 68, 1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: 'rgba(239, 68, 68, 1)',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2
+        },
+        {
+            label: 'Nombre d\'entrées',
+            data: [{% for item in timeline_data %}{{ item.entries }},{% endfor %}],
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            borderColor: 'rgba(102, 126, 234, 1)',
+            borderWidth: 2,
+            fill: false,
+            tension: 0.4,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            pointBackgroundColor: 'rgba(102, 126, 234, 1)',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            borderDash: [5, 5]
+        }
+    ]
+};
+
+new Chart(sentimentCtx, {
+    type: 'line',
+    data: sentimentData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: {
+            mode: 'index',
+            intersect: false
+        },
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    font: { size: 13, weight: '600' },
+                    color: '#64748b',
+                    padding: 15,
+                    usePointStyle: true,
+                    pointStyle: 'circle'
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(102, 126, 234, 0.95)',
+                padding: 16,
+                titleFont: { size: 15, weight: 'bold' },
+                bodyFont: { size: 13 },
+                cornerRadius: 12,
+                displayColors: true,
+                callbacks: {
+                    title: function(context) {
+                        return 'Date: ' + context[0].label;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1,
+                    font: { size: 12, weight: '600' },
+                    color: '#64748b'
+                },
+                grid: {
+                    color: 'rgba(102, 126, 234, 0.08)',
+                    lineWidth: 1
+                }
+            },
+            x: {
+                ticks: {
+                    font: { size: 11, weight: '600' },
+                    color: '#64748b',
+                    maxRotation: 45,
+                    minRotation: 45
+                },
+                grid: {
+                    display: false
+                }
+            }
+        },
+        animation: {
+            duration: 2000,
+            easing: 'easeInOutQuart'
+        }
+    }
+});
+
+// Tags Chart
+const tagsCtx = document.getElementById('tagsChart').getContext('2d');
+const tagsData = {
+    labels: [{% for tag in tags_populaires|slice:":5" %}'{{ tag.nom }}',{% endfor %}],
+    datasets: [{
+        label: 'Utilisations',
+        data: [{% for tag in tags_populaires|slice:":5" %}{{ tag.nb_utilisations }},{% endfor %}],
+        backgroundColor: [
+            {% for tag in tags_populaires|slice:":5" %}'{{ tag.couleur }}40',{% endfor %}
+        ],
+        borderColor: [
+            {% for tag in tags_populaires|slice:":5" %}'{{ tag.couleur }}',{% endfor %}
+        ],
+        borderWidth: 2
+    }]
+};
+
+new Chart(tagsCtx, {
+    type: 'bar',
+    data: tagsData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                backgroundColor: 'rgba(102, 126, 234, 0.95)',
+                padding: 16,
+                titleFont: { size: 16, weight: 'bold' },
+                bodyFont: { size: 14 },
+                cornerRadius: 12,
+                displayColors: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1,
+                    font: { size: 13, weight: '600' },
+                    color: '#64748b'
+                },
+                grid: {
+                    color: 'rgba(102, 126, 234, 0.08)',
+                    lineWidth: 1
+                }
+            },
+            x: {
+                ticks: {
+                    font: { size: 13, weight: '600' },
+                    color: '#64748b'
+                },
+                grid: {
+                    display: false
+                }
+            }
+        },
+        animation: {
+            duration: 1500,
+            easing: 'easeInOutQuart'
+        }
+    }
+});
+
+// Moods Chart
+const moodsCtx = document.getElementById('moodsChart').getContext('2d');
+const moodsData = {
+    labels: [{% for humeur in humeurs_frequentes|slice:":5" %}'{{ humeur.emoji }} {{ humeur.nom }}',{% endfor %}],
+    datasets: [{
+        label: 'Fréquence',
+        data: [{% for humeur in humeurs_frequentes|slice:":5" %}{{ humeur.nb_utilisations }},{% endfor %}],
+        backgroundColor: [
+            {% for humeur in humeurs_frequentes|slice:":5" %}'{{ humeur.couleur }}40',{% endfor %}
+        ],
+        borderColor: [
+            {% for humeur in humeurs_frequentes|slice:":5" %}'{{ humeur.couleur }}',{% endfor %}
+        ],
+        borderWidth: 2
+    }]
+};
+
+new Chart(moodsCtx, {
+    type: 'doughnut',
+    data: moodsData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    font: { size: 14, weight: '600' },
+                    color: '#64748b',
+                    padding: 20,
+                    usePointStyle: true,
+                    pointStyle: 'circle'
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(102, 126, 234, 0.95)',
+                padding: 16,
+                titleFont: { size: 16, weight: 'bold' },
+                bodyFont: { size: 14 },
+                cornerRadius: 12,
+                displayColors: true
+            }
+        },
+        cutout: '65%',
+        animation: {
+            duration: 1800,
+            easing: 'easeInOutQuart',
+            animateRotate: true,
+            animateScale: true
+        }
+    }
+});
+
+// Export to PDF function
+function exportToPDF() {
+    // Show loading
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '⏳ Génération en cours...';
+    btn.disabled = true;
+    
+    // Call export endpoint
+    fetch('/journal/export-pdf/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'mon-journal-' + new Date().toISOString().split('T')[0] + '.pdf';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        // Reset button
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Erreur lors de l\'export PDF. Veuillez réessayer.');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+</script>
+{% endblock %}

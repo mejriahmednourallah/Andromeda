@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #764ba2;
+            margin-top: 30px;
+            page-break-after: avoid;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .meta {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .entry {
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+        }
+        .entry-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+        .entry-date {
+            color: #6b7280;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        .entry-content {
+            text-align: justify;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+        }
+        .tags {
+            margin-top: 10px;
+        }
+        .tag {
+            display: inline-block;
+            background: #e5e7eb;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin-right: 5px;
+        }
+        .footer {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 0.8em;
+            margin-top: 50px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📔 Mon Journal</h1>
+        <p><strong>{{ user.get_full_name|default:user.username }}</strong></p>
+        <p>Exporté le {{ date_export|date:"d/m/Y à H:i" }}</p>
+    </div>
+    
+    <div class="meta">
+        <p><strong>Statistiques:</strong></p>
+        <p>Total d'entrées: {{ total_entrees }}</p>
+        <p>Total de mots: {{ total_mots }}</p>
+    </div>
+    
+    {% for entree in entrees %}
+    <div class="entry">
+        <h2 class="entry-title">{{ entree.titre }}</h2>
+        <p class="entry-date">
+            📅 {{ entree.date_creation|date:"d/m/Y" }} • 
+            ⏰ {{ entree.date_creation|date:"H:i" }} • 
+            📝 {{ entree.nombre_mots }} mots
+            {% if entree.lieu %} • 📍 {{ entree.lieu }}{% endif %}
+        </p>
+        
+        <div class="entry-content">{{ entree.contenu_texte }}</div>
+        
+        {% if entree.tags_list %}
+        <div class="tags">
+            <strong>Tags:</strong>
+            {% for tag in entree.tags_list %}
+            <span class="tag">{{ tag.nom }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% if entree.humeurs_list %}
+        <div class="tags">
+            <strong>Humeurs:</strong>
+            {% for humeur in entree.humeurs_list %}
+            <span class="tag">{{ humeur.emoji }} {{ humeur.nom }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    
+    <div class="footer">
+        <p>Généré par Andromeda - Votre journal personnel</p>
+    </div>
+</body>
+</html>
