@@ -22,34 +22,45 @@
 
 <!-- Analysis Result -->
 {% if result %}
-<div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white;">
-    <h2 style="font-size: 1.75rem; font-weight: bold; margin-bottom: 1rem; color: white;">📊 Analysis Result</h2>
+<div class="card" style="background: linear-gradient(135deg, #faf6f1 0%, #f5ebe0 100%); border: 3px solid var(--accent-orange); position: relative; overflow: hidden;">
+    <!-- Decorative corner accent -->
+    <div style="position: absolute; top: 0; right: 0; width: 80px; height: 80px; background: linear-gradient(135deg, var(--accent-orange) 0%, transparent 100%); opacity: 0.1;"></div>
     
-    <div style="background: rgba(255,255,255,0.15); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
-        <p style="font-size: 1.1rem; margin-bottom: 0.5rem; color: white; opacity: 0.9;">Detected Mood:</p>
-        <p style="font-size: 2.5rem; font-weight: bold; color: white; text-transform: capitalize;">{{ result.top }}</p>
-    </div>
-    
-    {% if recommendation %}
-    <div style="background: rgba(255,255,255,0.15); padding: 1.5rem; border-radius: 8px;">
-        <p style="font-size: 1.1rem; margin-bottom: 0.75rem; color: white; font-weight: bold;">💡 Personalized Recommendation:</p>
-        <p style="font-size: 1rem; line-height: 1.6; color: white; opacity: 0.95;">{{ recommendation }}</p>
-    </div>
-    {% endif %}
-    
-    {% if result.scores %}
-    <div style="margin-top: 1.5rem;">
-        <p style="font-size: 1.1rem; margin-bottom: 1rem; color: white; font-weight: bold;">Emotion Scores:</p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-            {% for k, v in result.scores.items %}
-            <div style="background: rgba(255,255,255,0.15); padding: 1rem; border-radius: 6px; text-align: center;">
-                <p style="font-size: 0.85rem; color: white; opacity: 0.9; margin-bottom: 0.25rem; text-transform: capitalize;">{{ k }}</p>
-                <p style="font-size: 1.5rem; font-weight: bold; color: white;">{{ v|floatformat:2 }}</p>
-            </div>
-            {% endfor %}
+    <div style="position: relative; z-index: 1;">
+        <h2 style="font-size: 1.75rem; font-weight: bold; margin-bottom: 1rem; color: var(--text-dark); display: flex; align-items: center; gap: 0.5rem;">
+            <span style="color: var(--accent-orange);">🎭</span> Analysis Result
+        </h2>
+        
+        <div style="background: rgba(255, 107, 53, 0.05); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; border-left: 4px solid var(--accent-orange);">
+            <p style="font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--text-gray); opacity: 0.9;">Detected Mood:</p>
+            <p style="font-size: 2.5rem; font-weight: bold; color: var(--accent-orange); text-transform: capitalize; margin: 0;">{{ result.top }}</p>
         </div>
+        
+        {% if recommendation %}
+        <div style="background: rgba(212, 197, 185, 0.1); padding: 1.5rem; border-radius: 12px; border: 2px solid var(--separator-color);">
+            <p style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--text-dark); font-weight: bold; display: flex; align-items: center; gap: 0.5rem;">
+                <span>💡</span> Personalized Recommendation:
+            </p>
+            <p style="font-size: 1rem; line-height: 1.6; color: var(--text-gray); margin: 0;">{{ recommendation }}</p>
+        </div>
+        {% endif %}
+        
+        {% if result.scores %}
+        <div style="margin-top: 1.5rem;">
+            <p style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-dark); font-weight: bold; display: flex; align-items: center; gap: 0.5rem;">
+                <span>📊</span> Emotion Scores:
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                {% for k, v in result.scores.items %}
+                <div style="background: var(--panel-bg); padding: 1rem; border-radius: 8px; text-align: center; border: 2px solid var(--separator-color); transition: transform 0.2s ease;">
+                    <p style="font-size: 0.85rem; color: var(--text-gray); margin-bottom: 0.25rem; text-transform: capitalize; font-weight: 500;">{{ k }}</p>
+                    <p style="font-size: 1.5rem; font-weight: bold; color: var(--accent-orange); margin: 0;">{{ v|floatformat:2 }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 {% endif %}
 

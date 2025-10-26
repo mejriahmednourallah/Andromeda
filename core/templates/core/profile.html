@@ -7,63 +7,200 @@
 ul.errorlist {
     display: none;
 }
-.profile-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
+
+.profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
 }
-.stat-card {
-    background: var(--panel-bg);
-    border: 3px solid var(--border-color);
-    padding: 1.5rem;
+
+.profile-header {
     text-align: center;
-    border-radius: 8px;
+    margin-bottom: 3rem;
+    padding: 2rem 0;
+    background: linear-gradient(135deg, var(--panel-bg) 0%, rgba(255, 107, 53, 0.05) 100%);
+    border-radius: 16px;
+    border: 2px solid var(--separator-color);
 }
-.stat-number {
-    font-size: 2rem;
-    font-weight: bold;
-    color: var(--accent-orange);
+
+.profile-header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text-dark);
     margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--accent-orange) 0%, #f5a623 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
-.stat-label {
+
+.profile-header p {
     color: var(--text-gray);
-    font-size: 0.9rem;
+    font-size: 1.1rem;
+    margin: 0;
 }
-.activity-item {
+
+.main-content {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.profile-section {
     background: var(--panel-bg);
     border: 2px solid var(--border-color);
-    padding: 1rem;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--separator-color);
+}
+
+.section-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
     margin-bottom: 0.5rem;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+}
+
+.form-label span {
+    color: #ef4444;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--accent-orange);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-orange) 0%, #f5a623 100%);
+    color: white;
+    border: none;
+    padding: 0.875rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.3);
+}
+
+.btn-secondary {
+    background: var(--panel-bg);
+    color: var(--text-dark);
+    border: 2px solid var(--border-color);
+    padding: 0.5rem 1rem;
     border-radius: 6px;
-}
-.activity-type {
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
     display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    margin-bottom: 0.5rem;
 }
-.activity-memory { background: #dbeafe; color: #1e40af; }
-.activity-capsule { background: #fef3c7; color: #92400e; }
-.activity-date {
+
+.btn-secondary:hover {
+    background: var(--accent-orange);
+    color: white;
+    border-color: var(--accent-orange);
+}
+
+.security-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, var(--bg-light) 0%, rgba(255, 255, 255, 0.5) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.security-item:hover {
+    border-color: var(--accent-orange);
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.1);
+}
+
+.security-info h3 {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--text-dark);
+}
+
+.security-info p {
     color: var(--text-gray);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .profile-header h1 {
+        font-size: 2.5rem;
+    }
+
+    .profile-section {
+        padding: 1.5rem;
+    }
+
+    .section-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+    }
 }
 </style>
 
-<div style="max-width: 1000px; margin: 0 auto;">
-    <div style="margin-bottom: 2rem;">
-        <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">My Profile</h1>
-        <p style="color: #6b7280; font-size: 1rem;">Manage your account information and view your activity</p>
+<div class="profile-container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <h1>My Profile</h1>
+        <p>Manage your account information and view your activity</p>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 2rem;">
-        <!-- Profile Form -->
-        <div>
-            <div class="card">
-                <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1.5rem;">Account Information</h2>
+    <div class="main-content">
+        <!-- Profile Form and Security -->
+        <div style="max-width: 600px; margin: 0 auto;">
+            <!-- Account Information -->
+            <div class="profile-section">
+                <div class="section-header">
+                    <h2 class="section-title">Account Information</h2>
+                </div>
 
                 <form method="post">
                     {% csrf_token %}
@@ -77,9 +214,9 @@ ul.errorlist {
                     {% endif %}
 
                     <!-- Username -->
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="{{ form.username.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
-                            {{ form.username.label }} <span style="color: #dc2626;">*</span>
+                    <div class="form-group">
+                        <label for="{{ form.username.id_for_label }}" class="form-label">
+                            {{ form.username.label }} <span>*</span>
                         </label>
                         {{ form.username }}
                         {% if form.username.errors %}
@@ -90,9 +227,9 @@ ul.errorlist {
                     </div>
 
                     <!-- Email -->
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="{{ form.email.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
-                            {{ form.email.label }} <span style="color: #dc2626;">*</span>
+                    <div class="form-group">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">
+                            {{ form.email.label }} <span>*</span>
                         </label>
                         {{ form.email }}
                         {% if form.email.errors %}
@@ -103,8 +240,8 @@ ul.errorlist {
                     </div>
 
                     <!-- First Name -->
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="{{ form.first_name.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                    <div class="form-group">
+                        <label for="{{ form.first_name.id_for_label }}" class="form-label">
                             {{ form.first_name.label }}
                         </label>
                         {{ form.first_name }}
@@ -116,8 +253,8 @@ ul.errorlist {
                     </div>
 
                     <!-- Last Name -->
-                    <div style="margin-bottom: 2rem;">
-                        <label for="{{ form.last_name.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">
+                    <div class="form-group">
+                        <label for="{{ form.last_name.id_for_label }}" class="form-label">
                             {{ form.last_name.label }}
                         </label>
                         {{ form.last_name }}
@@ -128,91 +265,23 @@ ul.errorlist {
                         {% endif %}
                     </div>
 
-                    <button type="submit" class="btn-primary" style="width: 100%;">Update Profile</button>
+                    <button type="submit" class="btn-primary">Update Profile</button>
                 </form>
             </div>
 
             <!-- Account Security -->
-            <div class="card" style="margin-top: 2rem;">
-                <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1.5rem;">Account Security</h2>
-
-                <div style="space-y-4">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--bg-light); border-radius: 8px;">
-                        <div>
-                            <h3 style="font-weight: bold; margin-bottom: 0.25rem;">Password</h3>
-                            <p style="color: var(--text-gray); font-size: 0.9rem; margin: 0;">Last changed: Never</p>
-                        </div>
-                        <a href="{% url 'core:password_reset' %}" class="btn-secondary" style="padding: 0.5rem 1rem;">Change Password</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Statistics and Activity -->
-        <div>
-            <!-- Statistics -->
-            <div class="card" style="margin-bottom: 2rem;">
-                <h3 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;">Your Statistics</h3>
-
-                <div class="profile-grid">
-                    <div class="stat-card">
-                        <div class="stat-number">{{ user_stats.total_memories }}</div>
-                        <div class="stat-label">Total Memories</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">{{ user_stats.favorite_memories }}</div>
-                        <div class="stat-label">Favorites</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">{{ user_stats.analyzed_memories }}</div>
-                        <div class="stat-label">AI Analyzed</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">{{ user_stats.albums_count }}</div>
-                        <div class="stat-label">Albums</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">{{ user_stats.capsules_count }}</div>
-                        <div class="stat-label">Time Capsules</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">{{ user_stats.notes_count }}</div>
-                        <div class="stat-label">Notes</div>
-                    </div>
+            <div class="profile-section">
+                <div class="section-header">
+                    <h2 class="section-title">Account Security</h2>
                 </div>
 
-                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 2px solid var(--separator-color);">
-                    <p style="color: var(--text-gray); font-size: 0.9rem; margin: 0;">
-                        Member since {{ user_stats.member_since }}
-                    </p>
+                <div class="security-item">
+                    <div class="security-info">
+                        <h3>Password</h3>
+                        <p>Last changed: Never</p>
+                    </div>
+                    <a href="{% url 'core:password_reset' %}" class="btn-secondary">Change Password</a>
                 </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="card">
-                <h3 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;">Recent Activity</h3>
-
-                {% if recent_activity %}
-                    {% for activity in recent_activity %}
-                        <div class="activity-item">
-                            <span class="activity-type activity-{{ activity.type }}">
-                                {{ activity.type|title }}
-                            </span>
-                            <div style="margin-bottom: 0.5rem;">
-                                <a href="{{ activity.url }}" style="color: var(--text-dark); text-decoration: none; font-weight: 500;">
-                                    {{ activity.title }}
-                                </a>
-                            </div>
-                            <div class="activity-date">
-                                {{ activity.date|date:"M j, Y g:i A" }}
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p style="color: var(--text-gray); font-style: italic; text-align: center; padding: 2rem;">
-                        No recent activity yet. Start creating memories!
-                    </p>
-                {% endif %}
             </div>
         </div>
     </div>
