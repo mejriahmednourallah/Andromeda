@@ -7,38 +7,38 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <div>
             <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">🏷️ Mes Tags</h1>
-            <p style="color: #6b7280;">Gérez vos tags personnalisés</p>
+            <p style="color: var(--text-gray); font-size: 1rem;">Gérez vos tags personnalisés</p>
         </div>
         <div style="display: flex; gap: 1rem;">
             <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary">← Retour</a>
             <a href="{% url 'core:ajouter_tag' %}" class="btn-primary">+ Nouveau Tag</a>
         </div>
     </div>
-    
+
     {% if tags %}
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
         {% for tag in tags %}
-        <div style="background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+        <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                <span style="font-size: 1.5rem; font-weight: bold; color: {{ tag.couleur }};">{{ tag.nom }}</span>
-                <div style="width: 30px; height: 30px; background: {{ tag.couleur }}; border-radius: 50%;"></div>
+                <span style="font-size: 1.25rem; font-weight: bold; color: {{ tag.couleur }};">{{ tag.nom }}</span>
+                <div style="width: 30px; height: 30px; border-radius: 50%; background: {{ tag.couleur }};"></div>
             </div>
             {% if tag.description %}
-            <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 1rem;">{{ tag.description }}</p>
+            <p style="color: var(--text-gray); font-size: 0.9rem; margin-bottom: 1rem;">{{ tag.description }}</p>
             {% endif %}
-            <p style="color: #3b82f6; font-weight: 600; margin-bottom: 1rem;">{{ tag.nb_entrees }} entrée{{ tag.nb_entrees|pluralize }}</p>
+            <p style="color: var(--accent-orange); font-weight: 600; margin-bottom: 1rem;">{{ tag.nb_entrees }} entrée{{ tag.nb_entrees|pluralize }}</p>
             <div style="display: flex; gap: 0.5rem;">
                 <a href="{% url 'core:modifier_tag' tag.pk %}" class="btn-secondary" style="flex: 1; text-align: center;">Modifier</a>
-                <a href="{% url 'core:supprimer_tag' tag.pk %}" class="btn-secondary" style="background: #ef4444; color: white;">🗑️</a>
+                <a href="{% url 'core:supprimer_tag' tag.pk %}" class="btn-secondary" style="background: #ef4444; color: white; flex: 1; text-align: center;">🗑️</a>
             </div>
         </div>
         {% endfor %}
     </div>
     {% else %}
-    <div style="text-align: center; padding: 4rem; background: white; border-radius: 12px;">
+    <div class="card" style="text-align: center; padding: 4rem;">
         <p style="font-size: 3rem; margin-bottom: 1rem;">🏷️</p>
         <h2 style="margin-bottom: 1rem;">Aucun tag</h2>
-        <p style="color: #6b7280; margin-bottom: 2rem;">Créez votre premier tag pour organiser vos entrées</p>
+        <p style="color: var(--text-gray); margin-bottom: 2rem;">Créez votre premier tag pour organiser vos entrées</p>
         <a href="{% url 'core:ajouter_tag' %}" class="btn-primary">+ Créer un tag</a>
     </div>
     {% endif %}
