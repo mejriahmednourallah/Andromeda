@@ -328,6 +328,10 @@ class EntreeJournalForm(forms.ModelForm):
 class TagForm(forms.ModelForm):
     """Formulaire pour créer/modifier un tag"""
     
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+    
     class Meta:
         model = Tag
         fields = ['nom', 'couleur', 'description']
@@ -361,6 +365,17 @@ class TagForm(forms.ModelForm):
             raise ValidationError('Le nom ne peut pas être vide.')
         if len(nom) < 2:
             raise ValidationError('Le nom doit contenir au moins 2 caractères.')
+        
+        # Check for duplicate tag name for the current user
+        if self.user:
+            # Exclude current instance when editing
+            queryset = Tag.objects.filter(nom=nom.strip(), utilisateur=self.user)
+            if self.instance and self.instance.pk:
+                queryset = queryset.exclude(pk=self.instance.pk)
+            
+            if queryset.exists():
+                raise ValidationError(f'Vous avez déjà un tag avec le nom "{nom.strip()}".')
+        
         return nom.strip()
 
 

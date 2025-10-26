@@ -330,7 +330,7 @@
         <div style="display: flex; gap: 1rem;">
             <a href="{% url 'core:statistiques_journal' %}" style="padding: 1rem 2rem; border-radius: 50px; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); color: #475569; font-weight: 700; text-decoration: none; box-shadow: 0 8px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'">📊 Statistiques</a>
             <a href="{% url 'core:liste_tags' %}" style="padding: 1rem 2rem; border-radius: 50px; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); color: #475569; font-weight: 700; text-decoration: none; box-shadow: 0 8px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'">🏷️ Gérer les Tags</a>
-            <a href="{% url 'core:ajouter_entree_journal' %}" style="padding: 1.2rem 2.5rem; border-radius: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); color: white; font-weight: 800; text-decoration: none; box-shadow: 0 12px 30px rgba(102,126,234,0.4); transition: all 0.4s ease; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 1.1rem;" onmouseover="this.style.transform='translateY(-5px) scale(1.05)'; this.style.boxShadow='0 20px 50px rgba(102,126,234,0.5)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 12px 30px rgba(102,126,234,0.4)'">✍️ Nouvelle Entrée</a>
+            <a href="{% url 'core:ajouter_entree_journal' %}" style="padding: 1.2rem 2.5rem; border-radius: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); color: white; font-weight: 800; text-decoration: none; box-shadow: 0 12px 30px rgba(102,126,234,0.4); transition: all 0.4s ease; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 1.1rem;" onmouseover="this.style.transform='translateY(-5px) scale(1.05)'; this.style.boxShadow='0 20px 50px rgba(102,126,234,0.5)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 12px 30px rgba(102,126,234,0.4)'">Nouveau Journal</a>
         </div>
     </div>
 
@@ -361,9 +361,9 @@
             {% endif %}
         </div>
         
-        <div style="display: flex; gap: 2rem; margin-top: 1.5rem;">
+        <div style="margin-top: 1.5rem;">
             <!-- Tags Filter -->
-            <div style="flex: 1;">
+            <div>
                 <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Filtrer par tag:</label>
                 <div class="filter-chips">
                     <a href="{% url 'core:liste_entrees_journal' %}" class="chip {% if not selected_tag %}active{% endif %}">
@@ -377,27 +377,12 @@
                     {% endfor %}
                 </div>
             </div>
-            
-            <!-- Moods Filter -->
-            <div style="flex: 1;">
-                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Filtrer par humeur:</label>
-                <div class="filter-chips">
-                    <a href="{% url 'core:liste_entrees_journal' %}" class="chip {% if not selected_humeur %}active{% endif %}">
-                        Toutes
-                    </a>
-                    {% for humeur in humeurs %}
-                    <a href="?humeur={{ humeur.id }}" class="chip {% if selected_humeur == humeur.id|stringformat:'s' %}active{% endif %}">
-                        {{ humeur.emoji }} {{ humeur.nom }}
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
         </div>
         
         <div style="margin-top: 1rem;">
             <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                 <input type="checkbox" name="favorites" value="true" {% if request.GET.favorites %}checked{% endif %} onchange="this.form.submit()">
-                <span>⭐ Afficher uniquement les favoris</span>
+                <span>Afficher uniquement les favoris</span>
             </label>
         </div>
     </form>
@@ -411,11 +396,11 @@
             <div style="flex: 1;">
                 <h2 class="entry-title">{{ entree.titre }}</h2>
                 <div class="entry-meta">
-                    <span>📅 {{ entree.date_creation|date:"d M Y" }}</span>
-                    <span>⏰ {{ entree.date_creation|date:"H:i" }}</span>
-                    <span>📝 {{ entree.nombre_mots }} mots</span>
+                    <span>{{ entree.date_creation|date:"d M Y" }}</span>
+                    <span>{{ entree.date_creation|date:"H:i" }}</span>
+                    <span>{{ entree.nombre_mots }} mots</span>
                     {% if entree.lieu %}
-                    <span>📍 {{ entree.lieu }}</span>
+                    <span>{{ entree.lieu }}</span>
                     {% endif %}
                 </div>
             </div>
@@ -431,16 +416,6 @@
             {% for tag in entree.tags_list %}
             <span class="tag-badge" style="background-color: {{ tag.couleur }}20; color: {{ tag.couleur }}; border: 1px solid {{ tag.couleur }};">
                 {{ tag.nom }}
-            </span>
-            {% endfor %}
-        </div>
-        {% endif %}
-        
-        {% if entree.humeurs_list %}
-        <div class="mood-badges">
-            {% for humeur in entree.humeurs_list %}
-            <span class="mood-badge" style="background-color: {{ humeur.couleur }}20; color: {{ humeur.couleur }};">
-                {{ humeur.emoji }} {{ humeur.nom }}
             </span>
             {% endfor %}
         </div>
@@ -467,15 +442,15 @@
 {% else %}
     <div class="empty-state">
         <div class="empty-state-icon">📝</div>
-        <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Aucune entrée trouvée</h2>
+        <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Aucun journal trouvé</h2>
         <p style="margin-bottom: 1.5rem;">
             {% if query %}
-            Aucune entrée ne correspond à votre recherche.
+            Aucun journal ne correspond à votre recherche.
             {% else %}
             Commencez à écrire votre journal dès maintenant !
             {% endif %}
         </p>
-        <a href="{% url 'core:ajouter_entree_journal' %}" class="btn-primary">✍️ Créer ma première entrée</a>
+        <a href="{% url 'core:ajouter_entree_journal' %}" class="btn-primary">Créer mon premier journal</a>
     </div>
 {% endif %}
 

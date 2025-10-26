@@ -403,7 +403,7 @@ class PartageSouvenir(models.Model):
 # --- Tags for Journal Entries ---
 class Tag(models.Model):
     """Tags pour catégoriser les entrées de journal"""
-    nom = models.CharField(max_length=50, unique=True, help_text="Nom du tag")
+    nom = models.CharField(max_length=50, help_text="Nom du tag")
     couleur = models.CharField(max_length=7, default='#3498db', help_text="Couleur du tag (hex)")
     description = models.TextField(blank=True, default='', help_text="Description du tag")
     utilisateur = models.ForeignKey('User', on_delete=models.CASCADE, related_name='tags', null=True, blank=True, help_text="Propriétaire du tag (null = tag global)")
@@ -442,7 +442,7 @@ class Humeur(models.Model):
         ordering = ['nom']
     
     def __str__(self):
-        return f"{self.emoji} {self.nom}"
+        return self.nom
 
 
 # --- Journal Entries (for linking memories to journal) ---

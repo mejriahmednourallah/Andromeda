@@ -260,7 +260,7 @@ def ajouter_tag(request):
     Créer un nouveau tag
     """
     if request.method == 'POST':
-        form = TagForm(request.POST)
+        form = TagForm(request.POST, user=request.user)
         if form.is_valid():
             tag = form.save(commit=False)
             tag.utilisateur = request.user
@@ -269,7 +269,7 @@ def ajouter_tag(request):
             messages.success(request, f'Tag "{tag.nom}" créé avec succès!')
             return redirect('core:liste_tags')
     else:
-        form = TagForm()
+        form = TagForm(user=request.user)
     
     context = {
         'form': form,
@@ -287,13 +287,13 @@ def modifier_tag(request, pk):
     tag = get_object_or_404(Tag, pk=pk, utilisateur=request.user)
     
     if request.method == 'POST':
-        form = TagForm(request.POST, instance=tag)
+        form = TagForm(request.POST, instance=tag, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, f'Tag "{tag.nom}" modifié avec succès!')
             return redirect('core:liste_tags')
     else:
-        form = TagForm(instance=tag)
+        form = TagForm(instance=tag, user=request.user)
     
     context = {
         'form': form,
