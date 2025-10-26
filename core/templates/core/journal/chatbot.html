@@ -1,0 +1,511 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Chatbot Journal{% endblock %}
+
+{% block extra_head %}
+<style>
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes typing {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 1; }
+    }
+    
+    .chat-container {
+        display: flex;
+        height: calc(100vh - 200px);
+        max-height: 700px;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(20px);
+        border-radius: 32px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+        border: 2px solid rgba(255,255,255,0.9);
+        overflow: hidden;
+    }
+    
+    .chat-sidebar {
+        width: 300px;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-right: 2px solid #e2e8f0;
+        padding: 2rem;
+        overflow-y: auto;
+    }
+    
+    .chat-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chat-header {
+        padding: 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom: 2px solid rgba(255,255,255,0.2);
+    }
+    
+    .chat-messages {
+        flex: 1;
+        padding: 2rem;
+        overflow-y: auto;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    }
+    
+    .chat-input-area {
+        padding: 1.5rem 2rem;
+        background: white;
+        border-top: 2px solid #e2e8f0;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .message {
+        margin-bottom: 1.5rem;
+        animation: fadeInUp 0.4s ease-out;
+    }
+    
+    .message-user {
+        display: flex;
+        justify-content: flex-end;
+    }
+    
+    .message-bot {
+        display: flex;
+        justify-content: flex-start;
+    }
+    
+    .message-bubble {
+        max-width: 70%;
+        padding: 1.2rem 1.5rem;
+        border-radius: 20px;
+        line-height: 1.6;
+        font-size: 1rem;
+    }
+    
+    .message-user .message-bubble {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom-right-radius: 4px;
+        box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+    }
+    
+    .message-bot .message-bubble {
+        background: white;
+        color: #1f2937;
+        border-bottom-left-radius: 4px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border: 2px solid #e2e8f0;
+    }
+    
+    .message-time {
+        font-size: 0.75rem;
+        opacity: 0.7;
+        margin-top: 0.5rem;
+    }
+    
+    .typing-indicator {
+        display: none;
+        padding: 1rem 1.5rem;
+        background: white;
+        border-radius: 20px;
+        border-bottom-left-radius: 4px;
+        max-width: fit-content;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border: 2px solid #e2e8f0;
+    }
+    
+    .typing-indicator span {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #667eea;
+        margin: 0 2px;
+        animation: typing 1.4s infinite;
+    }
+    
+    .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    .chat-input {
+        flex: 1;
+        padding: 1rem 1.5rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 50px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .chat-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
+    }
+    
+    .send-btn {
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+    }
+    
+    .send-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102,126,234,0.4);
+    }
+    
+    .send-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .entry-card {
+        padding: 1rem;
+        background: white;
+        border-radius: 16px;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .entry-card:hover {
+        border-color: #667eea;
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(102,126,234,0.2);
+    }
+    
+    .entry-card.active {
+        border-color: #667eea;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .suggested-question {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        border-radius: 50px;
+        margin: 0.5rem 0.5rem 0.5rem 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        border: 2px solid #e2e8f0;
+    }
+    
+    .suggested-question:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+    }
+    
+    .welcome-message {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #64748b;
+    }
+    
+    .welcome-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        animation: float 3s ease-in-out infinite;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Animated Background -->
+<div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: -1; overflow: hidden; background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #fce7f3 100%);">
+    <div style="position: absolute; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(102,126,234,0.15) 0%, transparent 70%); top: -250px; right: -250px; animation: float 20s ease-in-out infinite;"></div>
+    <div style="position: absolute; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(245,87,108,0.12) 0%, transparent 70%); bottom: -200px; left: -200px; animation: float 25s ease-in-out infinite reverse;"></div>
+</div>
+
+<div style="max-width: 1400px; margin: 0 auto; padding: 2rem;">
+    <!-- Header -->
+    <div style="background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); border-radius: 32px; padding: 2rem 3rem; margin-bottom: 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.08); border: 2px solid rgba(255,255,255,0.9); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -1px;">💬 Chatbot Journal</h1>
+            <p style="color: #64748b; font-size: 1.1rem; font-weight: 500;">Chat with AI about your journal entries</p>
+        </div>
+        <a href="{% url 'core:liste_entrees_journal' %}" style="padding: 1rem 2rem; border-radius: 50px; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); color: #475569; font-weight: 700; text-decoration: none; box-shadow: 0 8px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'">← Back</a>
+    </div>
+
+    <!-- Chat Container -->
+    <div class="chat-container">
+        <!-- Sidebar -->
+        <div class="chat-sidebar">
+            <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 1.5rem; color: #1f2937;">📚 Your Entries</h3>
+            
+            <div class="entry-card" onclick="selectEntry(null)" id="entry-general">
+                <div style="font-weight: 700; margin-bottom: 0.25rem;">💭 General Conversation</div>
+                <div style="font-size: 0.85rem; opacity: 0.8;">Discuss your journal</div>
+            </div>
+            
+            {% for entree in entrees_recentes %}
+            <div class="entry-card" onclick="selectEntry({{ entree.pk }})" id="entry-{{ entree.pk }}">
+                <div style="font-weight: 700; margin-bottom: 0.25rem;">{{ entree.titre|truncatewords:5 }}</div>
+                <div style="font-size: 0.85rem; opacity: 0.8;">{{ entree.date_creation|date:"d/m/Y" }}</div>
+            </div>
+            {% endfor %}
+            
+            {% if not entrees_recentes %}
+            <p style="text-align: center; color: #94a3b8; font-style: italic; padding: 2rem 0;">No entries available</p>
+            {% endif %}
+        </div>
+
+        <!-- Main Chat -->
+        <div class="chat-main">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem;" id="chat-title">💭 General Conversation</h2>
+                <p style="opacity: 0.95; font-size: 0.95rem;" id="chat-subtitle">Ask me questions about your journal</p>
+            </div>
+
+            <!-- Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <div class="welcome-message">
+                    <div class="welcome-icon">🤖</div>
+                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; color: #1f2937;">Hello! I'm your journal assistant</h3>
+                    <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">I can help you reflect on your entries, answer your questions, and give you personalized advice.</p>
+                    <div style="margin-top: 2rem;">
+                        <p style="font-weight: 600; margin-bottom: 1rem; color: #475569;">Suggested questions:</p>
+                        <div>
+                            <span class="suggested-question" onclick="askQuestion('How can I improve my journaling practice?')">How can I improve my journaling practice?</span>
+                            <span class="suggested-question" onclick="askQuestion('What are my recurring emotions?')">What are my recurring emotions?</span>
+                            <span class="suggested-question" onclick="askQuestion('Give me advice for today')">Give me advice for today</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="typing-indicator" id="typingIndicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="chat-input-area">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Ask your question..." onkeypress="handleKeyPress(event)">
+                <button class="send-btn" onclick="sendMessage()" id="sendBtn">
+                    <span id="sendBtnText">Send</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let conversationHistory = [];
+let currentEntryId = null;
+
+// Sélectionner une entrée
+function selectEntry(entryId) {
+    // Réinitialiser l'historique
+    conversationHistory = [];
+    currentEntryId = entryId;
+    
+    // Mettre à jour l'UI
+    document.querySelectorAll('.entry-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    
+    if (entryId) {
+        document.getElementById(`entry-${entryId}`).classList.add('active');
+        document.getElementById('chat-title').textContent = '📝 Discussion about the entry';
+        document.getElementById('chat-subtitle').textContent = 'Ask questions about this specific entry';
+        
+        // Charger les questions suggérées
+        loadSuggestedQuestions(entryId);
+    } else {
+        document.getElementById('entry-general').classList.add('active');
+        document.getElementById('chat-title').textContent = '💭 Conversation Générale';
+        document.getElementById('chat-subtitle').textContent = 'Posez-moi des questions sur votre journal';
+    }
+    
+    // Effacer les messages
+    const messagesDiv = document.getElementById('chatMessages');
+    messagesDiv.innerHTML = `
+        <div class="welcome-message">
+            <div class="welcome-icon">🤖</div>
+            <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; color: #1f2937;">
+                ${entryId ? 'Let\'s discuss this entry' : 'Hello! I\'m your journal assistant'}
+            </h3>
+            <p style="font-size: 1.1rem;">
+                ${entryId ? 'Ask me questions about this specific entry.' : 'I can help you reflect on your entries.'}
+            </p>
+            <div id="suggestedQuestionsArea"></div>
+        </div>
+        <div class="typing-indicator" id="typingIndicator">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    `;
+}
+
+// Charger les questions suggérées
+function loadSuggestedQuestions(entryId) {
+    fetch(`/journal/chatbot/questions/${entryId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.questions) {
+            const area = document.getElementById('suggestedQuestionsArea');
+            let html = '<div style="margin-top: 2rem;"><p style="font-weight: 600; margin-bottom: 1rem; color: #475569;">Questions suggérées:</p><div>';
+            data.questions.forEach(q => {
+                html += `<span class="suggested-question" onclick="askQuestion('${q.replace(/'/g, "\\'")}')">${q}</span>`;
+            });
+            html += '</div></div>';
+            area.innerHTML = html;
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+// Envoyer un message
+function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const question = input.value.trim();
+    
+    if (!question) return;
+    
+    askQuestion(question);
+    input.value = '';
+}
+
+// Poser une question
+function askQuestion(question) {
+    // Ajouter le message utilisateur
+    addMessage(question, 'user');
+    
+    // Afficher l'indicateur de frappe
+    document.getElementById('typingIndicator').style.display = 'block';
+    scrollToBottom();
+    
+    // Désactiver le bouton
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.disabled = true;
+    document.getElementById('sendBtnText').textContent = '...';
+    
+    // Envoyer à l'API
+    fetch('/journal/chatbot/message/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            question: question,
+            historique: conversationHistory,
+            entree_id: currentEntryId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('typingIndicator').style.display = 'none';
+        
+        if (data.success) {
+            addMessage(data.reponse, 'bot');
+            
+            // Ajouter à l'historique
+            conversationHistory.push({role: 'user', content: question});
+            conversationHistory.push({role: 'assistant', content: data.reponse});
+        } else {
+            addMessage('Sorry, an error occurred: ' + data.error, 'bot');
+        }
+        
+        sendBtn.disabled = false;
+        document.getElementById('sendBtnText').textContent = 'Envoyer';
+    })
+    .catch(error => {
+        document.getElementById('typingIndicator').style.display = 'none';
+        addMessage('Connection error. Please try again.', 'bot');
+        sendBtn.disabled = false;
+        document.getElementById('sendBtnText').textContent = 'Envoyer';
+    });
+}
+
+// Ajouter un message à la conversation
+function addMessage(text, sender) {
+    const messagesDiv = document.getElementById('chatMessages');
+    
+    // Supprimer le message de bienvenue si présent
+    const welcome = messagesDiv.querySelector('.welcome-message');
+    if (welcome) {
+        welcome.remove();
+    }
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message message-${sender}`;
+    
+    const now = new Date();
+    const time = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    
+    messageDiv.innerHTML = `
+        <div class="message-bubble">
+            ${text}
+            <div class="message-time">${time}</div>
+        </div>
+    `;
+    
+    // Insérer avant l'indicateur de frappe
+    const typingIndicator = document.getElementById('typingIndicator');
+    messagesDiv.insertBefore(messageDiv, typingIndicator);
+    
+    scrollToBottom();
+}
+
+// Scroll vers le bas
+function scrollToBottom() {
+    const messagesDiv = document.getElementById('chatMessages');
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+// Gérer la touche Entrée
+function handleKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+}
+
+// Initialiser
+document.addEventListener('DOMContentLoaded', function() {
+    selectEntry(null);
+    document.getElementById('chatInput').focus();
+});
+</script>
+{% endblock %}

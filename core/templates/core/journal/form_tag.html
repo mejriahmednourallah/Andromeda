@@ -1,0 +1,38 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}{{ action }} un tag{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto;">
+    <h1 style="font-size: 2rem; margin-bottom: 2rem;">{{ action }} un tag</h1>
+    
+    <div style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Nom du tag *</label>
+                {{ form.nom }}
+                {% if form.nom.errors %}
+                <p style="color: #ef4444; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.nom.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Couleur</label>
+                {{ form.couleur }}
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Description</label>
+                {{ form.description }}
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <a href="{% url 'core:liste_tags' %}" class="btn-secondary">Annuler</a>
+                <button type="submit" class="btn-primary">💾 {{ action }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

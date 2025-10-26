@@ -3,7 +3,7 @@ from .models import (
     User, Note, Link, Template, Attachment, APIIntegration, AITask,
     Souvenir, AnalyseIASouvenir, AlbumSouvenir, CapsuleTemporelle,
     EntreeJournal, SouvenirEntree, PartageSouvenir,
-    ExportPDF, SuiviMotivationnel, Badge, UserBadge, HistoireInspirante
+    ExportPDF, SuiviMotivationnel, Badge, UserBadge, HistoireInspirante , Tag, Humeur, EntreeTag, EntreeHumeur
 )
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
@@ -85,13 +85,82 @@ class CapsuleTemporelleAdmin(admin.ModelAdmin):
     readonly_fields = ('date_verrouillage', 'date_ouverture_reelle', 'jours_restants', 'pourcentage_progression')
 
 
+class EntreeTagInline(admin.TabularInline):
+    model = EntreeTag
+    extra = 1
+    autocomplete_fields = ['tag']
+
+
+class EntreeHumeurInline(admin.TabularInline):
+    model = EntreeHumeur
+    extra = 1
+    autocomplete_fields = ['humeur']
+
+
 @admin.register(EntreeJournal)
 class EntreeJournalAdmin(admin.ModelAdmin):
-    list_display = ('titre', 'utilisateur', 'date_creation')
-    list_filter = ('date_creation',)
-    search_fields = ('titre', 'contenu_texte', 'utilisateur__username')
+    list_display = ('titre', 'utilisateur', 'is_favorite', 'is_public', 'nombre_mots', 'date_creation')
+    list_filter = ('date_creation', 'is_favorite', 'is_public')
+    search_fields = ('titre', 'contenu_texte', 'utilisateur__username', 'lieu')
     date_hierarchy = 'date_creation'
-    readonly_fields = ('date_creation', 'updated_at')
+    readonly_fields = ('date_creation', 'updated_at', 'nombre_mots')
+    inlines = [EntreeTagInline, EntreeHumeurInline]
+    
+    fieldsets = (
+        ('Information principale', {
+            'fields': ('utilisateur', 'titre', 'contenu_texte')
+        }),
+        ('Métadonnées', {
+            'fields': ('lieu', 'meteo', 'is_favorite', 'is_public')
+        }),
+        ('Système', {
+            'fields': ('date_creation', 'updated_at', 'nombre_mots'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    actions = ['mark_as_favorite']
+    
+    def mark_as_favorite(self, request, queryset):
+        updated = queryset.update(is_favorite=True)
+        self.message_user(request, f'{updated} entrées marquées comme favorites.')
+    mark_as_favorite.short_description = "Marquer comme favorite"
+
+
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ('nom', 'couleur', 'utilisateur', 'created_at')
+    list_filter = ('created_at', 'utilisateur')
+    search_fields = ('nom', 'description')
+    readonly_fields = ('created_at',)
+    list_per_page = 50
+
+
+@admin.register(Humeur)
+class HumeurAdmin(admin.ModelAdmin):
+    list_display = ('nom', 'emoji', 'couleur')
+    search_fields = ('nom', 'description')
+    list_per_page = 50
+
+
+@admin.register(EntreeTag)
+class EntreeTagAdmin(admin.ModelAdmin):
+    list_display = ('entree_journal', 'tag', 'date_association')
+    list_filter = ('date_association', 'tag')
+    search_fields = ('entree_journal__titre', 'tag__nom')
+    date_hierarchy = 'date_association'
+    readonly_fields = ('date_association',)
+    autocomplete_fields = ['entree_journal', 'tag']
+
+
+@admin.register(EntreeHumeur)
+class EntreeHumeurAdmin(admin.ModelAdmin):
+    list_display = ('entree_journal', 'humeur', 'intensite', 'date_association')
+    list_filter = ('date_association', 'humeur', 'intensite')
+    search_fields = ('entree_journal__titre', 'humeur__nom', 'note')
+    date_hierarchy = 'date_association'
+    readonly_fields = ('date_association',)
+    autocomplete_fields = ['entree_journal', 'humeur']
 
 
 @admin.register(SouvenirEntree)

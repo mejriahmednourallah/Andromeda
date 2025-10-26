@@ -69,6 +69,12 @@ AUTH_PASSWORD_VALIDATORS = []
 
 AUTH_USER_MODEL = 'core.User'
 
+# Custom authentication backend to allow login with email or username
+AUTHENTICATION_BACKENDS = [
+    'core.backends.EmailOrUsernameModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True

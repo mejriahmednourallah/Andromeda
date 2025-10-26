@@ -1,0 +1,508 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Analyse IA - Journal{% endblock %}
+
+{% block extra_head %}
+<style>
+.ai-header {
+    border-bottom: 3px solid var(--border-color);
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+}
+
+.ai-title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.ai-subtitle {
+    color: var(--text-gray);
+}
+
+.ai-stats {
+    color: var(--text-gray);
+    font-size: 0.9rem;
+}
+
+.ai-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.btn-ai {
+    width: 100%;
+    padding: 1rem;
+    background: var(--accent-orange);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-ai:hover {
+    opacity: 0.9;
+}
+
+.btn-ai:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.result-card {
+    background: var(--panel-bg);
+    border: 2px solid var(--border-color);
+    padding: 1.5rem;
+    margin-top: 1rem;
+    display: none;
+}
+
+.emotion-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: var(--accent-orange);
+    color: white;
+    border-radius: 20px;
+    font-weight: bold;
+    margin: 0.25rem;
+}
+
+.tag-suggestion {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: var(--accent-orange);
+    color: white;
+    border-radius: 20px;
+    font-weight: bold;
+    margin: 0.25rem;
+    cursor: pointer;
+}
+
+.tag-suggestion:hover {
+    opacity: 0.8;
+}
+
+.insight-item {
+    padding: 1rem;
+    background: var(--panel-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    border-left: 4px solid var(--accent-orange);
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--accent-orange);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.ai-center {
+    text-align: center;
+}
+
+.ai-back {
+    text-align: center;
+    margin-top: 3rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto;">
+    <!-- Header -->
+    <div class="ai-header">
+        <h1 class="ai-title">🤖 Analyse IA Avancée</h1>
+        <p class="ai-subtitle">Découvrez des insights sur vos émotions et habitudes d'écriture</p>
+        <p class="ai-stats">{{ total_entrees }} entrée(s) dans votre journal</p>
+    </div>
+
+    <!-- Fonctionnalités IA -->
+    <div class="ai-features">
+        <!-- Analyse Émotionnelle -->
+        <div class="card">
+            <div class="card-title">😊 Analyse Émotionnelle</div>
+            <p class="ai-card-desc">Détection automatique des émotions, sentiment et intensité</p>
+
+            {% if dernieres_entrees %}
+            <select id="entree-select-emotion" class="form-control">
+                <option value="">Sélectionnez une entrée</option>
+                {% for entree in dernieres_entrees %}
+                <option value="{{ entree.pk }}">{{ entree.titre }} - {{ entree.date_creation|date:"d/m/Y" }}</option>
+                {% endfor %}
+            </select>
+            <button onclick="analyserEmotions()" class="btn-ai">
+                🔍 Analyser les Émotions
+            </button>
+            <div id="result-emotions" class="result-card"></div>
+            {% else %}
+            <p style="color: var(--text-gray); font-style: italic;">Aucune entrée disponible</p>
+            {% endif %}
+        </div>
+
+        <!-- Suggestions de Tags -->
+        <div class="card">
+            <div class="card-title">🏷️ Tags Intelligents</div>
+            <p class="ai-card-desc">Suggestions automatiques de tags pertinents</p>
+
+            {% if dernieres_entrees %}
+            <select id="entree-select-tags" class="form-control">
+                <option value="">Sélectionnez une entrée</option>
+                {% for entree in dernieres_entrees %}
+                <option value="{{ entree.pk }}">{{ entree.titre }} - {{ entree.date_creation|date:"d/m/Y" }}</option>
+                {% endfor %}
+            </select>
+            <button onclick="suggererTags()" class="btn-ai">
+                ✨ Suggérer des Tags
+            </button>
+            <div id="result-tags" class="result-card"></div>
+            {% else %}
+            <p style="color: var(--text-gray); font-style: italic;">Aucune entrée disponible</p>
+            {% endif %}
+        </div>
+
+        <!-- Insights -->
+        <div class="card">
+            <div class="card-title">💡 Insights & Conseils</div>
+            <p class="ai-card-desc">Observations et suggestions personnalisées</p>
+
+            {% if dernieres_entrees %}
+            <select id="entree-select-insights" class="form-control">
+                <option value="">Sélectionnez une entrée</option>
+                {% for entree in dernieres_entrees %}
+                <option value="{{ entree.pk }}">{{ entree.titre }} - {{ entree.date_creation|date:"d/m/Y" }}</option>
+                {% endfor %}
+            </select>
+            <button onclick="genererInsights()" class="btn-ai">
+                🎯 Générer des Insights
+            </button>
+            <div id="result-insights" class="result-card"></div>
+            {% else %}
+            <p style="color: var(--text-gray); font-style: italic;">Aucune entrée disponible</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Analyse de Tendances -->
+    <div class="card ai-center">
+        <div class="card-title">📈 Analyse de Tendances</div>
+        <p class="ai-card-desc">Évolution émotionnelle sur vos 10 dernières entrées</p>
+
+        {% if total_entrees >= 3 %}
+        <button onclick="analyserTendances()" class="btn-ai" style="width: auto; padding: 1rem 2rem;">
+            📊 Analyser mes Tendances
+        </button>
+        <div id="result-tendances" class="result-card"></div>
+        {% else %}
+        <p style="color: var(--text-gray); font-style: italic;">Minimum 3 entrées requises pour l'analyse de tendances</p>
+        {% endif %}
+    </div>
+
+    <!-- Prompt d'Écriture -->
+    <div class="card ai-center">
+        <div class="card-title">✍️ Prompt d'Écriture</div>
+        <p class="ai-card-desc">Générez une question inspirante pour votre prochaine entrée</p>
+
+        <button onclick="genererPrompt()" class="btn-ai" style="width: auto; padding: 1rem 2rem;">
+            🎲 Générer un Prompt
+        </button>
+        <div id="result-prompt" class="result-card"></div>
+    </div>
+
+    <!-- Retour -->
+    <div class="ai-back">
+        <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary">← Retour au Journal</a>
+    </div>
+</div>
+
+<script>
+// Fonction utilitaire pour afficher le loading
+function showLoading(elementId) {
+    const element = document.getElementById(elementId);
+    element.style.display = 'block';
+    element.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="loading-spinner"></div><p style="margin-top: 1rem; color: #64748b;">Analyse en cours...</p></div>';
+}
+
+// Fonction utilitaire pour afficher une erreur
+function showError(elementId, message) {
+    const element = document.getElementById(elementId);
+    element.style.display = 'block';
+    element.innerHTML = `<div style="color: #ef4444; padding: 1rem; background: #fee2e2; border-radius: 12px;">❌ ${message}</div>`;
+}
+
+// Analyser les émotions
+function analyserEmotions() {
+    const entreeId = document.getElementById('entree-select-emotion').value;
+    if (!entreeId) {
+        alert('Veuillez sélectionner une entrée');
+        return;
+    }
+    
+    showLoading('result-emotions');
+    
+    fetch(`/journal/ai/analyser/${entreeId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const emotions = data.analyse.emotions;
+            let html = '<h4 style="color: #1f2937; margin-bottom: 1rem;">📊 Résultats de l\'Analyse</h4>';
+            
+            // Émotions principales
+            html += '<div style="margin-bottom: 1.5rem;"><strong>Émotions détectées:</strong><br>';
+            emotions.emotions_principales.forEach(emotion => {
+                html += `<span class="emotion-badge">${emotion}</span>`;
+            });
+            html += '</div>';
+            
+            // Score de sentiment
+            const sentimentPercent = (emotions.sentiment_score * 100).toFixed(0);
+            const sentimentColor = emotions.sentiment_score > 0.6 ? '#10b981' : emotions.sentiment_score < 0.4 ? '#ef4444' : '#f59e0b';
+            html += `<div style="margin-bottom: 1.5rem;">
+                <strong>Score de sentiment:</strong>
+                <div style="background: #e2e8f0; border-radius: 50px; height: 30px; margin-top: 0.5rem; overflow: hidden;">
+                    <div style="background: ${sentimentColor}; height: 100%; width: ${sentimentPercent}%; border-radius: 50px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">${sentimentPercent}%</div>
+                </div>
+            </div>`;
+            
+            // Intensité
+            html += `<div style="margin-bottom: 1.5rem;"><strong>Intensité émotionnelle:</strong> ${emotions.intensite_emotionnelle}</div>`;
+            
+            // Résumé
+            html += `<div style="padding: 1rem; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border-left: 4px solid #667eea;"><strong>Résumé:</strong><br>${emotions.resume_emotionnel}</div>`;
+            
+            document.getElementById('result-emotions').innerHTML = html;
+        } else {
+            showError('result-emotions', data.error);
+        }
+    })
+    .catch(error => {
+        showError('result-emotions', 'Erreur de connexion');
+    });
+}
+
+// Suggérer des tags
+function suggererTags() {
+    const entreeId = document.getElementById('entree-select-tags').value;
+    if (!entreeId) {
+        alert('Veuillez sélectionner une entrée');
+        return;
+    }
+    
+    showLoading('result-tags');
+    
+    fetch(`/journal/ai/analyser/${entreeId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const tags = data.analyse.tags_suggeres;
+            let html = '<h4 style="color: #1f2937; margin-bottom: 1rem;">🏷️ Tags Suggérés</h4>';
+            html += '<p style="color: #64748b; margin-bottom: 1rem;">Cliquez sur un tag pour l\'ajouter à l\'entrée:</p>';
+            
+            tags.forEach(tag => {
+                html += `<span class="tag-suggestion" onclick="appliquerTag('${entreeId}', '${tag}')">${tag}</span>`;
+            });
+            
+            document.getElementById('result-tags').innerHTML = html;
+        } else {
+            showError('result-tags', data.error);
+        }
+    })
+    .catch(error => {
+        showError('result-tags', 'Erreur de connexion');
+    });
+}
+
+// Appliquer un tag
+function appliquerTag(entreeId, tagNom) {
+    fetch(`/journal/ai/appliquer-tags/${entreeId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tags: [tagNom] })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✓ Tag "${tagNom}" ajouté !`);
+        }
+    });
+}
+
+// Générer des insights
+function genererInsights() {
+    const entreeId = document.getElementById('entree-select-insights').value;
+    if (!entreeId) {
+        alert('Veuillez sélectionner une entrée');
+        return;
+    }
+    
+    showLoading('result-insights');
+    
+    fetch(`/journal/ai/analyser/${entreeId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const insights = data.analyse.insights;
+            let html = '<h4 style="color: #1f2937; margin-bottom: 1rem;">💡 Insights & Conseils</h4>';
+            
+            // Observation principale
+            html += `<div class="insight-item"><strong>📌 Observation:</strong><br>${insights.observation_principale}</div>`;
+            
+            // Suggestions
+            if (insights.suggestions && insights.suggestions.length > 0) {
+                html += '<div class="insight-item"><strong>💡 Suggestions:</strong><ul style="margin: 0.5rem 0 0 1.5rem;">';
+                insights.suggestions.forEach(suggestion => {
+                    html += `<li>${suggestion}</li>`;
+                });
+                html += '</ul></div>';
+            }
+            
+            // Questions de réflexion
+            if (insights.questions_reflexion && insights.questions_reflexion.length > 0) {
+                html += '<div class="insight-item"><strong>🤔 Questions de réflexion:</strong><ul style="margin: 0.5rem 0 0 1.5rem;">';
+                insights.questions_reflexion.forEach(question => {
+                    html += `<li>${question}</li>`;
+                });
+                html += '</ul></div>';
+            }
+            
+            document.getElementById('result-insights').innerHTML = html;
+        } else {
+            showError('result-insights', data.error);
+        }
+    })
+    .catch(error => {
+        showError('result-insights', 'Erreur de connexion');
+    });
+}
+
+// Analyser les tendances
+function analyserTendances() {
+    showLoading('result-tendances');
+    
+    fetch('/journal/ai/tendances/', {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const tendances = data.tendances;
+            let html = '<h4 style="color: #1f2937; margin-bottom: 1rem;">📈 Analyse de Tendances</h4>';
+            html += `<p style="color: #64748b; margin-bottom: 1.5rem;">Basé sur ${data.nombre_entrees_analysees} entrée(s)</p>`;
+            
+            // Évolution
+            const evolutionColors = {
+                'positive': '#10b981',
+                'stable': '#f59e0b',
+                'negative': '#ef4444'
+            };
+            const evolutionIcons = {
+                'positive': '📈',
+                'stable': '➡️',
+                'negative': '📉'
+            };
+            html += `<div class="insight-item" style="border-left-color: ${evolutionColors[tendances.evolution]};">
+                <strong>${evolutionIcons[tendances.evolution]} Évolution:</strong> ${tendances.evolution}<br>
+                <span style="color: #64748b;">${tendances.tendance_emotionnelle}</span>
+            </div>`;
+            
+            // Thèmes récurrents
+            if (tendances.themes_recurrents && tendances.themes_recurrents.length > 0) {
+                html += '<div class="insight-item"><strong>🎯 Thèmes récurrents:</strong><br>';
+                tendances.themes_recurrents.forEach(theme => {
+                    html += `<span class="emotion-badge" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">${theme}</span>`;
+                });
+                html += '</div>';
+            }
+            
+            // Recommandations
+            if (tendances.recommandations && tendances.recommandations.length > 0) {
+                html += '<div class="insight-item"><strong>💡 Recommandations:</strong><ul style="margin: 0.5rem 0 0 1.5rem;">';
+                tendances.recommandations.forEach(reco => {
+                    html += `<li>${reco}</li>`;
+                });
+                html += '</ul></div>';
+            }
+            
+            document.getElementById('result-tendances').innerHTML = html;
+        } else {
+            showError('result-tendances', data.error);
+        }
+    })
+    .catch(error => {
+        showError('result-tendances', 'Erreur de connexion');
+    });
+}
+
+// Générer un prompt
+function genererPrompt() {
+    showLoading('result-prompt');
+    
+    fetch('/journal/ai/prompt/', {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = `<div style="padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; text-align: center; font-size: 1.3rem; font-weight: 600; line-height: 1.6;">
+                "${data.prompt}"
+            </div>`;
+            html += '<p style="text-align: center; margin-top: 1rem; color: #64748b;">Utilisez ce prompt pour votre prochaine entrée ✍️</p>';
+            
+            document.getElementById('result-prompt').innerHTML = html;
+        } else {
+            showError('result-prompt', data.error);
+        }
+    })
+    .catch(error => {
+        showError('result-prompt', 'Erreur de connexion');
+    });
+}
+</script>
+{% endblock %}

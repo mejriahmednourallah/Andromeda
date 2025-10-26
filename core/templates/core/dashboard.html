@@ -20,7 +20,7 @@
         <a href="{% url 'core:index' %}" class="btn-secondary" style="margin-top: 1rem; text-align: center;">View All Notes</a>
     </div>
 
-    <!-- Souvenirs Card -->
+    <!-- Memories Card -->
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
             <h3 style="font-size: 1.25rem; font-weight: bold;">Memories</h3>
@@ -30,12 +30,23 @@
         <a href="{% url 'core:liste_souvenirs' %}" class="btn-secondary" style="margin-top: 1rem; text-align: center;">View All Memories</a>
     </div>
 
+    <!-- Journal Card -->
+    <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.25rem; font-weight: bold; color: white;">📔 Journal</h3>
+        </div>
+        <p style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: white;">NEW!</p>
+        <p style="color: white; opacity: 0.9; font-size: 0.9rem;">Write your daily thoughts and emotions</p>
+        <a href="{% url 'core:liste_entrees_journal' %}" class="btn-primary" style="margin-top: 1rem; text-align: center; background: white; color: #667eea; font-weight: bold;">Open Journal</a>
+    </div>
+
     <!-- Quick Actions Card -->
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
             <h3 style="font-size: 1.25rem; font-weight: bold;">Quick Actions</h3>
         </div>
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <a href="{% url 'core:liste_entrees_journal' %}" class="btn-primary" style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">📔 My Journal</a>
             <a href="{% url 'core:ajouter_souvenir' %}" class="btn-primary" style="text-align: center;">Add Memory</a>
             <a href="{% url 'core:memories_dashboard' %}" class="btn-secondary" style="text-align: center;">My Memories</a>
             <a href="{% url 'core:liste_capsules' %}" class="btn-secondary" style="text-align: center;">Time Capsules</a>
