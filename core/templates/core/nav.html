@@ -7,11 +7,15 @@
         <span class="font-semibold text-2xl">Andromeda</span>
       </div>
       <div class="flex-1 max-w-md mx-4">
-        <input placeholder="Search notes, templates, tags..." class="w-full p-3 border border-gray-300 rounded" aria-label="Search" />
+        <nav class="flex items-center gap-4">
+          <a href="{% url 'core:dashboard' %}" class="text-sm font-semibold">Dashboard</a>
+          <a href="{% url 'core:story_inspiration' %}" class="text-sm font-semibold">Story</a>
+          <a href="/notes/" class="text-sm font-semibold">Notes</a>
+        </nav>
       </div>
       <div class="flex items-center gap-3">
-        <a href="{% url 'login' %}" class="btn-login text-sm font-semibold" aria-label="Log in">Log in</a>
-        <a href="{% url 'core:signup' %}" class="px-3 py-2 rounded bg-[#f28a2e] text-white text-sm font-semibold" aria-label="Sign up">Sign up</a>
+        <span class="text-sm">{% if request.user.is_authenticated %}{{ request.user.username }}{% endif %}</span>
+        <a href="{% url 'logout' %}" class="btn-login text-sm font-semibold" aria-label="Log out">Logout</a>
       </div>
     </header>
   </div>

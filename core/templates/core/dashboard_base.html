@@ -251,6 +251,9 @@
             <li><a href="{% url 'core:story_inspiration' %}" class="{% if request.resolver_match.url_name == 'story_inspiration' %}active{% endif %}">Story</a></li>
             <li><a href="{% url 'core:index' %}" class="{% if request.resolver_match.url_name == 'index' %}active{% endif %}">Notes</a></li>
             <li><a href="{% url 'core:memories_dashboard' %}" class="{% if request.resolver_match.url_name == 'memories_dashboard' %}active{% endif %}">Souvenirs</a></li>
+            <!-- Focus Timer & Universe Graph accessible only from Dashboard navigation -->
+            <li><a href="/focus/" class="{% if '/focus/' in request.path %}active{% endif %}">Focus Timer</a></li>
+            <li><a href="/graph/" class="{% if '/graph/' in request.path %}active{% endif %}">Universe Graph</a></li>
             <li><a href="{% url 'core:profile' %}" class="{% if request.resolver_match.url_name == 'profile' %}active{% endif %}">Profile</a></li>
         </ul>
 
