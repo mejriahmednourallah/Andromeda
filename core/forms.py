@@ -281,22 +281,22 @@ class UserProfileForm(forms.ModelForm):
             raise ValidationError('This email address is already in use.')
         return email
 class EntreeJournalForm(forms.ModelForm):
-    """Formulaire pour créer/modifier une entrée de journal"""
+    """Form for creating/editing a journal entry"""
     
     tags = forms.ModelMultipleChoiceField(
         queryset=Tag.objects.none(),  # Will be set in __init__
         required=False,
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-checkbox-list'}),
         label='Tags',
-        help_text='Sélectionnez les tags pour catégoriser cette entrée'
+        help_text='Select tags to categorize this entry'
     )
     
     humeurs = forms.ModelMultipleChoiceField(
         queryset=Humeur.objects.all(),
         required=False,
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-checkbox-list'}),
-        label='Humeurs',
-        help_text='Sélectionnez vos humeurs du moment'
+        label='Moods',
+        help_text='Select your current moods'
     )
     
     class Meta:
@@ -305,23 +305,23 @@ class EntreeJournalForm(forms.ModelForm):
         widgets = {
             'titre': forms.TextInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'Titre de votre entrée',
+                'placeholder': 'Entry title',
                 'maxlength': 200,
                 'id': 'id_titre'
             }),
             'contenu_texte': forms.Textarea(attrs={
                 'class': 'form-textarea',
-                'placeholder': 'Écrivez votre journal ici...',
+                'placeholder': 'Write your journal here...',
                 'rows': 10,
                 'id': 'id_contenu_texte'
             }),
             'lieu': forms.TextInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'Où êtes-vous ? (optionnel)'
+                'placeholder': 'Where are you? (optional)'
             }),
             'meteo': forms.TextInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'Quel temps fait-il ? (optionnel)'
+                'placeholder': 'What is the weather like? (optional)'
             }),
             'is_favorite': forms.CheckboxInput(attrs={
                 'class': 'form-checkbox'
@@ -331,12 +331,12 @@ class EntreeJournalForm(forms.ModelForm):
             })
         }
         labels = {
-            'titre': 'Titre',
-            'contenu_texte': 'Contenu',
-            'lieu': 'Lieu',
-            'meteo': 'Météo',
-            'is_favorite': 'Marquer comme favori',
-            'is_public': 'Rendre public'
+            'titre': 'Title',
+            'contenu_texte': 'Content',
+            'lieu': 'Location',
+            'meteo': 'Weather',
+            'is_favorite': 'Mark as favorite',
+            'is_public': 'Make public'
         }
     
     def __init__(self, *args, **kwargs):
@@ -357,26 +357,26 @@ class EntreeJournalForm(forms.ModelForm):
             self.fields['humeurs'].initial = [eh.humeur for eh in self.instance.entree_humeurs.all()]
     
     def clean_titre(self):
-        """Validation du titre"""
+        """Title validation"""
         titre = self.cleaned_data.get('titre')
         if not titre or titre.strip() == '':
-            raise ValidationError('Le titre ne peut pas être vide.')
+            raise ValidationError('Title cannot be empty.')
         if len(titre) < 3:
-            raise ValidationError('Le titre doit contenir au moins 3 caractères.')
+            raise ValidationError('Title must be at least 3 characters long.')
         return titre.strip()
     
     def clean_contenu_texte(self):
-        """Validation du contenu"""
+        """Content validation"""
         contenu = self.cleaned_data.get('contenu_texte')
         if not contenu or contenu.strip() == '':
-            raise ValidationError('Le contenu ne peut pas être vide.')
+            raise ValidationError('Content cannot be empty.')
         if len(contenu) < 10:
-            raise ValidationError('Le contenu doit contenir au moins 10 caractères.')
+            raise ValidationError('Content must be at least 10 characters long.')
         return contenu.strip()
 
 
 class TagForm(forms.ModelForm):
-    """Formulaire pour créer/modifier un tag"""
+    """Form for creating/editing a tag"""
     
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
@@ -388,7 +388,7 @@ class TagForm(forms.ModelForm):
         widgets = {
             'nom': forms.TextInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'Nom du tag',
+                'placeholder': 'Tag name',
                 'maxlength': 50
             }),
             'couleur': forms.TextInput(attrs={
@@ -398,23 +398,23 @@ class TagForm(forms.ModelForm):
             }),
             'description': forms.Textarea(attrs={
                 'class': 'form-input',
-                'placeholder': 'Description (optionnel)',
+                'placeholder': 'Description (optional)',
                 'rows': 3
             })
         }
         labels = {
-            'nom': 'Nom du tag',
-            'couleur': 'Couleur',
+            'nom': 'Tag name',
+            'couleur': 'Color',
             'description': 'Description'
         }
     
     def clean_nom(self):
-        """Validation du nom"""
+        """Name validation"""
         nom = self.cleaned_data.get('nom')
         if not nom or nom.strip() == '':
-            raise ValidationError('Le nom ne peut pas être vide.')
+            raise ValidationError('Name cannot be empty.')
         if len(nom) < 2:
-            raise ValidationError('Le nom doit contenir au moins 2 caractères.')
+            raise ValidationError('Name must be at least 2 characters long.')
         
         # Check for duplicate tag name for the current user
         if self.user:
@@ -424,13 +424,13 @@ class TagForm(forms.ModelForm):
                 queryset = queryset.exclude(pk=self.instance.pk)
             
             if queryset.exists():
-                raise ValidationError(f'Vous avez déjà un tag avec le nom "{nom.strip()}".')
+                raise ValidationError(f'You already have a tag with the name "{nom.strip()}".')
         
         return nom.strip()
 
 
 class HumeurForm(forms.ModelForm):
-    """Formulaire pour créer/modifier une humeur (admin uniquement)"""
+    """Form for creating/editing a mood (admin only)"""
     
     class Meta:
         model = Humeur
@@ -438,7 +438,7 @@ class HumeurForm(forms.ModelForm):
         widgets = {
             'nom': forms.TextInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'Nom de l\'humeur',
+                'placeholder': 'Mood name',
                 'maxlength': 50
             }),
             'emoji': forms.TextInput(attrs={
@@ -453,20 +453,20 @@ class HumeurForm(forms.ModelForm):
             }),
             'description': forms.Textarea(attrs={
                 'class': 'form-input',
-                'placeholder': 'Description (optionnel)',
+                'placeholder': 'Description (optional)',
                 'rows': 3
             })
         }
         labels = {
-            'nom': 'Nom de l\'humeur',
+            'nom': 'Mood name',
             'emoji': 'Emoji',
-            'couleur': 'Couleur',
+            'couleur': 'Color',
             'description': 'Description'
         }
 
 
 class UserProfileForm(forms.ModelForm):
-    """Formulaire pour modifier le profil utilisateur"""
+    """Form for editing user profile"""
     
     class Meta:
         model = User
@@ -474,11 +474,11 @@ class UserProfileForm(forms.ModelForm):
         widgets = {
             'first_name': forms.TextInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'Prénom'
+                'placeholder': 'First name'
             }),
             'last_name': forms.TextInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'Nom'
+                'placeholder': 'Last name'
             }),
             'email': forms.EmailInput(attrs={
                 'class': 'form-input',
@@ -486,12 +486,12 @@ class UserProfileForm(forms.ModelForm):
             }),
             'avatar_url': forms.URLInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'URL de l\'avatar (optionnel)'
+                'placeholder': 'Avatar URL (optional)'
             })
         }
         labels = {
-            'first_name': 'Prénom',
-            'last_name': 'Nom',
+            'first_name': 'First name',
+            'last_name': 'Last name',
             'email': 'Email',
             'avatar_url': 'Avatar URL'
         }

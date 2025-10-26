@@ -75,7 +75,7 @@ def signup(request):
 @login_required
 def dashboard(request):
     """
-    Vue principale du dashboard avec statistiques et activités récentes.
+    Main dashboard view with statistics and recent activities.
     """
     # Statistiques
     notes_count = Note.objects.filter(owner=request.user).count()
@@ -159,28 +159,28 @@ def profile(request):
 @login_required
 def ajouter_souvenir(request):
     """
-    Vue pour ajouter un souvenir dans la base de données.
-    Nécessite que l'utilisateur soit authentifié.
+    View to add a memory to the database.
+    Requires user authentication.
     """
     if request.method == 'POST':
         form = SouvenirForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                # Créer le souvenir sans le sauvegarder immédiatement
+                # Create memory without saving immediately
                 souvenir = form.save(commit=False)
-                # Associer l'utilisateur connecté
+                # Associate logged-in user
                 souvenir.utilisateur = request.user
-                # Sauvegarder avec validation automatique
+                # Save with automatic validation
                 souvenir.save()
                 
                 # Perform AI analysis automatically
                 try:
                     AIAnalysisService.analyze_memory(souvenir)
-                    messages.success(request, f'✨ Souvenir "{souvenir.titre}" ajouté avec succès et analysé par IA!')
+                    messages.success(request, f'✨ Memory "{souvenir.titre}" added successfully and analyzed by AI!')
                 except Exception as e:
-                    # Don't fail souvenir creation if AI analysis fails
-                    messages.success(request, f'Souvenir "{souvenir.titre}" ajouté avec succès!')
-                    messages.warning(request, f'⚠️ Analyse IA non disponible: {str(e)}')
+                    # Don't fail memory creation if AI analysis fails
+                    messages.success(request, f'Memory "{souvenir.titre}" added successfully!')
+                    messages.warning(request, f'⚠️ AI analysis not available: {str(e)}')
                     logger.warning(f'AI analysis failed for new memory {souvenir.id}: {str(e)}')
                 
                 logger.info(f'Souvenir créé: {souvenir.id} par utilisateur {request.user.username}')
@@ -189,16 +189,16 @@ def ajouter_souvenir(request):
                 return redirect('core:liste_souvenirs')
             
             except ValidationError as e:
-                # Gérer les erreurs de validation
+                # Handle validation errors
                 for field, errors in e.message_dict.items():
                     for error in errors:
                         messages.error(request, f'{field}: {error}')
-                logger.warning(f'Erreur de validation lors de la création du souvenir: {e}')
+                logger.warning(f'Validation error during memory creation: {e}')
             
             except Exception as e:
-                # Gérer les autres erreurs
-                messages.error(request, 'Une erreur est survenue lors de l\'enregistrement du souvenir.')
-                logger.error(f'Erreur lors de la création du souvenir: {str(e)}')
+                # Handle other errors
+                messages.error(request, 'An error occurred while saving the memory.')
+                logger.error(f'Error during memory creation: {str(e)}')
         else:
             # Form is invalid - errors will be displayed inline in template
             pass
@@ -211,7 +211,7 @@ def ajouter_souvenir(request):
 @login_required
 def liste_souvenirs(request):
     """
-    Vue pour afficher la liste des souvenirs de l'utilisateur connecté.
+    View to display the list of memories of the logged-in user.
     """
     souvenirs = Souvenir.objects.filter(utilisateur=request.user).order_by('-date_evenement')
     return render(request, 'core/liste_souvenirs.html', {'souvenirs': souvenirs})
@@ -220,8 +220,8 @@ def liste_souvenirs(request):
 @login_required
 def detail_souvenir(request, souvenir_id):
     """
-    Vue pour afficher le détail d'un souvenir.
-    Vérifie que l'utilisateur est bien le propriétaire.
+    View to display the detail of a memory.
+    Verifies that the user is indeed the owner.
     """
     souvenir = get_object_or_404(Souvenir, id=souvenir_id, utilisateur=request.user)
     return render(request, 'core/detail_souvenir.html', {'souvenir': souvenir})
@@ -308,7 +308,7 @@ def memories_dashboard(request):
     if favoris_only:
         filtered_souvenirs = filtered_souvenirs.filter(is_favorite=True)
     if search_query:
-        # Recherche full-text étendue
+        # Extended full-text search
         filtered_souvenirs = filtered_souvenirs.filter(
             Q(titre__icontains=search_query) |
             Q(description__icontains=search_query) |
@@ -996,7 +996,7 @@ def supprimer_album(request, album_id):
 @login_required
 def story_inspiration(request):
     """
-    Vue pour la page Story - génération d'histoires inspirantes
+    View for the Story page - generation of inspirational stories
     """
     story_data = None
     reflexion_text = ""
@@ -1007,10 +1007,10 @@ def story_inspiration(request):
         
         if reflexion_text:
             try:
-                # Générer l'histoire inspirante avec l'IA
+                # Generate inspirational story with AI
                 story_data = AIRecommendationService.generate_inspirational_story(reflexion_text)
                 
-                # Sauvegarder l'histoire dans la base de données
+                # Save story in database
                 histoire_saved = HistoireInspirante.objects.create(
                     utilisateur=request.user,
                     reflexion_text=reflexion_text,
@@ -1020,14 +1020,14 @@ def story_inspiration(request):
                     modele_utilise=story_data.get('model', '')
                 )
                 
-                logger.info(f"Histoire inspirante sauvegardée (ID: {histoire_saved.id}) pour l'utilisateur {request.user.username}")
-                messages.success(request, "✨ Votre histoire inspirante a été générée et sauvegardée !")
+                logger.info(f"Inspirational story saved (ID: {histoire_saved.id}) for user {request.user.username}")
+                messages.success(request, "✨ Your inspirational story has been generated and saved!")
                 
             except Exception as e:
                 logger.error(f"Error generating story: {str(e)}")
-                messages.error(request, "Une erreur s'est produite lors de la génération de l'histoire. Veuillez réessayer.")
+                messages.error(request, "An error occurred while generating the story. Please try again.")
         else:
-            messages.warning(request, "Veuillez entrer une réflexion pour générer une histoire inspirante.")
+            messages.warning(request, "Please enter a reflection to generate an inspirational story.")
     
     context = {
         'story_data': story_data,
@@ -1041,9 +1041,9 @@ def story_inspiration(request):
 @login_required
 def story_history(request):
     """
-    Vue pour afficher l'historique de toutes les histoires inspirantes de l'utilisateur
+    View to display the history of all user's inspirational stories
     """
-    # Récupérer toutes les histoires de l'utilisateur
+    # Get all user's stories
     histoires = HistoireInspirante.objects.filter(utilisateur=request.user).order_by('-created_at')
     
     # Filtres
@@ -1099,8 +1099,8 @@ def toggle_histoire_favorite(request, histoire_id):
     histoire.is_favorite = not histoire.is_favorite
     histoire.save()
     
-    status = "ajoutée aux" if histoire.is_favorite else "retirée des"
-    messages.success(request, f'✨ Histoire {status} favorites!')
+    status = "added to" if histoire.is_favorite else "removed from"
+    messages.success(request, f'✨ Story {status} favorites!')
     
     # Redirect back to history or story page
     return redirect(request.META.get('HTTP_REFERER', 'core:story_history'))

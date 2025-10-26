@@ -1,7 +1,7 @@
 {% extends "core/dashboard_base.html" %}
 {% load static %}
 
-{% block title %}Mon Journal{% endblock %}
+{% block title %}My Journal{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -165,13 +165,13 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <div>
             <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">Mon Journal</h1>
-            <p style="color: var(--text-gray); font-size: 1rem;">Explorez vos pensées et émotions</p>
+            <p style="color: var(--text-gray); font-size: 1rem;">Explore your thoughts and emotions</p>
         </div>
         <div style="display: flex; gap: 1rem;">
-            <a href="{% url 'core:statistiques_journal' %}" class="btn-secondary">📊 Statistiques</a>
+            <a href="{% url 'core:statistiques_journal' %}" class="btn-secondary">📊 Statistics</a>
             <a href="{% url 'core:liste_tags' %}" class="btn-secondary">🏷️ Tags</a>
-            <a href="{% url 'core:page_analyse_ai' %}" class="btn-secondary">🤖 Analyse IA</a>
-            <a href="{% url 'core:ajouter_entree_journal' %}" class="btn-primary">+ Nouvelle Entrée</a>
+            <a href="{% url 'core:page_analyse_ai' %}" class="btn-secondary">🤖 AI Analysis</a>
+            <a href="{% url 'core:ajouter_entree_journal' %}" class="btn-primary">+ New Entry</a>
         </div>
     </div>
 </div>
@@ -181,35 +181,35 @@
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
     <div class="card" style="text-align: center;">
         <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ page_obj.paginator.count }}</p>
-        <p style="color: var(--text-gray); font-size: 0.9rem;">Total des entrées</p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">Total entries</p>
     </div>
     <div class="card" style="text-align: center;">
         <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ user_tags.count }}</p>
-        <p style="color: var(--text-gray); font-size: 0.9rem;">Tags utilisés</p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">Tags used</p>
     </div>
     <div class="card" style="text-align: center;">
         <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">{{ humeurs.count }}</p>
-        <p style="color: var(--text-gray); font-size: 0.9rem;">Humeurs</p>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">Moods</p>
     </div>
 </div>
 {% endif %}
 
 <!-- Search and Filters -->
 <div class="card" style="margin-bottom: 2rem;">
-    <h2 class="card-title">Recherche et Filtres</h2>
+    <h2 class="card-title">Search and Filters</h2>
     <form method="get" action="{% url 'core:liste_entrees_journal' %}">
         <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-            <input type="text" name="q" style="flex: 1; padding: 0.75rem; border: 2px solid var(--border-color); font-family: 'Courier New', monospace;" placeholder="🔍 Rechercher dans vos entrées..." value="{{ query|default:'' }}">
-            <button type="submit" class="btn-primary">Rechercher</button>
+            <input type="text" name="q" style="flex: 1; padding: 0.75rem; border: 2px solid var(--border-color); font-family: 'Courier New', monospace;" placeholder="🔍 Search in your entries..." value="{{ query|default:'' }}">
+            <button type="submit" class="btn-primary">Search</button>
             {% if query %}
-            <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary">Effacer</a>
+            <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary">Clear</a>
             {% endif %}
         </div>
 
         <div style="margin-bottom: 1rem;">
-            <label style="font-weight: bold; margin-bottom: 0.5rem; display: block;">Filtrer par tag:</label>
+            <label style="font-weight: bold; margin-bottom: 0.5rem; display: block;">Filter by tag:</label>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary" style="{% if not selected_tag %}background: var(--accent-orange); color: white;{% endif %}">Tous</a>
+                <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary" style="{% if not selected_tag %}background: var(--accent-orange); color: white;{% endif %}">All</a>
                 {% for tag in user_tags %}
                 <a href="?tag={{ tag.id }}" class="btn-secondary" style="{% if selected_tag == tag.id|stringformat:'s' %}background: var(--accent-orange); color: white;{% endif %}">{{ tag.nom }}</a>
                 {% endfor %}
@@ -219,7 +219,7 @@
         <div>
             <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                 <input type="checkbox" name="favorites" value="true" {% if request.GET.favorites %}checked{% endif %} onchange="this.form.submit()">
-                <span>Afficher uniquement les favoris</span>
+                <span>Show favorites only</span>
             </label>
         </div>
     </form>
@@ -245,7 +245,7 @@
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <p style="color: var(--text-gray); font-size: 0.9rem;">
-                📅 {{ entree.date_creation|date:"d/m/Y" }} • 📝 {{ entree.nombre_mots }} mots
+                📅 {{ entree.date_creation|date:"d/m/Y" }} • 📝 {{ entree.nombre_mots }} words
             </p>
         </div>
 
@@ -258,7 +258,7 @@
         {% endif %}
 
         <div style="display: flex;">
-            <a href="{% url 'core:detail_entree_journal' entree.pk %}" class="btn-primary" style="width: 100%; text-align: center;">Voir les détails</a>
+            <a href="{% url 'core:detail_entree_journal' entree.pk %}" class="btn-primary" style="width: 100%; text-align: center;">View details</a>
         </div>
     </div>
     {% endfor %}
@@ -268,24 +268,24 @@
 {% if page_obj.has_other_pages %}
 <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem;">
     {% if page_obj.has_previous %}
-    <a href="?page=1{% if query %}&q={{ query }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}" class="btn-secondary">« Première</a>
-    <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}" class="btn-secondary">‹ Précédente</a>
+    <a href="?page=1{% if query %}&q={{ query }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}" class="btn-secondary">« First</a>
+    <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}" class="btn-secondary">‹ Previous</a>
     {% endif %}
 
     <span class="btn-secondary" style="background: var(--accent-orange); color: white;">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
 
     {% if page_obj.has_next %}
-    <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}" class="btn-secondary">Suivante ›</a>
-    <a href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}" class="btn-secondary">Dernière »</a>
+    <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}" class="btn-secondary">Next ›</a>
+    <a href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}" class="btn-secondary">Last »</a>
     {% endif %}
 </div>
 {% endif %}
 
 {% else %}
 <div class="card" style="text-align: center; padding: 4rem;">
-    <p style="font-size: 1.25rem; color: var(--text-gray); margin-bottom: 1.5rem;">Votre journal est vide</p>
+    <p style="font-size: 1.25rem; color: var(--text-gray); margin-bottom: 1.5rem;">Your journal is empty</p>
     <a href="{% url 'core:ajouter_entree_journal' %}" class="btn-primary" style="display: inline-block;">
-        Écrire votre première entrée
+        Write your first entry
     </a>
 </div>
 {% endif %}

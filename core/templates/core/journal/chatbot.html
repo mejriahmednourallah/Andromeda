@@ -253,20 +253,20 @@
     <div style="background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); border-radius: 32px; padding: 2rem 3rem; margin-bottom: 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.08); border: 2px solid rgba(255,255,255,0.9); display: flex; justify-content: space-between; align-items: center;">
         <div>
             <h1 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -1px;">💬 Chatbot Journal</h1>
-            <p style="color: #64748b; font-size: 1.1rem; font-weight: 500;">Discutez avec l'IA sur vos entrées de journal</p>
+            <p style="color: #64748b; font-size: 1.1rem; font-weight: 500;">Chat with AI about your journal entries</p>
         </div>
-        <a href="{% url 'core:liste_entrees_journal' %}" style="padding: 1rem 2rem; border-radius: 50px; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); color: #475569; font-weight: 700; text-decoration: none; box-shadow: 0 8px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'">← Retour</a>
+        <a href="{% url 'core:liste_entrees_journal' %}" style="padding: 1rem 2rem; border-radius: 50px; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); color: #475569; font-weight: 700; text-decoration: none; box-shadow: 0 8px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'">← Back</a>
     </div>
 
     <!-- Chat Container -->
     <div class="chat-container">
         <!-- Sidebar -->
         <div class="chat-sidebar">
-            <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 1.5rem; color: #1f2937;">📚 Vos Entrées</h3>
+            <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 1.5rem; color: #1f2937;">📚 Your Entries</h3>
             
             <div class="entry-card" onclick="selectEntry(null)" id="entry-general">
-                <div style="font-weight: 700; margin-bottom: 0.25rem;">💭 Conversation Générale</div>
-                <div style="font-size: 0.85rem; opacity: 0.8;">Discutez de votre journal</div>
+                <div style="font-weight: 700; margin-bottom: 0.25rem;">💭 General Conversation</div>
+                <div style="font-size: 0.85rem; opacity: 0.8;">Discuss your journal</div>
             </div>
             
             {% for entree in entrees_recentes %}
@@ -277,7 +277,7 @@
             {% endfor %}
             
             {% if not entrees_recentes %}
-            <p style="text-align: center; color: #94a3b8; font-style: italic; padding: 2rem 0;">Aucune entrée disponible</p>
+            <p style="text-align: center; color: #94a3b8; font-style: italic; padding: 2rem 0;">No entries available</p>
             {% endif %}
         </div>
 
@@ -285,22 +285,22 @@
         <div class="chat-main">
             <!-- Chat Header -->
             <div class="chat-header">
-                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem;" id="chat-title">💭 Conversation Générale</h2>
-                <p style="opacity: 0.95; font-size: 0.95rem;" id="chat-subtitle">Posez-moi des questions sur votre journal</p>
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem;" id="chat-title">💭 General Conversation</h2>
+                <p style="opacity: 0.95; font-size: 0.95rem;" id="chat-subtitle">Ask me questions about your journal</p>
             </div>
 
             <!-- Messages -->
             <div class="chat-messages" id="chatMessages">
                 <div class="welcome-message">
                     <div class="welcome-icon">🤖</div>
-                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; color: #1f2937;">Bonjour! Je suis votre assistant journal</h3>
-                    <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">Je peux vous aider à réfléchir sur vos entrées, répondre à vos questions, et vous donner des conseils personnalisés.</p>
+                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; color: #1f2937;">Hello! I'm your journal assistant</h3>
+                    <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">I can help you reflect on your entries, answer your questions, and give you personalized advice.</p>
                     <div style="margin-top: 2rem;">
-                        <p style="font-weight: 600; margin-bottom: 1rem; color: #475569;">Questions suggérées:</p>
+                        <p style="font-weight: 600; margin-bottom: 1rem; color: #475569;">Suggested questions:</p>
                         <div>
-                            <span class="suggested-question" onclick="askQuestion('Comment puis-je améliorer ma pratique du journaling ?')">Comment améliorer ma pratique du journaling ?</span>
-                            <span class="suggested-question" onclick="askQuestion('Quelles sont mes émotions récurrentes ?')">Quelles sont mes émotions récurrentes ?</span>
-                            <span class="suggested-question" onclick="askQuestion('Donne-moi un conseil pour aujourd\\'hui')">Donne-moi un conseil pour aujourd'hui</span>
+                            <span class="suggested-question" onclick="askQuestion('How can I improve my journaling practice?')">How can I improve my journaling practice?</span>
+                            <span class="suggested-question" onclick="askQuestion('What are my recurring emotions?')">What are my recurring emotions?</span>
+                            <span class="suggested-question" onclick="askQuestion('Give me advice for today')">Give me advice for today</span>
                         </div>
                     </div>
                 </div>
@@ -314,9 +314,9 @@
 
             <!-- Input Area -->
             <div class="chat-input-area">
-                <input type="text" class="chat-input" id="chatInput" placeholder="Posez votre question..." onkeypress="handleKeyPress(event)">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Ask your question..." onkeypress="handleKeyPress(event)">
                 <button class="send-btn" onclick="sendMessage()" id="sendBtn">
-                    <span id="sendBtnText">Envoyer</span>
+                    <span id="sendBtnText">Send</span>
                 </button>
             </div>
         </div>
@@ -340,8 +340,8 @@ function selectEntry(entryId) {
     
     if (entryId) {
         document.getElementById(`entry-${entryId}`).classList.add('active');
-        document.getElementById('chat-title').textContent = '📝 Discussion sur l\'entrée';
-        document.getElementById('chat-subtitle').textContent = 'Posez des questions sur cette entrée spécifique';
+        document.getElementById('chat-title').textContent = '📝 Discussion about the entry';
+        document.getElementById('chat-subtitle').textContent = 'Ask questions about this specific entry';
         
         // Charger les questions suggérées
         loadSuggestedQuestions(entryId);
@@ -357,10 +357,10 @@ function selectEntry(entryId) {
         <div class="welcome-message">
             <div class="welcome-icon">🤖</div>
             <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; color: #1f2937;">
-                ${entryId ? 'Discutons de cette entrée' : 'Bonjour! Je suis votre assistant journal'}
+                ${entryId ? 'Let\'s discuss this entry' : 'Hello! I\'m your journal assistant'}
             </h3>
             <p style="font-size: 1.1rem;">
-                ${entryId ? 'Posez-moi des questions sur cette entrée spécifique.' : 'Je peux vous aider à réfléchir sur vos entrées.'}
+                ${entryId ? 'Ask me questions about this specific entry.' : 'I can help you reflect on your entries.'}
             </p>
             <div id="suggestedQuestionsArea"></div>
         </div>
@@ -445,7 +445,7 @@ function askQuestion(question) {
             conversationHistory.push({role: 'user', content: question});
             conversationHistory.push({role: 'assistant', content: data.reponse});
         } else {
-            addMessage('Désolé, une erreur est survenue: ' + data.error, 'bot');
+            addMessage('Sorry, an error occurred: ' + data.error, 'bot');
         }
         
         sendBtn.disabled = false;
@@ -453,7 +453,7 @@ function askQuestion(question) {
     })
     .catch(error => {
         document.getElementById('typingIndicator').style.display = 'none';
-        addMessage('Erreur de connexion. Veuillez réessayer.', 'bot');
+        addMessage('Connection error. Please try again.', 'bot');
         sendBtn.disabled = false;
         document.getElementById('sendBtnText').textContent = 'Envoyer';
     });

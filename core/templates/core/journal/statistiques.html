@@ -1,7 +1,7 @@
 {% extends "core/dashboard_base.html" %}
 {% load static %}
 
-{% block title %}Statistiques du Journal{% endblock %}
+{% block title %}Journal Statistics{% endblock %}
 
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -11,19 +11,19 @@
 <div style="max-width: 1200px; margin: 0 auto;">
     <div style="margin-bottom: 2rem;">
         <div>
-            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">📊 Statistiques du Journal</h1>
-            <p style="color: var(--text-gray); font-size: 1rem;">Analysez vos habitudes d'écriture et vos émotions</p>
+            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">📊 Journal Statistics</h1>
+            <p style="color: var(--text-gray); font-size: 1rem;">Analyze your writing habits and emotions</p>
         </div>
         <div style="margin-top: 1rem;">
-            <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary">← Retour au journal</a>
+            <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary">← Back to journal</a>
         </div>
     </div>
 
     <!-- Export Section -->
     <div class="card" style="margin-bottom: 2rem; text-align: center;">
-        <h2 class="card-title">📄 Exporter votre journal</h2>
-        <p style="color: var(--text-gray); margin-bottom: 1.5rem;">Téléchargez toutes vos entrées au format PDF</p>
-        <button onclick="exportToPDF()" class="btn-primary">📥 Télécharger en PDF</button>
+        <h2 class="card-title">📄 Export your journal</h2>
+        <p style="color: var(--text-gray); margin-bottom: 1.5rem;">Download all your entries in PDF format</p>
+        <button onclick="exportToPDF()" class="btn-primary">📥 Download as PDF</button>
     </div>
 
     <!-- Stats Cards -->
@@ -31,37 +31,37 @@
         <div class="card" style="text-align: center;">
             <div style="font-size: 3rem; margin-bottom: 1rem;">📝</div>
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ total_entrees }}</div>
-            <div style="color: var(--text-gray); font-size: 0.9rem;">Entrées totales</div>
+            <div style="color: var(--text-gray); font-size: 0.9rem;">Total entries</div>
         </div>
 
         <div class="card" style="text-align: center;">
             <div style="font-size: 3rem; margin-bottom: 1rem;">✍️</div>
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ total_mots|floatformat:0 }}</div>
-            <div style="color: var(--text-gray); font-size: 0.9rem;">Mots écrits</div>
+            <div style="color: var(--text-gray); font-size: 0.9rem;">Words written</div>
         </div>
 
         <div class="card" style="text-align: center;">
             <div style="font-size: 3rem; margin-bottom: 1rem;">⭐</div>
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ entrees_favorites }}</div>
-            <div style="color: var(--text-gray); font-size: 0.9rem;">Entrées favorites</div>
+            <div style="color: var(--text-gray); font-size: 0.9rem;">Favorite entries</div>
         </div>
 
         <div class="card" style="text-align: center;">
             <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ moyenne_mots }}</div>
-            <div style="color: var(--text-gray); font-size: 0.9rem;">Mots par entrée</div>
+            <div style="color: var(--text-gray); font-size: 0.9rem;">Words per entry</div>
         </div>
 
         <div class="card" style="text-align: center; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
             <div style="font-size: 3rem; margin-bottom: 1rem;">🔥</div>
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ current_streak }}</div>
-            <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Série actuelle (jours)</div>
+            <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Current streak (days)</div>
         </div>
 
         <div class="card" style="text-align: center; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
             <div style="font-size: 3rem; margin-bottom: 1rem;">🏆</div>
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ longest_streak }}</div>
-            <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Meilleure série</div>
+            <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Best streak</div>
         </div>
     </div>
 

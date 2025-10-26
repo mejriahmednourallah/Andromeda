@@ -1,5 +1,5 @@
 """
-Vues pour la gestion des entrées de journal
+Views for managing journal entries
 """
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
@@ -35,7 +35,7 @@ except ImportError:
 @login_required
 def liste_entrees_journal(request):
     """
-    Liste toutes les entrées de journal de l'utilisateur avec filtrage
+    List all user's journal entries with filtering
     """
     entrees = EntreeJournal.objects.filter(utilisateur=request.user).order_by('-date_creation')
     
@@ -67,7 +67,7 @@ def liste_entrees_journal(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    # Récupérer les tags et humeurs pour les filtres
+    # Get tags and moods for filters
     user_tags = Tag.objects.filter(
         Q(utilisateur=request.user) | Q(utilisateur__isnull=True)
     ).order_by('nom')
@@ -89,7 +89,7 @@ def liste_entrees_journal(request):
 @login_required
 def detail_entree_journal(request, pk):
     """
-    Affiche les détails d'une entrée de journal
+    Display details of a journal entry
     """
     entree = get_object_or_404(EntreeJournal, pk=pk, utilisateur=request.user)
     
@@ -105,7 +105,7 @@ def detail_entree_journal(request, pk):
 @login_required
 def ajouter_entree_journal(request):
     """
-    Créer une nouvelle entrée de journal
+    Create a new journal entry
     """
     if request.method == 'POST':
         form = EntreeJournalForm(request.POST, user=request.user)
@@ -114,40 +114,40 @@ def ajouter_entree_journal(request):
             entree.utilisateur = request.user
             entree.save()
             
-            # Sauvegarder les tags
+            # Save tags
             tags = form.cleaned_data.get('tags')
             if tags:
                 for tag in tags:
                     EntreeTag.objects.create(entree_journal=entree, tag=tag)
             
-            # Sauvegarder les humeurs avec intensité par défaut
+            # Save moods with default intensity
             humeurs = form.cleaned_data.get('humeurs')
             if humeurs:
                 for humeur in humeurs:
                     EntreeHumeur.objects.create(
                         entree_journal=entree, 
                         humeur=humeur,
-                        intensite=3  # Intensité moyenne par défaut
+                        intensite=3  # Default medium intensity
                     )
             
-            # Générer le résumé automatique avec l'IA
+            # Generate automatic summary with AI
             try:
                 ai_service = get_ai_service()
                 resume = ai_service.generer_resume(entree.contenu_texte, longueur="court")
                 entree.auto_summary = resume
                 entree.save()
             except Exception as e:
-                # Si l'IA échoue, continuer sans résumé
-                print(f"Erreur génération résumé: {e}")
+                # If AI fails, continue without summary
+                print(f"Error generating summary: {e}")
             
-            messages.success(request, 'Entrée de journal créée avec succès!')
+            messages.success(request, 'Journal entry created successfully!')
             return redirect('core:detail_entree_journal', pk=entree.pk)
     else:
         form = EntreeJournalForm(user=request.user)
     
     context = {
         'form': form,
-        'action': 'Créer',
+        'action': 'Create',
     }
     
     return render(request, 'core/journal/form_entree.html', context)
@@ -156,7 +156,7 @@ def ajouter_entree_journal(request):
 @login_required
 def modifier_entree_journal(request, pk):
     """
-    Modifier une entrée de journal existante
+    Edit an existing journal entry
     """
     entree = get_object_or_404(EntreeJournal, pk=pk, utilisateur=request.user)
     
@@ -165,14 +165,14 @@ def modifier_entree_journal(request, pk):
         if form.is_valid():
             entree = form.save()
             
-            # Mettre à jour les tags
+            # Update tags
             EntreeTag.objects.filter(entree_journal=entree).delete()
             tags = form.cleaned_data.get('tags')
             if tags:
                 for tag in tags:
                     EntreeTag.objects.create(entree_journal=entree, tag=tag)
             
-            # Mettre à jour les humeurs
+            # Update moods
             EntreeHumeur.objects.filter(entree_journal=entree).delete()
             humeurs = form.cleaned_data.get('humeurs')
             if humeurs:
@@ -183,7 +183,7 @@ def modifier_entree_journal(request, pk):
                         intensite=3
                     )
             
-            messages.success(request, 'Entrée de journal modifiée avec succès!')
+            messages.success(request, 'Journal entry updated successfully!')
             return redirect('core:detail_entree_journal', pk=entree.pk)
     else:
         form = EntreeJournalForm(instance=entree, user=request.user)
@@ -191,7 +191,7 @@ def modifier_entree_journal(request, pk):
     context = {
         'form': form,
         'entree': entree,
-        'action': 'Modifier',
+        'action': 'Edit',
     }
     
     return render(request, 'core/journal/form_entree.html', context)
@@ -200,13 +200,13 @@ def modifier_entree_journal(request, pk):
 @login_required
 def supprimer_entree_journal(request, pk):
     """
-    Supprimer une entrée de journal
+    Delete a journal entry
     """
     entree = get_object_or_404(EntreeJournal, pk=pk, utilisateur=request.user)
     
     if request.method == 'POST':
         entree.delete()
-        messages.success(request, 'Entrée de journal supprimée avec succès!')
+        messages.success(request, 'Journal entry deleted successfully!')
         return redirect('core:liste_entrees_journal')
     
     context = {
@@ -219,7 +219,7 @@ def supprimer_entree_journal(request, pk):
 @login_required
 def toggle_favori_entree(request, pk):
     """
-    Basculer le statut favori d'une entrée (AJAX)
+    Toggle favorite status of an entry (AJAX)
     """
     if request.method == 'POST':
         entree = get_object_or_404(EntreeJournal, pk=pk, utilisateur=request.user)
@@ -239,7 +239,7 @@ def toggle_favori_entree(request, pk):
 @login_required
 def liste_tags(request):
     """
-    Liste tous les tags de l'utilisateur
+    List all user's tags
     """
     tags = Tag.objects.filter(
         Q(utilisateur=request.user) | Q(utilisateur__isnull=True)
@@ -257,7 +257,7 @@ def liste_tags(request):
 @login_required
 def ajouter_tag(request):
     """
-    Créer un nouveau tag
+    Create a new tag
     """
     if request.method == 'POST':
         form = TagForm(request.POST, user=request.user)
@@ -266,14 +266,14 @@ def ajouter_tag(request):
             tag.utilisateur = request.user
             tag.save()
             
-            messages.success(request, f'Tag "{tag.nom}" créé avec succès!')
+            messages.success(request, f'Tag "{tag.nom}" created successfully!')
             return redirect('core:liste_tags')
     else:
         form = TagForm(user=request.user)
     
     context = {
         'form': form,
-        'action': 'Créer',
+        'action': 'Create',
     }
     
     return render(request, 'core/journal/form_tag.html', context)
@@ -282,7 +282,7 @@ def ajouter_tag(request):
 @login_required
 def modifier_tag(request, pk):
     """
-    Modifier un tag existant
+    Edit an existing tag
     """
     tag = get_object_or_404(Tag, pk=pk, utilisateur=request.user)
     
@@ -290,7 +290,7 @@ def modifier_tag(request, pk):
         form = TagForm(request.POST, instance=tag, user=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, f'Tag "{tag.nom}" modifié avec succès!')
+            messages.success(request, f'Tag "{tag.nom}" updated successfully!')
             return redirect('core:liste_tags')
     else:
         form = TagForm(instance=tag, user=request.user)
@@ -298,7 +298,7 @@ def modifier_tag(request, pk):
     context = {
         'form': form,
         'tag': tag,
-        'action': 'Modifier',
+        'action': 'Edit',
     }
     
     return render(request, 'core/journal/form_tag.html', context)
@@ -307,14 +307,14 @@ def modifier_tag(request, pk):
 @login_required
 def supprimer_tag(request, pk):
     """
-    Supprimer un tag
+    Delete a tag
     """
     tag = get_object_or_404(Tag, pk=pk, utilisateur=request.user)
     
     if request.method == 'POST':
         nom = tag.nom
         tag.delete()
-        messages.success(request, f'Tag "{nom}" supprimé avec succès!')
+        messages.success(request, f'Tag "{nom}" deleted successfully!')
         return redirect('core:liste_tags')
     
     context = {
@@ -329,7 +329,7 @@ def supprimer_tag(request, pk):
 @login_required
 def statistiques_journal(request):
     """
-    Affiche les statistiques du journal de l'utilisateur
+    Display user's journal statistics
     """
     from datetime import timedelta
     from django.utils import timezone
@@ -342,7 +342,7 @@ def statistiques_journal(request):
     entrees_favorites = entrees.filter(is_favorite=True).count()
     moyenne_mots = round(total_mots / total_entrees) if total_entrees > 0 else 0
     
-    # Calcul de la série d'écriture (writing streak)
+    # Calculate writing streak
     current_streak = 0
     longest_streak = 0
     temp_streak = 0
@@ -448,15 +448,15 @@ def statistiques_journal(request):
 @login_required
 def export_journal_pdf(request):
     """
-    Exporte toutes les entrées de journal en PDF
+    Export all journal entries to PDF
     """
     if not PDF_AVAILABLE:
-        messages.error(request, 'Export PDF non disponible. Veuillez installer xhtml2pdf.')
+        messages.error(request, 'PDF export not available. Please install xhtml2pdf.')
         return redirect('core:statistiques_journal')
     
     entrees = EntreeJournal.objects.filter(utilisateur=request.user).order_by('-date_creation')
     
-    # Préparer le contexte pour le template
+    # Prepare context for template
     context = {
         'entrees': entrees,
         'user': request.user,
@@ -465,29 +465,29 @@ def export_journal_pdf(request):
         'total_mots': sum(e.nombre_mots for e in entrees),
     }
     
-    # Générer le HTML
+    # Generate HTML
     html_string = render_to_string('core/journal/pdf_template.html', context)
     
-    # Créer le PDF
+    # Create PDF
     result = BytesIO()
     pdf = pisa.pisaDocument(BytesIO(html_string.encode("UTF-8")), result)
     
     if not pdf.err:
         response = HttpResponse(result.getvalue(), content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="mon-journal-{timezone.now().strftime("%Y-%m-%d")}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="my-journal-{timezone.now().strftime("%Y-%m-%d")}.pdf"'
         return response
     
-    messages.error(request, 'Erreur lors de la génération du PDF.')
+    messages.error(request, 'Error generating PDF.')
     return redirect('core:statistiques_journal')
 
 
 @login_required
 def export_entree_pdf(request, pk):
     """
-    Exporte une seule entrée en PDF
+    Export a single entry to PDF
     """
     if not PDF_AVAILABLE:
-        messages.error(request, 'Export PDF non disponible.')
+        messages.error(request, 'PDF export not available.')
         return redirect('core:detail_entree_journal', pk=pk)
     
     entree = get_object_or_404(EntreeJournal, pk=pk, utilisateur=request.user)
@@ -509,7 +509,7 @@ def export_entree_pdf(request, pk):
         response['Content-Disposition'] = f'attachment; filename="entree-{entree.pk}.pdf"'
         return response
     
-    messages.error(request, 'Erreur lors de la génération du PDF.')
+    messages.error(request, 'Error generating PDF.')
     return redirect('core:detail_entree_journal', pk=pk)
 
 
@@ -518,7 +518,7 @@ def export_entree_pdf(request, pk):
 @login_required
 def analyser_entree_ia(request):
     """
-    Analyse une entrée de journal avec l'IA
+    Analyze a journal entry with AI
     """
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
@@ -529,9 +529,9 @@ def analyser_entree_ia(request):
         contenu = data.get('contenu', '')
         
         if not contenu or len(contenu.strip()) < 10:
-            return JsonResponse({'error': 'Contenu trop court'}, status=400)
+            return JsonResponse({'error': 'Content too short'}, status=400)
         
-        # Analyse IA ou simulation
+        # AI analysis or simulation
         if AI_AVAILABLE:
             result = _analyze_with_openai(titre, contenu)
         else:
@@ -545,26 +545,26 @@ def analyser_entree_ia(request):
 
 def _analyze_with_openai(titre, contenu):
     """
-    Analyse avec OpenAI GPT
+    Analyze with OpenAI GPT
     """
     try:
         client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
         
-        prompt = f"""Analyse cette entrée de journal et fournis:
-1. L'émotion principale (joyeux, triste, anxieux, calme, etc.)
-2. Un score de confiance pour l'émotion (0-1)
-3. 3-5 tags pertinents
-4. Un résumé en une phrase
+        prompt = f"""Analyze this journal entry and provide:
+1. The main emotion (joyful, sad, anxious, calm, etc.)
+2. A confidence score for the emotion (0-1)
+3. 3-5 relevant tags
+4. A one-sentence summary
 
-Titre: {titre}
-Contenu: {contenu}
+Title: {titre}
+Content: {contenu}
 
-Réponds au format JSON avec les clés: emotion, emotion_score, suggested_tags (liste), summary"""
+Respond in JSON format with the keys: emotion, emotion_score, suggested_tags (list), summary"""
         
         response = client.chat.completions.create(
             model=settings.AI_TEXT_MODEL if hasattr(settings, 'AI_TEXT_MODEL') else 'gpt-4o-mini',
             messages=[
-                {"role": "system", "content": "Tu es un assistant qui analyse des entrées de journal."},
+                {"role": "system", "content": "You are an assistant that analyzes journal entries."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
@@ -580,9 +580,9 @@ Réponds au format JSON avec les clés: emotion, emotion_score, suggested_tags (
 
 def _simulate_ai_analysis(titre, contenu):
     """
-    Simulation d'analyse IA (fallback)
+    AI analysis simulation (fallback)
     """
-    # Détection simple d'émotions par mots-clés
+    # Simple emotion detection by keywords
     contenu_lower = contenu.lower()
     
     emotions = {
@@ -603,18 +603,18 @@ def _simulate_ai_analysis(titre, contenu):
             max_score = score
             detected_emotion = emotion
     
-    # Extraction de tags simples
+    # Simple tag extraction
     words = contenu_lower.split()
     common_tags = ['travail', 'famille', 'amis', 'voyage', 'santé', 'projet', 'lecture', 'sport']
     suggested_tags = [tag for tag in common_tags if tag in contenu_lower][:5]
     
-    # Résumé simple (première phrase)
+    # Simple summary (first sentence)
     sentences = contenu.split('.')
     summary = sentences[0][:100] + '...' if sentences else contenu[:100] + '...'
     
     return {
         'emotion': detected_emotion,
         'emotion_score': min(0.5 + (max_score * 0.1), 0.95),
-        'suggested_tags': suggested_tags if suggested_tags else ['personnel', 'réflexion'],
+        'suggested_tags': suggested_tags if suggested_tags else ['personal', 'reflection'],
         'summary': summary
     }

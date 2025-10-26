@@ -111,7 +111,7 @@
 <div class="entry-detail">
     <!-- Back Button -->
     <div style="margin-bottom: 1.5rem;">
-        <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary">← Retour au journal</a>
+        <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary">← Back to journal</a>
     </div>
     
     <!-- Entry Header -->
@@ -144,7 +144,7 @@
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; color: white; box-shadow: 0 8px 20px rgba(102,126,234,0.3);">
         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
             <span style="font-size: 2rem;">🤖</span>
-            <h3 style="font-size: 1.5rem; font-weight: 800; margin: 0;">Résumé Automatique (IA)</h3>
+            <h3 style="font-size: 1.5rem; font-weight: 800; margin: 0;">Automatic Summary (AI)</h3>
         </div>
         <p style="font-size: 1.1rem; line-height: 1.6; margin: 0; opacity: 0.95;">{{ entree.auto_summary }}</p>
     </div>
@@ -172,7 +172,7 @@
     <!-- Moods Section -->
     {% if humeurs %}
     <div class="moods-section">
-        <h3 class="section-title">😊 Humeurs</h3>
+        <h3 class="section-title">😊 Moods</h3>
         <div>
             {% for humeur in humeurs %}
             <span class="mood-badge" style="background-color: {{ humeur.couleur }}20; color: {{ humeur.couleur }}; border: 2px solid {{ humeur.couleur }};">
@@ -186,10 +186,10 @@
     
     <!-- Action Buttons -->
     <div class="action-buttons">
-        <a href="{% url 'core:modifier_entree_journal' entree.pk %}" class="btn-primary">✏️ Modifier</a>
-        <button onclick="exportEntry()" class="btn-secondary">📥 Exporter en PDF</button>
-        <button onclick="shareEntry()" class="btn-secondary">🔗 Partager</button>
-        <button onclick="confirmDelete()" class="delete-btn">🗑️ Supprimer</button>
+        <a href="{% url 'core:modifier_entree_journal' entree.pk %}" class="btn-primary">✏️ Edit</a>
+        <button onclick="exportEntry()" class="btn-secondary">📥 Export as PDF</button>
+        <button onclick="shareEntry()" class="btn-secondary">🔗 Share</button>
+        <button onclick="confirmDelete()" class="delete-btn">🗑️ Delete</button>
     </div>
 </div>
 
@@ -220,17 +220,17 @@ function shareEntry() {
     if (navigator.share) {
         navigator.share({
             title: '{{ entree.titre }}',
-            text: 'Découvrez mon entrée de journal',
+            text: 'Check out my journal entry',
             url: url
         });
     } else {
         navigator.clipboard.writeText(url);
-        alert('Lien copié dans le presse-papier !');
+        alert('Link copied to clipboard!');
     }
 }
 
 function confirmDelete() {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette entrée ? Cette action est irréversible.')) {
+    if (confirm('Are you sure you want to delete this entry? This action is irreversible.')) {
         window.location.href = '{% url "core:supprimer_entree_journal" entree.pk %}';
     }
 }

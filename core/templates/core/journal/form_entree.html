@@ -7,34 +7,34 @@
 <div style="max-width: 900px; margin: 0 auto;">
     <div style="margin-bottom: 2rem;">
         <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ action }} un journal</h1>
-        <p style="color: var(--text-gray); font-size: 1rem;">Exprimez vos pensées et émotions</p>
+        <p style="color: var(--text-gray); font-size: 1rem;">Express your thoughts and emotions</p>
     </div>
 
     <!-- Templates Section -->
     <div class="card" style="margin-bottom: 2rem;">
-        <h2 class="card-title">Modèles de Journal</h2>
-        <p style="color: var(--text-gray); margin-bottom: 1.5rem;">Commencez rapidement avec un modèle prédéfini</p>
+        <h2 class="card-title">Journal Templates</h2>
+        <p style="color: var(--text-gray); margin-bottom: 1.5rem;">Start quickly with a predefined template</p>
         <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
             <button type="button" onclick="applyTemplate('gratitude')" class="btn-secondary">Gratitude</button>
-            <button type="button" onclick="applyTemplate('reflection')" class="btn-secondary">Réflexion</button>
-            <button type="button" onclick="applyTemplate('goals')" class="btn-secondary">Objectifs</button>
-            <button type="button" onclick="applyTemplate('dream')" class="btn-secondary">Rêve</button>
-            <button type="button" onclick="applyTemplate('achievement')" class="btn-secondary">Réussite</button>
+            <button type="button" onclick="applyTemplate('reflection')" class="btn-secondary">Reflection</button>
+            <button type="button" onclick="applyTemplate('goals')" class="btn-secondary">Goals</button>
+            <button type="button" onclick="applyTemplate('dream')" class="btn-secondary">Dream</button>
+            <button type="button" onclick="applyTemplate('achievement')" class="btn-secondary">Achievement</button>
         </div>
     </div>
 
     <!-- AI Analysis Section -->
     <div class="card" style="margin-bottom: 2rem; text-align: center;">
-        <h2 class="card-title">Analyse IA Avancée</h2>
-        <a href="{% url 'core:page_analyse_ai' %}" class="btn-primary" style="display: inline-block;">Ouvrir l'Analyse IA</a>
+        <h2 class="card-title">Advanced AI Analysis</h2>
+        <a href="{% url 'core:page_analyse_ai' %}" class="btn-primary" style="display: inline-block;">Open AI Analysis</a>
         <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-gray);">
-            <em>Sauvegardez d'abord votre journal, puis analysez-le sur la page dédiée</em>
+            <em>Save your journal first, then analyze it on the dedicated page</em>
         </p>
     </div>
 
     <!-- Auto-save indicator -->
     <div id="autoSaveIndicator" style="position: fixed; top: 2rem; right: 2rem; background: var(--panel-bg); border: 2px solid var(--border-color); color: var(--text-dark); padding: 0.75rem 1.5rem; font-weight: bold; z-index: 1000; display: none;">
-        ✓ Sauvegardé automatiquement
+        ✓ Auto-saved
     </div>
 
     <form method="post" id="entryForm" class="card">
@@ -99,19 +99,19 @@
                 </label>
                 {% endfor %}
             </div>
-            <a href="{% url 'core:liste_tags' %}" style="display: inline-block; margin-top: 0.5rem; color: var(--accent-orange);">+ Gérer les tags</a>
+            <a href="{% url 'core:liste_tags' %}" style="display: inline-block; margin-top: 0.5rem; color: var(--accent-orange);">+ Manage tags</a>
         </div>
 
         <!-- Action Buttons -->
         <div style="display: flex; gap: 1rem; padding-top: 1rem; border-top: 2px solid var(--separator-color);">
             <button type="submit" class="btn-primary" style="flex: 1;">{{ action }}</button>
-            <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary" style="flex: 1; text-align: center; line-height: 2.5;">Annuler</a>
+            <a href="{% url 'core:liste_entrees_journal' %}" class="btn-secondary" style="flex: 1; text-align: center; line-height: 2.5;">Cancel</a>
         </div>
     </form>
 
     <!-- Word Counter -->
     <div id="wordCount" style="position: fixed; bottom: 2rem; right: 2rem; background: var(--panel-bg); border: 2px solid var(--border-color); color: var(--text-dark); padding: 1rem; font-weight: bold; font-size: 1rem; z-index: 100;">
-        0 mots
+        0 words
     </div>
 </div>
 
@@ -123,7 +123,7 @@ const wordCountEl = document.getElementById('wordCount');
 function updateWordCount() {
     const text = textarea.value.trim();
     const words = text ? text.split(/\s+/).length : 0;
-    wordCountEl.textContent = words + ' mot' + (words > 1 ? 's' : '');
+    wordCountEl.textContent = words + ' word' + (words > 1 ? 's' : '');
 }
 
 textarea.addEventListener('input', updateWordCount);
@@ -135,24 +135,24 @@ updateWordCount();
 // Templates
 const templates = {
     gratitude: {
-        title: "Gratitude du jour",
-        content: "Aujourd'hui, je suis reconnaissant(e) pour...\n\n1. \n2. \n3. \n\nCes moments/personnes/choses ont rendu ma journée spéciale parce que..."
+        title: "Daily Gratitude",
+        content: "Today, I am grateful for...\n\n1. \n2. \n3. \n\nThese moments/people/things made my day special because..."
     },
     reflection: {
-        title: "Réflexion quotidienne",
-        content: "Ce que j'ai appris aujourd'hui :\n\n\nCe qui m'a surpris :\n\n\nCe que je pourrais améliorer demain :\n\n\nMes pensées principales :"
+        title: "Daily Reflection",
+        content: "What I learned today:\n\n\nWhat surprised me:\n\n\nWhat I could improve tomorrow:\n\n\nMy main thoughts:"
     },
     goals: {
-        title: "Mes objectifs",
-        content: "Objectifs à court terme :\n• \n• \n• \n\nObjectifs à long terme :\n• \n• \n\nActions concrètes pour aujourd'hui :\n1. \n2. \n3. "
+        title: "My Goals",
+        content: "Short-term goals:\n• \n• \n• \n\nLong-term goals:\n• \n• \n\nConcrete actions for today:\n1. \n2. \n3. "
     },
     dream: {
-        title: "Journal de rêves",
-        content: "Date du rêve : \n\nRésumé du rêve :\n\n\nÉmotions ressenties :\n\n\nSymboles ou éléments marquants :\n\n\nInterprétation personnelle :"
+        title: "Dream Journal",
+        content: "Dream date: \n\nDream summary:\n\n\nEmotions felt:\n\n\nNotable symbols or elements:\n\n\nPersonal interpretation:"
     },
     achievement: {
-        title: "Réussite du jour",
-        content: "Ce que j'ai accompli aujourd'hui :\n\n\nLes défis que j'ai surmontés :\n\n\nCe dont je suis fier(e) :\n\n\nCe que cela signifie pour moi :"
+        title: "Achievement of the Day",
+        content: "What I accomplished today:\n\n\nChallenges I overcame:\n\n\nWhat I'm proud of:\n\n\nWhat this means to me:"
     }
 };
 
@@ -162,7 +162,7 @@ function applyTemplate(templateName) {
         document.getElementById('id_titre').value = template.title;
         document.getElementById('id_contenu_texte').value = template.content;
         updateWordCount();
-        showNotification('✓ Modèle appliqué !', 'success');
+        showNotification('✓ Template applied!', 'success');
     }
 }
 
@@ -194,7 +194,7 @@ function formatText(format) {
             formattedText = `> ${selectedText}`;
             break;
         case 'link':
-            const url = prompt('Entrez l\'URL:');
+            const url = prompt('Enter URL:');
             if (url) formattedText = `[${selectedText}](${url})`;
             break;
     }
@@ -272,11 +272,11 @@ window.addEventListener('load', function() {
         
         // Only restore if draft is less than 24 hours old and fields are empty
         if (draftAge < 1440 && !document.getElementById('id_titre').value && !document.getElementById('id_contenu_texte').value) {
-            if (confirm('Un brouillon a été trouvé. Voulez-vous le restaurer ?')) {
+            if (confirm('A draft was found. Do you want to restore it?')) {
                 document.getElementById('id_titre').value = data.titre;
                 document.getElementById('id_contenu_texte').value = data.contenu;
                 updateWordCount();
-                showNotification('✓ Brouillon restauré !', 'success');
+                showNotification('✓ Draft restored!', 'success');
             }
         }
     }

@@ -403,11 +403,11 @@ class PartageSouvenir(models.Model):
 
 # --- Tags for Journal Entries ---
 class Tag(models.Model):
-    """Tags pour catégoriser les entrées de journal"""
-    nom = models.CharField(max_length=50, help_text="Nom du tag")
-    couleur = models.CharField(max_length=7, default='#3498db', help_text="Couleur du tag (hex)")
-    description = models.TextField(blank=True, default='', help_text="Description du tag")
-    utilisateur = models.ForeignKey('User', on_delete=models.CASCADE, related_name='tags', null=True, blank=True, help_text="Propriétaire du tag (null = tag global)")
+    """Tags for categorizing journal entries"""
+    nom = models.CharField(max_length=50, help_text="Tag name")
+    couleur = models.CharField(max_length=7, default='#3498db', help_text="Tag color (hex)")
+    description = models.TextField(blank=True, default='', help_text="Tag description")
+    utilisateur = models.ForeignKey('User', on_delete=models.CASCADE, related_name='tags', null=True, blank=True, help_text="Tag owner (null = global tag)")
     
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -423,19 +423,19 @@ class Tag(models.Model):
 
 # --- Humeurs (Moods) ---
 class Humeur(models.Model):
-    """Humeurs disponibles pour les entrées de journal"""
+    """Available moods for journal entries"""
     INTENSITE_CHOICES = [
-        (1, 'Très faible'),
-        (2, 'Faible'),
-        (3, 'Modérée'),
-        (4, 'Forte'),
-        (5, 'Très forte'),
+        (1, 'Very low'),
+        (2, 'Low'),
+        (3, 'Moderate'),
+        (4, 'High'),
+        (5, 'Very high'),
     ]
     
-    nom = models.CharField(max_length=50, unique=True, help_text="Nom de l'humeur")
-    emoji = models.CharField(max_length=10, default='😊', help_text="Emoji représentant l'humeur")
-    couleur = models.CharField(max_length=7, default='#FFD700', help_text="Couleur associée (hex)")
-    description = models.TextField(blank=True, default='', help_text="Description de l'humeur")
+    nom = models.CharField(max_length=50, unique=True, help_text="Mood name")
+    emoji = models.CharField(max_length=10, default='😊', help_text="Emoji representing the mood")
+    couleur = models.CharField(max_length=7, default='#FFD700', help_text="Associated color (hex)")
+    description = models.TextField(blank=True, default='', help_text="Mood description")
     
     class Meta:
         verbose_name = "Humeur"
@@ -450,19 +450,19 @@ class Humeur(models.Model):
 class EntreeJournal(models.Model):
     """Journal entries that can be linked to memories"""
     utilisateur = models.ForeignKey('User', on_delete=models.CASCADE, related_name='entrees_journal')
-    titre = models.CharField(max_length=200, help_text="Titre de l'entrée")
-    contenu_texte = models.TextField(help_text="Contenu de l'entrée")
+    titre = models.CharField(max_length=200, help_text="Entry title")
+    contenu_texte = models.TextField(help_text="Entry content")
     
     # Metadata
-    lieu = models.CharField(max_length=200, blank=True, default='', help_text="Lieu où l'entrée a été écrite")
-    meteo = models.CharField(max_length=50, blank=True, default='', help_text="Météo du jour")
+    lieu = models.CharField(max_length=200, blank=True, default='', help_text="Location where the entry was written")
+    meteo = models.CharField(max_length=50, blank=True, default='', help_text="Weather on the day")
     
     # AI Generated
-    auto_summary = models.TextField(blank=True, default='', help_text="Résumé automatique généré par l'IA")
+    auto_summary = models.TextField(blank=True, default='', help_text="AI-generated summary")
     
     # Privacy
-    is_public = models.BooleanField(default=False, help_text="Entrée publique")
-    is_favorite = models.BooleanField(default=False, help_text="Entrée favorite")
+    is_public = models.BooleanField(default=False, help_text="Public entry")
+    is_favorite = models.BooleanField(default=False, help_text="Favorite entry")
     
     # Timestamps
     date_creation = models.DateTimeField(auto_now_add=True)
@@ -515,19 +515,19 @@ class EntreeTag(models.Model):
 
 # --- Relation Many-to-Many entre EntreeJournal et Humeur ---
 class EntreeHumeur(models.Model):
-    """Relation entre une entrée de journal et une humeur avec intensité"""
+    """Relation between a journal entry and a mood with intensity"""
     INTENSITE_CHOICES = [
-        (1, 'Très faible'),
-        (2, 'Faible'),
-        (3, 'Modérée'),
-        (4, 'Forte'),
-        (5, 'Très forte'),
+        (1, 'Very low'),
+        (2, 'Low'),
+        (3, 'Moderate'),
+        (4, 'High'),
+        (5, 'Very high'),
     ]
     
     entree_journal = models.ForeignKey(EntreeJournal, on_delete=models.CASCADE, related_name='entree_humeurs')
     humeur = models.ForeignKey(Humeur, on_delete=models.CASCADE, related_name='entree_humeurs')
-    intensite = models.IntegerField(choices=INTENSITE_CHOICES, default=3, help_text="Intensité de l'humeur (1-5)")
-    note = models.TextField(blank=True, default='', help_text="Note sur cette humeur")
+    intensite = models.IntegerField(choices=INTENSITE_CHOICES, default=3, help_text="Mood intensity (1-5)")
+    note = models.TextField(blank=True, default='', help_text="Note on this mood")
     date_association = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -637,19 +637,19 @@ class SuiviMotivationnel(models.Model):
 # --- Badge/Medal System (Gamification) ---
 class Badge(models.Model):
     BADGE_TYPES = [
-        ('consistency', 'Constance'),
-        ('reflective', 'Reflexif'),
-        ('emotional_balance', 'Equilibre Emotionnel'),
-        ('memory_keeper', 'Gardien de Memoires'),
-        ('storyteller', 'Conteur'),
-        ('explorer', 'Explorateur'),
+        ('consistency', 'Consistency'),
+        ('reflective', 'Reflective'),
+        ('emotional_balance', 'Emotional Balance'),
+        ('memory_keeper', 'Memory Keeper'),
+        ('storyteller', 'Storyteller'),
+        ('explorer', 'Explorer'),
     ]
     
     code = models.CharField(max_length=50, unique=True, choices=BADGE_TYPES)
     name = models.CharField(max_length=100)
     description = models.TextField()
     icon = models.CharField(max_length=10, default='trophy')
-    requirement_value = models.IntegerField(help_text="Valeur requise pour debloquer")
+    requirement_value = models.IntegerField(help_text="Value required to unlock")
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):

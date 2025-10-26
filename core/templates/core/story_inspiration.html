@@ -226,8 +226,8 @@
     <!-- Hero Section -->
     <div class="hero-section">
         <h1>✨ Story</h1>
-        <p>Partagez vos réflexions et découvrez comment des personnalités inspirantes ont surmonté des défis similaires. Vous n'êtes pas seul.</p>
-        <a href="{% url 'core:story_history' %}" class="history-btn">📚 Voir mon historique</a>
+        <p>Share your thoughts and discover how inspiring personalities have overcome similar challenges. You are not alone.</p>
+        <a href="{% url 'core:story_history' %}" class="history-btn">📚 View my history</a>
     </div>
 
     <!-- Story Result -->
@@ -235,23 +235,23 @@
     <div class="story-card">
         <div class="story-header">
             <div class="story-celebrity">{{ story_data.celebrity }}</div>
-            <div class="story-subtitle">Une histoire pour vous inspirer</div>
+            <div class="story-subtitle">A story to inspire you</div>
         </div>
         
         <div class="story-content">{{ story_data.story }}</div>
         
         <div class="story-footer">
             {% if story_data.simulated %}
-            <span class="story-badge">💡 Mode Inspirant</span>
+            <span class="story-badge">💡 Inspiring Mode</span>
             {% else %}
-            <span class="story-badge">🤖 Généré par IA</span>
+            <span class="story-badge">🤖 AI Generated</span>
             {% endif %}
         </div>
     </div>
 
     <!-- New Reflection Button -->
     <form method="get" action="{% url 'core:story_inspiration' %}">
-        <button type="submit" class="new-reflection-btn">✍️ Nouvelle Réflexion</button>
+        <button type="submit" class="new-reflection-btn">✍️ New Reflection</button>
     </form>
     {% endif %}
 
@@ -261,38 +261,38 @@
         <form method="post" action="{% url 'core:story_inspiration' %}">
             {% csrf_token %}
             
-            <label for="reflexion_text" class="input-label">📝 Partagez votre réflexion</label>
+            <label for="reflexion_text" class="input-label">📝 Share your reflection</label>
             <textarea 
                 name="reflexion_text" 
                 id="reflexion_text" 
                 class="input-textarea"
-                placeholder="Écrivez ici vos pensées, doutes, émotions ou défis... Par exemple : 'Je me sens découragé par mes échecs récents' ou 'J'ai peur de ne pas être à la hauteur'..."
+                placeholder="Write here your thoughts, doubts, emotions or challenges... For example: 'I feel discouraged by my recent failures' or 'I'm afraid I won't be up to the task'..."
                 required>{{ reflexion_text }}</textarea>
             
             <div class="info-box">
-                💡 <strong>Astuce :</strong> Soyez authentique et précis. Plus vous partagez vos sentiments, plus l'histoire générée sera pertinente et inspirante.
+                💡 <strong>Tip:</strong> Be authentic and precise. The more you share your feelings, the more relevant and inspiring the generated story will be.
             </div>
 
-            <button type="submit" class="generate-btn">🌟 Générer mon Histoire Inspirante</button>
+            <button type="submit" class="generate-btn">🌟 Generate My Inspiring Story</button>
         </form>
 
         <!-- Example Prompts -->
         <div class="example-prompts">
-            <h3>💭 Besoin d'inspiration ? Essayez ces exemples :</h3>
-            <div class="example-prompt" onclick="fillPrompt('Je traverse une période difficile au travail et je me sens incompétent.')">
-                "Je traverse une période difficile au travail et je me sens incompétent."
+            <h3>💭 Need inspiration? Try these examples:</h3>
+            <div class="example-prompt" onclick="fillPrompt('I\'m going through a difficult period at work and I feel incompetent.')">
+                "I'm going through a difficult period at work and I feel incompetent."
             </div>
-            <div class="example-prompt" onclick="fillPrompt('J\'ai peur de l\'échec et ça me paralyse.')">
-                "J'ai peur de l'échec et ça me paralyse."
+            <div class="example-prompt" onclick="fillPrompt('I\'m afraid of failure and it paralyzes me.')">
+                "I'm afraid of failure and it paralyzes me."
             </div>
-            <div class="example-prompt" onclick="fillPrompt('Je doute de mes capacités et de ma valeur.')">
-                "Je doute de mes capacités et de ma valeur."
+            <div class="example-prompt" onclick="fillPrompt('I doubt my abilities and my worth.')">
+                "I doubt my abilities and my worth."
             </div>
-            <div class="example-prompt" onclick="fillPrompt('Je me sens seul et incompris par mon entourage.')">
-                "Je me sens seul et incompris par mon entourage."
+            <div class="example-prompt" onclick="fillPrompt('I feel alone and misunderstood by those around me.')">
+                "I feel alone and misunderstood by those around me."
             </div>
-            <div class="example-prompt" onclick="fillPrompt('J\'ai du mal à surmonter une déception récente.')">
-                "J'ai du mal à surmonter une déception récente."
+            <div class="example-prompt" onclick="fillPrompt('I\'m having trouble overcoming a recent disappointment.')">
+                "I'm having trouble overcoming a recent disappointment."
             </div>
         </div>
     </div>
@@ -300,12 +300,12 @@
 
     <!-- Info Card -->
     <div class="card" style="background: #f0fdf4; border-color: #16a34a;">
-        <h3 style="font-size: 1.1rem; font-weight: bold; margin-bottom: 1rem; color: #15803d;">🌱 Comment ça marche ?</h3>
+        <h3 style="font-size: 1.1rem; font-weight: bold; margin-bottom: 1rem; color: #15803d;">🌱 How does it work?</h3>
         <ul style="list-style: none; padding: 0; color: #166534;">
-            <li style="margin-bottom: 0.75rem;">✓ <strong>Étape 1 :</strong> Partagez votre réflexion ou vos émotions dans le champ ci-dessus</li>
-            <li style="margin-bottom: 0.75rem;">✓ <strong>Étape 2 :</strong> Notre système analyse votre texte et identifie le contexte émotionnel</li>
-            <li style="margin-bottom: 0.75rem;">✓ <strong>Étape 3 :</strong> Une histoire inspirante d'une personnalité réelle est générée pour vous</li>
-            <li>✓ <strong>Résultat :</strong> Vous découvrez que même les plus grands ont surmonté des épreuves similaires</li>
+            <li style="margin-bottom: 0.75rem;">✓ <strong>Step 1:</strong> Share your reflection or emotions in the field above</li>
+            <li style="margin-bottom: 0.75rem;">✓ <strong>Step 2:</strong> Our system analyzes your text and identifies the emotional context</li>
+            <li style="margin-bottom: 0.75rem;">✓ <strong>Step 3:</strong> An inspiring story from a real personality is generated for you</li>
+            <li>✓ <strong>Result:</strong> You discover that even the greatest have overcome similar trials</li>
         </ul>
     </div>
 </div>
