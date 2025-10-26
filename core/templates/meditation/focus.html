@@ -1,0 +1,74 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Focus Timer - Andromeda{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/focus.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="focus-container">
+    <h1 class="page-title">FOCUS TIMER</h1>
+    <p class="page-subtitle">Your personal productivity companion</p>
+    <div class="focus-grid">
+        <div class="card timer-card">
+            <h2 class="card-title">⏱ LIVE TIMER</h2>
+            <div class="timer-display" id="timerDisplay">00:00</div>
+            <div class="category-selector">
+                <label for="categorySelect">CATEGORY</label>
+                <select id="categorySelect" class="category-dropdown">
+                    <option value="">Select category...</option>
+                </select>
+            </div>
+            <div class="timer-controls">
+                <button id="startBtn" class="btn-primary">START</button>
+                <button id="pauseBtn" class="btn-secondary" style="display:none;">PAUSE</button>
+                <button id="resumeBtn" class="btn-secondary" style="display:none;">RESUME</button>
+                <button id="completeBtn" class="btn-accent" style="display:none;">COMPLETE</button>
+            </div>
+        </div>
+        <div class="card stats-card">
+            <h2 class="card-title">📊 TODAY'S STATS</h2>
+            <div class="stat-item">
+                <div class="stat-value" id="todayMinutes">0</div>
+                <div class="stat-label">Minutes focused</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="todaySessions">0</div>
+                <div class="stat-label">Sessions completed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Favorite category</div>
+                <div class="stat-text" id="favoriteCategory">None yet</div>
+            </div>
+        </div>
+    </div>
+    <div class="card history-card">
+        <h2 class="card-title">📜 SESSION HISTORY</h2>
+        <div class="history-filters">
+            <button class="filter-btn active" data-filter="today">Today</button>
+            <button class="filter-btn" data-filter="week">Week</button>
+            <button class="filter-btn" data-filter="month">Month</button>
+            <button class="filter-btn" data-filter="all">All</button>
+        </div>
+        <div id="sessionHistory" class="session-list"></div>
+    </div>
+
+    <div id="reflectionModal" class="modal" style="display:none;">
+        <div class="modal-content card">
+            <h2 class="card-title">✍️ SESSION REFLECTION</h2>
+            <p>What did you focus on?</p>
+            <textarea id="reflectionNotes" rows="4" placeholder="Optional notes..."></textarea>
+            <div class="modal-actions">
+                <button id="saveReflection" class="btn-primary">SAVE</button>
+                <button id="skipReflection" class="btn-secondary">SKIP</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/focus.js' %}"></script>
+{% endblock %}

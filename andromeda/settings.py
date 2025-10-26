@@ -25,6 +25,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'core',
+    # New apps
+    'meditation',
 ]
 
 MIDDLEWARE = [
@@ -92,6 +94,38 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Channels / ASGI (optional)
+# Channels is optional so local environments that don't have 'channels' installed
+# can still run tests and Django checks. To enable channels set USE_CHANNELS=1
+# in your environment and optionally set CHANNEL_REDIS_URL to a redis:// url.
+USE_CHANNELS = os.environ.get('USE_CHANNELS', '0') in ('1', 'True', 'true', 'yes')
+if USE_CHANNELS:
+    try:
+        import channels  # noqa: F401
+        INSTALLED_APPS.append('channels')
+        ASGI_APPLICATION = 'andromeda.asgi.application'
+
+        # If CHANNEL_REDIS_URL is set, use Redis backend; otherwise fall back to in-memory.
+        CHANNEL_REDIS_URL = os.environ.get('CHANNEL_REDIS_URL')
+        if CHANNEL_REDIS_URL:
+            CHANNEL_LAYERS = {
+                'default': {
+                    'BACKEND': 'channels_redis.core.RedisChannelLayer',
+                    'CONFIG': {
+                        'hosts': [CHANNEL_REDIS_URL],
+                    },
+                }
+            }
+        else:
+            CHANNEL_LAYERS = {
+                'default': {
+                    'BACKEND': 'channels.layers.InMemoryChannelLayer'
+                }
+            }
+    except Exception:
+        # channels isn't installed; leave Channels disabled.
+        USE_CHANNELS = False
 
 # Redirect URLs
 LOGIN_REDIRECT_URL = '/dashboard/'

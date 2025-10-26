@@ -1,0 +1,69 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Universe Graph - Andromeda{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/graph.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="graph-container">
+    <div class="graph-header">
+        <div>
+            <h1 class="page-title">🌌 UNIVERSE GRAPH</h1>
+            <p class="page-subtitle">Visualize your interconnected thoughts</p>
+        </div>
+        <div class="graph-stats">
+            <div class="stat-badge">
+                <span class="stat-number" id="totalNotes">0</span>
+                <span class="stat-label">NOTES</span>
+            </div>
+            <div class="stat-badge">
+                <span class="stat-number" id="totalLinks">0</span>
+                <span class="stat-label">LINKS</span>
+            </div>
+            <div class="stat-badge">
+                <span class="stat-number" id="orphanedNotes">0</span>
+                <span class="stat-label">ORPHANED</span>
+            </div>
+        </div>
+    </div>
+    <div class="graph-canvas-wrapper">
+        <div id="graphCanvas" class="graph-canvas"></div>
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <p>Loading your universe...</p>
+        </div>
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <i class="fas fa-network-wired fa-4x"></i>
+            <h2>No Connections Yet</h2>
+            <p>Create notes with [[links]] to other notes to build your knowledge graph</p>
+            <a href="/" class="btn-primary">CREATE FIRST NOTE</a>
+        </div>
+    </div>
+    <div id="notePanel" class="note-panel" style="display:none;">
+        <div class="note-panel-header">
+            <h3 id="notePanelTitle">Note Title</h3>
+            <button id="closePanelBtn" class="close-btn">&times;</button>
+        </div>
+        <div class="note-panel-content">
+            <div class="note-meta">
+                <span id="noteCreated"></span>
+                <span id="noteUpdated"></span>
+            </div>
+            <div id="noteContent" class="note-content-preview"></div>
+            <div class="note-panel-actions">
+                <a id="openNoteBtn" class="btn-primary" target="_blank">OPEN NOTE</a>
+                <a id="editNoteBtn" class="btn-secondary" target="_blank">EDIT</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+<script src="{% static 'js/graph.js' %}"></script>
+{% endblock %}
