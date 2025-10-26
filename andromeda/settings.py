@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
 try:
     import dj_database_url
@@ -7,6 +8,7 @@ except ImportError:
     dj_database_url = None
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
@@ -87,3 +89,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 LOGIN_URL = '/accounts/login/'
+
+HF_API_KEY = os.environ.get('HF_API_KEY')
+HF_MODEL = os.environ.get('HF_MODEL', 'cardiffnlp/twitter-xlm-roberta-base-sentiment')
