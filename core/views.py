@@ -22,6 +22,7 @@ from .models import (
 )
 from .forms import UserCreationForm, SouvenirForm, CapsuleTemporelleForm, UserProfileForm
 from .ai_services import AIAnalysisService, AIRecommendationService
+from .mood_ai_service import MoodAIService
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +70,8 @@ def signup(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            # Specify backend explicitly when multiple authentication backends are configured
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             return redirect('core:dashboard')
     else:
         form = UserCreationForm()
@@ -163,59 +165,8 @@ def profile(request):
 @login_required
 def mood(request):
     """
-    Mood page: simple textarea -> analyze -> save MoodAnalysis and MoodRecommendation
+    Mood page: analyze with OpenAI -> save MoodAnalysis and MoodRecommendation
     """
-    def _local_scores(txt: str):
-        t = (txt or '').lower()
-        pos = ['super', 'bien', 'génial', 'genial', 'heureux', 'joie', 'content', 'love', 'aime', 'fier']
-        neg = ['mauvais', 'nul', 'triste', 'déprimé', 'deprime', 'peur', 'anxieux', 'stress', 'mal']
-        anger = ['colère', 'colere', 'furieux', 'énervé', 'enerve', 'rage', 'agacé', 'agace']
-        sad = ['triste', 'tristesse', 'chagrin', 'pleurer', 'solitaire']
-        scores = {'positif': 0.0, 'neutre': 0.1, 'negatif': 0.0, 'colere': 0.0, 'tristesse': 0.0}
-        for w in pos:
-            if w in t: scores['positif'] += 1
-        for w in neg:
-            if w in t: scores['negatif'] += 1
-        for w in anger:
-            if w in t: scores['colere'] += 1
-        for w in sad:
-            if w in t: scores['tristesse'] += 1
-        if scores['positif']==0 and scores['negatif']==0 and scores['colere']==0 and scores['tristesse']==0:
-            scores['neutre'] = 1.0
-        return scores
-
-    def _ai_scores(txt: str):
-        """Use the same internal analysis method as Story (AIAnalysisService._detect_emotion_smart)."""
-        emo = AIAnalysisService._detect_emotion_smart(txt)
-        mapping = {
-            'joy': 'positif',
-            'gratitude': 'positif',
-            'love': 'positif',
-            'peace': 'neutre',
-            'excitement': 'positif',
-            'pride': 'positif',
-            'sadness': 'tristesse',
-            'anger': 'colere',
-            'fear': 'negatif',
-            'nostalgia': 'neutre',
-            'neutral': 'neutre'
-        }
-        top = mapping.get(emo, 'neutre')
-        scores = {'positif': 0.0, 'neutre': 0.0, 'negatif': 0.0, 'colere': 0.0, 'tristesse': 0.0}
-        scores[top] = 1.0
-        return scores
-
-    def _recommend(top: str) -> str:
-        mapping = {
-            'positif': "Garde cette énergie: note 3 gratitudes et planifie une petite action qui te fait plaisir.",
-            'neutre': "Prends 2 minutes pour respirer et écrire une intention simple pour aujourd’hui.",
-            'negatif': "Fais une pause courte (5 min), respire 4-7-8 et écris ce qui te pèse pour l’externaliser.",
-            'colere': "Évite d’agir à chaud. 10 respirations profondes ou une marche brève pour apaiser la tension.",
-            'tristesse': "Autorise-toi à ressentir. Appelle une personne de confiance ou écoute une musique douce."
-        }
-        return mapping.get((top or '').lower(), mapping['neutre'])
-
-
     result = None
     recommendation = None
 
@@ -224,17 +175,23 @@ def mood(request):
         if not text:
             messages.error(request, "Veuillez saisir un texte.")
             return redirect('core:mood')
-        # Use internal AI method (same spirit as Story), fallback to simple heuristic if needed
+        
+        # Try OpenAI analysis first, fallback to local if unavailable
         try:
-            scores = _ai_scores(text)
-            source = 'internal_ai'
-            model_used = 'ai_services._detect_emotion_smart'
-        except Exception:
-            scores = _local_scores(text)
+            analysis_result = MoodAIService.analyze_mood_with_openai(text)
+            source = 'openai'
+            model_used = settings.AI_TEXT_MODEL
+        except Exception as e:
+            logger.warning(f"OpenAI analysis failed: {e}, using fallback")
+            analysis_result = MoodAIService.get_fallback_analysis(text)
             source = 'local'
             model_used = 'lexicon'
-        top = max(scores, key=scores.get)
-        recommendation = _recommend(top)
+        
+        top = analysis_result['top']
+        scores = analysis_result['scores']
+        recommendation = analysis_result['recommendation']
+        
+        # Save to database
         analysis = MoodAnalysis.objects.create(
             user=request.user,
             text=text,
@@ -243,73 +200,89 @@ def mood(request):
             source=source,
             model=model_used
         )
-        MoodRecommendation.objects.create(user=request.user, analysis=analysis, recommendation=recommendation)
+        MoodRecommendation.objects.create(
+            user=request.user, 
+            analysis=analysis, 
+            recommendation=recommendation
+        )
+        
         result = {'top': top, 'scores': scores, 'text': text}
+        messages.success(request, f"✨ Analyse effectuée avec {source.upper()}")
 
+    # Get history and statistics
     history = MoodAnalysis.objects.filter(user=request.user).order_by('-created_at')[:10]
+    
+    # Calculate statistics for charts
+    from django.db.models import Count
+    from datetime import datetime, timedelta
+    
+    # Mood distribution (last 30 days)
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    mood_stats = MoodAnalysis.objects.filter(
+        user=request.user,
+        created_at__gte=thirty_days_ago
+    ).values('top').annotate(count=Count('top')).order_by('-count')
+    
+    # Weekly trend (last 7 days)
+    seven_days_ago = timezone.now() - timedelta(days=7)
+    daily_moods = []
+    for i in range(7):
+        day = seven_days_ago + timedelta(days=i)
+        day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day_start + timedelta(days=1)
+        
+        day_analyses = MoodAnalysis.objects.filter(
+            user=request.user,
+            created_at__gte=day_start,
+            created_at__lt=day_end
+        )
+        
+        if day_analyses.exists():
+            # Calculate average positivity score
+            avg_positif = sum(a.scores.get('positif', 0) for a in day_analyses) / day_analyses.count()
+            avg_negatif = sum(a.scores.get('negatif', 0) + a.scores.get('colere', 0) + a.scores.get('tristesse', 0) for a in day_analyses) / day_analyses.count()
+            positivity = avg_positif - avg_negatif
+        else:
+            positivity = 0
+        
+        daily_moods.append({
+            'date': day.strftime('%a'),
+            'positivity': round(positivity, 2)
+        })
+    
     return render(request, 'core/mood.html', {
         'result': result,
         'recommendation': recommendation,
         'history': history,
+        'mood_stats': list(mood_stats),
+        'daily_moods': daily_moods,
     })
 
 
 @login_required
 def mood_analyze(request):
-    """JSON endpoint: analyze text and persist MoodAnalysis + MoodRecommendation."""
+    """JSON endpoint: analyze text with OpenAI and persist MoodAnalysis + MoodRecommendation."""
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-
-    def _local_scores(txt: str):
-        t = (txt or '').lower()
-        pos = ['super', 'bien', 'génial', 'genial', 'heureux', 'joie', 'content', 'love', 'aime', 'fier']
-        neg = ['mauvais', 'nul', 'triste', 'déprimé', 'deprime', 'peur', 'anxieux', 'stress', 'mal']
-        anger = ['colère', 'colere', 'furieux', 'énervé', 'enerve', 'rage', 'agacé', 'agace']
-        sad = ['triste', 'tristesse', 'chagrin', 'pleurer', 'solitaire']
-        scores = {'positif': 0.0, 'neutre': 0.1, 'negatif': 0.0, 'colere': 0.0, 'tristesse': 0.0}
-        for w in pos:
-            if w in t: scores['positif'] += 1
-        for w in neg:
-            if w in t: scores['negatif'] += 1
-        for w in anger:
-            if w in t: scores['colere'] += 1
-        for w in sad:
-            if w in t: scores['tristesse'] += 1
-        if scores['positif']==0 and scores['negatif']==0 and scores['colere']==0 and scores['tristesse']==0:
-            scores['neutre'] = 1.0
-        return scores
-
-    def _recommend(top: str) -> str:
-        mapping = {
-            'positif': "Garde cette énergie: note 3 gratitudes et planifie une petite action qui te fait plaisir.",
-            'neutre': "Prends 2 minutes pour respirer et écrire une intention simple pour aujourd’hui.",
-            'negatif': "Fais une pause courte (5 min), respire 4-7-8 et écris ce qui te pèse pour l’externaliser.",
-            'colere': "Évite d’agir à chaud. 10 respirations profondes ou une marche brève pour apaiser la tension.",
-            'tristesse': "Autorise-toi à ressentir. Appelle une personne de confiance ou écoute une musique douce."
-        }
-        return mapping.get((top or '').lower(), mapping['neutre'])
 
     text = request.POST.get('text', '').strip()
     if not text:
         return JsonResponse({'error': 'text required'}, status=400)
 
+    # Try OpenAI analysis first, fallback to local if unavailable
     try:
-        emo = AIAnalysisService._detect_emotion_smart(text)
-        mapping = {
-            'joy': 'positif', 'gratitude': 'positif', 'love': 'positif', 'excitement': 'positif', 'pride': 'positif',
-            'sadness': 'tristesse', 'anger': 'colere', 'fear': 'negatif', 'nostalgia': 'neutre', 'peace': 'neutre', 'neutral': 'neutre'
-        }
-        top = mapping.get(emo, 'neutre')
-        scores = {'positif': 0.0, 'neutre': 0.0, 'negatif': 0.0, 'colere': 0.0, 'tristesse': 0.0}
-        scores[top] = 1.0
-        source = 'internal_ai'
-        model_used = 'ai_services._detect_emotion_smart'
-    except Exception:
-        scores = _local_scores(text)
+        analysis_result = MoodAIService.analyze_mood_with_openai(text)
+        source = 'openai'
+        model_used = settings.AI_TEXT_MODEL
+    except Exception as e:
+        logger.warning(f"OpenAI analysis failed: {e}, using fallback")
+        analysis_result = MoodAIService.get_fallback_analysis(text)
         source = 'local'
         model_used = 'lexicon'
-    top = max(scores, key=scores.get)
-    recommendation = _recommend(top)
+    
+    top = analysis_result['top']
+    scores = analysis_result['scores']
+    recommendation = analysis_result['recommendation']
 
     analysis = MoodAnalysis.objects.create(
         user=request.user,

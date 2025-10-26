@@ -9,7 +9,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 import json
 
-from .models import EntreeJournal, Tag
+from .models import EntreeJournal, Tag, EntreeTag
 from .services.ai_service import get_ai_service
 
 
@@ -176,7 +176,10 @@ def appliquer_tags_suggeres(request, pk):
                 utilisateur=request.user,
                 defaults={'couleur': '#667eea'}  # Couleur par défaut
             )
-            entree.tags.add(tag)
+            EntreeTag.objects.get_or_create(
+                entree_journal=entree,
+                tag=tag
+            )
         
         return JsonResponse({
             'success': True,

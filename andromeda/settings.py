@@ -100,7 +100,7 @@ LOGIN_URL = '/accounts/login/'
 
 # AI API Configuration
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
-GROK_API_KEY = os.environ.get('GROK_API_KEY')
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
 GOOGLE_VISION_API_KEY = os.environ.get('GOOGLE_VISION_API_KEY')
 
 # AI Service Settings
