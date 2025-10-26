@@ -3,7 +3,8 @@ from .models import (
     User, Note, Link, Template, Attachment, APIIntegration, AITask,
     Souvenir, AnalyseIASouvenir, AlbumSouvenir, CapsuleTemporelle,
     EntreeJournal, SouvenirEntree, PartageSouvenir,
-    ExportPDF, SuiviMotivationnel, Badge, UserBadge, HistoireInspirante , Tag, Humeur, EntreeTag, EntreeHumeur
+    ExportPDF, SuiviMotivationnel, Badge, UserBadge, HistoireInspirante, DefiQuotidien,
+    Tag, Humeur, EntreeTag, EntreeHumeur
 )
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
@@ -245,6 +246,48 @@ class HistoireInspiranteAdmin(admin.ModelAdmin):
         updated = queryset.update(is_favorite=True)
         self.message_user(request, f'{updated} histoires marquées comme favorites.')
     mark_as_favorite.short_description = "Marquer comme favorite"
+
+
+@admin.register(DefiQuotidien)
+class DefiQuotidienAdmin(admin.ModelAdmin):
+    list_display = ('titre', 'utilisateur', 'date_defi', 'statut', 'categorie', 'duree_estimee', 'priorite')
+    list_filter = ('statut', 'categorie', 'priorite', 'date_defi', 'est_genere_par_ia')
+    search_fields = ('titre', 'description', 'utilisateur__username', 'histoire_inspirante__celebrite')
+    date_hierarchy = 'date_defi'
+    readonly_fields = ('id', 'created_at', 'updated_at', 'est_termine', 'est_en_retard')
+    
+    fieldsets = (
+        ('Information Principale', {
+            'fields': ('utilisateur', 'histoire_inspirante', 'titre', 'description')
+        }),
+        ('Planning', {
+            'fields': ('date_defi', 'duree_estimee', 'priorite', 'categorie')
+        }),
+        ('État', {
+            'fields': ('statut', 'date_completion', 'notes_utilisateur')
+        }),
+        ('Métadonnées', {
+            'fields': ('est_genere_par_ia',),
+            'classes': ('collapse',)
+        }),
+        ('Système', {
+            'fields': ('id', 'created_at', 'updated_at', 'est_termine', 'est_en_retard'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    actions = ['mark_as_completed', 'mark_as_pending']
+    
+    def mark_as_completed(self, request, queryset):
+        from django.utils import timezone
+        updated = queryset.update(statut='completed', date_completion=timezone.now())
+        self.message_user(request, f'{updated} défis marqués comme terminés.')
+    mark_as_completed.short_description = "Marquer comme terminé"
+    
+    def mark_as_pending(self, request, queryset):
+        updated = queryset.update(statut='pending', date_completion=None)
+        self.message_user(request, f'{updated} défis marqués comme à faire.')
+    mark_as_pending.short_description = "Marquer comme à faire"
 
 
 admin.site.register(Note)

@@ -345,25 +345,35 @@
 
       <div class="separator">log in with</div>
 
-      <form method="post">
+      <form method="post" action="{% url 'login' %}">
         {% csrf_token %}
         
         {% if form.errors %}
           <div style="background: #fee2e2; border: 2px solid #dc2626; padding: 1rem; margin-bottom: 1rem; color: #991b1b;">
             <p style="margin: 0; font-weight: bold;">❌ Login Error</p>
-            <p style="margin: 0.5rem 0 0 0;">Invalid username or password.</p>
+            <p style="margin: 0.5rem 0 0 0;">Invalid username or password. Please try again.</p>
           </div>
         {% endif %}
         
-        <input type="text" name="username" placeholder="Username or Email" class="form-input" value="{{ form.username.value|default:'' }}">
+        {% if messages %}
+          {% for message in messages %}
+            <div style="background: {% if message.tags == 'error' %}#fee2e2{% else %}#d1fae5{% endif %}; border: 2px solid {% if message.tags == 'error' %}#dc2626{% else %}#10b981{% endif %}; padding: 1rem; margin-bottom: 1rem; color: {% if message.tags == 'error' %}#991b1b{% else %}#065f46{% endif %};">
+              <p style="margin: 0;">{{ message }}</p>
+            </div>
+          {% endfor %}
+        {% endif %}
+        
+        <input type="text" name="username" placeholder="Username" class="form-input" value="{{ form.username.value|default:'' }}" required autofocus>
         
         <div class="password-container">
-          <input type="password" id="password" name="password" placeholder="Password" class="form-input">
+          <input type="password" id="password" name="password" placeholder="Password" class="form-input" required>
           <button type="button" class="password-toggle" onclick="togglePassword()">Show</button>
         </div>
+        
+        <input type="hidden" name="next" value="{{ next|default:'/dashboard/' }}">
 
         <div class="recovery-link">
-          <a href="{% url 'core:password_reset' %}">Recovery Password</a>
+          <a href="{% url 'core:password_reset' %}">Forgot Password?</a>
         </div>
 
         <button type="submit" class="continue-btn">Enter Andromeda</button>

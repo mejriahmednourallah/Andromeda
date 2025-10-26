@@ -18,11 +18,13 @@ import json
 from .models import (
     Note, User, Souvenir, AnalyseIASouvenir, AlbumSouvenir,
     CapsuleTemporelle, PartageSouvenir, SuiviMotivationnel, ExportPDF , HistoireInspirante,
+    DefiQuotidien,
     MoodAnalysis, MoodRecommendation
 )
 from .forms import UserCreationForm, SouvenirForm, CapsuleTemporelleForm, UserProfileForm
 from .ai_services import AIAnalysisService, AIRecommendationService
 from .mood_ai_service import MoodAIService
+from .music_recommendation_service import MusicRecommendationService
 
 logger = logging.getLogger(__name__)
 
@@ -169,6 +171,7 @@ def mood(request):
     """
     result = None
     recommendation = None
+    music_recommendation = None
 
     if request.method == 'POST':
         text = request.POST.get('text', '').strip()
@@ -190,6 +193,14 @@ def mood(request):
         top = analysis_result['top']
         scores = analysis_result['scores']
         recommendation = analysis_result['recommendation']
+        
+        # Get music recommendation based on mood
+        try:
+            music_recommendation = MusicRecommendationService.get_music_recommendation(text, top)
+            logger.info(f"Music recommendation generated for {request.user.username}: {music_recommendation.get('suggestion')}")
+        except Exception as e:
+            logger.error(f"Failed to generate music recommendation: {e}")
+            music_recommendation = None
         
         # Save to database
         analysis = MoodAnalysis.objects.create(
@@ -223,11 +234,15 @@ def mood(request):
         created_at__gte=thirty_days_ago
     ).values('top').annotate(count=Count('top')).order_by('-count')
     
-    # Weekly trend (last 7 days)
-    seven_days_ago = timezone.now() - timedelta(days=7)
+    # Weekly trend (last 14 days)
+    fourteen_days_ago = timezone.now() - timedelta(days=14)
     daily_moods = []
-    for i in range(7):
-        day = seven_days_ago + timedelta(days=i)
+    
+    # Debug logging
+    logger.info(f"Mood chart for user {request.user.username}: analyzing from {fourteen_days_ago.strftime('%Y-%m-%d %H:%M')} to {timezone.now().strftime('%Y-%m-%d %H:%M')}")
+    
+    for i in range(14):
+        day = fourteen_days_ago + timedelta(days=i)
         day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
         day_end = day_start + timedelta(days=1)
         
@@ -242,20 +257,35 @@ def mood(request):
             avg_positif = sum(a.scores.get('positif', 0) for a in day_analyses) / day_analyses.count()
             avg_negatif = sum(a.scores.get('negatif', 0) + a.scores.get('colere', 0) + a.scores.get('tristesse', 0) for a in day_analyses) / day_analyses.count()
             positivity = avg_positif - avg_negatif
+            
+            logger.info(f"  {day.strftime('%a %Y-%m-%d')}: {day_analyses.count()} analyses, positivity={round(positivity, 2)}")
+            
+            daily_moods.append({
+                'date': day.strftime('%a'),
+                'positivity': round(positivity, 2)
+            })
         else:
-            positivity = 0
-        
-        daily_moods.append({
-            'date': day.strftime('%a'),
-            'positivity': round(positivity, 2)
-        })
+            # Only add days with data, or use null for Chart.js to skip
+            daily_moods.append({
+                'date': day.strftime('%a'),
+                'positivity': None
+            })
+    
+    # Check if any data exists
+    has_data = any(item['positivity'] is not None for item in daily_moods)
+    logger.info(f"Mood chart has_data: {has_data}, daily_moods length: {len(daily_moods)}")
+    
+    # Convert to JSON to ensure None becomes null
+    daily_moods_json = json.dumps(daily_moods)
+    mood_stats_json = json.dumps(list(mood_stats))
     
     return render(request, 'core/mood.html', {
         'result': result,
         'recommendation': recommendation,
+        'music_recommendation': music_recommendation,
         'history': history,
-        'mood_stats': list(mood_stats),
-        'daily_moods': daily_moods,
+        'mood_stats_json': mood_stats_json,
+        'daily_moods_json': daily_moods_json,
     })
 
 
@@ -1147,25 +1177,65 @@ def story_inspiration(request):
         
         if reflexion_text:
             try:
-                # Generate inspirational story with AI
-                story_data = AIRecommendationService.generate_inspirational_story(reflexion_text)
+                # Générer l'histoire inspirante avec MindTrack Coach (nouveau format)
+                mindtrack_data = AIRecommendationService.generate_mindtrack_response(reflexion_text)
                 
-                # Save story in database
+                # Sauvegarder l'histoire dans la base de données avec le nouveau format
                 histoire_saved = HistoireInspirante.objects.create(
                     utilisateur=request.user,
                     reflexion_text=reflexion_text,
-                    histoire_generee=story_data['story'],
-                    celebrite=story_data['celebrity'],
-                    est_simulee=story_data.get('simulated', True),
-                    modele_utilise=story_data.get('model', '')
+                    # Anciens champs (pour compatibilité)
+                    histoire_generee=mindtrack_data.get('story_content', ''),
+                    celebrite=mindtrack_data.get('story_title', '').replace("L'histoire de ", '').replace("L'histoire d'", ''),
+                    # Nouveaux champs MindTrack
+                    emotion_detected=mindtrack_data.get('emotion_detected', ''),
+                    story_title=mindtrack_data.get('story_title', ''),
+                    story_content=mindtrack_data.get('story_content', ''),
+                    challenge_title=mindtrack_data.get('challenge_title', ''),
+                    challenge_description=mindtrack_data.get('challenge_description', ''),
+                    motivation_quote=mindtrack_data.get('motivation_quote', ''),
+                    # Métadonnées
+                    est_simulee=mindtrack_data.get('simulated', True),
+                    modele_utilise=mindtrack_data.get('model', '')
                 )
                 
-                logger.info(f"Inspirational story saved (ID: {histoire_saved.id}) for user {request.user.username}")
-                messages.success(request, "✨ Your inspirational story has been generated and saved!")
+                story_data = mindtrack_data  # Pour compatibilité avec le template
+                
+                # Générer les défis quotidiens (7 jours)
+                from datetime import timedelta
+                challenges_list = AIRecommendationService.generate_daily_challenges(
+                    emotion=mindtrack_data.get('emotion_detected', 'réflexion'),
+                    story_title=mindtrack_data.get('story_title', ''),
+                    reflexion_text=reflexion_text,
+                    num_days=7
+                )
+                
+                # Créer les défis dans la base de données
+                today = timezone.now().date()
+                defis_crees = []
+                for challenge in challenges_list:
+                    defi = DefiQuotidien.objects.create(
+                        utilisateur=request.user,
+                        histoire_inspirante=histoire_saved,
+                        titre=challenge.get('title', ''),
+                        description=challenge.get('description', ''),
+                        categorie=challenge.get('category', ''),
+                        date_defi=today + timedelta(days=challenge.get('day', 1) - 1),
+                        duree_estimee=challenge.get('duration', 15),
+                        priorite=challenge.get('priority', 1),
+                        est_genere_par_ia=not mindtrack_data.get('simulated', True)
+                    )
+                    defis_crees.append(defi)
+                
+                # Recharger l'histoire avec les défis pour l'affichage
+                histoire_saved.refresh_from_db()
+                
+                logger.info(f"Histoire MindTrack sauvegardée (ID: {histoire_saved.id}) avec {len(defis_crees)} défis pour {request.user.username}")
+                messages.success(request, f"✨ Votre réponse MindTrack Coach a été générée avec {len(defis_crees)} défis sur 7 jours !")
                 
             except Exception as e:
-                logger.error(f"Error generating story: {str(e)}")
-                messages.error(request, "An error occurred while generating the story. Please try again.")
+                logger.error(f"Error generating MindTrack story: {str(e)}")
+                messages.error(request, "Une erreur s'est produite lors de la génération de l'histoire. Veuillez réessayer.")
         else:
             messages.warning(request, "Please enter a reflection to generate an inspirational story.")
     
@@ -1183,8 +1253,8 @@ def story_history(request):
     """
     View to display the history of all user's inspirational stories
     """
-    # Get all user's stories
-    histoires = HistoireInspirante.objects.filter(utilisateur=request.user).order_by('-created_at')
+    # Get all user's stories with their challenges
+    histoires = HistoireInspirante.objects.filter(utilisateur=request.user).prefetch_related('defis').order_by('-created_at')
     
     # Filtres
     filter_favorite = request.GET.get('favorite', None)

@@ -397,10 +397,16 @@
         <div class="story-item">
             <div class="story-header">
                 <div class="story-meta">
-                    <div class="story-celebrity">{{ histoire.celebrite }}</div>
+                    <div class="story-celebrity">{{ histoire.story_title|default:histoire.celebrite }}</div>
                     <div class="story-date">{{ histoire.created_at|date:"d/m/Y à H:i" }}</div>
                 </div>
                 <div class="story-badges">
+                    {% if histoire.emotion_detected %}
+                    <span class="badge" style="border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); color: #1e40af;">💙 {{ histoire.emotion_detected }}</span>
+                    {% endif %}
+                    {% if histoire.defis.count > 0 %}
+                    <span class="badge" style="border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); color: #78350f;" title="{{ histoire.defis.count }} défis">🎯 {{ histoire.defis.count }} défis</span>
+                    {% endif %}
                     {% if histoire.est_simulee %}
                     <span class="badge badge-simulated">💡 Simulée</span>
                     {% else %}
@@ -420,7 +426,7 @@
                 "{{ histoire.reflexion_courte }}"
             </div>
 
-            <div class="story-content">{{ histoire.histoire_generee|truncatewords:80 }}</div>
+            <div class="story-content">{{ histoire.story_content|default:histoire.histoire_generee|truncatewords:80 }}</div>
 
             <div class="story-footer">
                 <div style="font-size: 0.85rem; color: var(--text-gray);">
@@ -437,7 +443,83 @@
 
             <!-- Full Story (Hidden by default) -->
             <div id="story-{{ histoire.id }}" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid rgba(43, 43, 43, 0.2);">
-                <div class="story-content">{{ histoire.histoire_generee }}</div>
+                <div class="story-content" style="margin-bottom: 1.5rem;">{{ histoire.story_content|default:histoire.histoire_generee }}</div>
+                
+                {% if histoire.challenge_title %}
+                <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; padding: 1.5rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; align-items: start; gap: 1rem;">
+                        <span style="font-size: 2rem;">🎯</span>
+                        <div>
+                            <div style="font-size: 1.1rem; font-weight: bold; color: #78350f; margin-bottom: 0.5rem;">{{ histoire.challenge_title }}</div>
+                            <div style="font-size: 0.95rem; color: #92400e;">{{ histoire.challenge_description }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if histoire.motivation_quote %}
+                <div style="background: linear-gradient(135deg, #e0f2fe 0%, #ddd6fe 100%); border: 2px solid #8b5cf6; padding: 1.5rem; text-align: center; margin-bottom: 1.5rem;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">✨</div>
+                    <div style="font-size: 1.05rem; font-style: italic; color: #5b21b6; font-weight: 500;">
+                        "{{ histoire.motivation_quote }}"
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Défis Section -->
+                {% if histoire.defis.all %}
+                <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                        <span style="font-size: 2rem;">🎯</span>
+                        <div>
+                            <h3 style="font-size: 1.3rem; font-weight: bold; color: #78350f; margin: 0;">Défis sur 7 Jours</h3>
+                            <p style="color: #92400e; font-size: 0.85rem; margin: 0.25rem 0 0 0;">{{ histoire.defis.count }} défis générés</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem;">
+                        {% for defi in histoire.defis.all %}
+                        <div style="background: white; border: 2px solid #f59e0b; border-radius: 6px; padding: 0.75rem; font-size: 0.85rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="background: #f59e0b; color: white; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: bold;">
+                                    Jour {{ forloop.counter }}
+                                </span>
+                                <span style="font-size: 0.75rem; color: #92400e;">
+                                    ⏱️ {{ defi.duree_estimee }}min
+                                </span>
+                            </div>
+                            
+                            <h4 style="font-size: 0.95rem; font-weight: bold; color: #78350f; margin: 0 0 0.4rem 0; line-height: 1.3;">
+                                {{ defi.titre }}
+                            </h4>
+                            
+                            <p style="font-size: 0.8rem; color: #92400e; line-height: 1.4; margin: 0 0 0.5rem 0;">
+                                {{ defi.description|truncatewords:15 }}
+                            </p>
+                            
+                            <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                                <span style="background: rgba(245, 158, 11, 0.2); color: #92400e; padding: 0.2rem 0.4rem; border-radius: 3px; font-size: 0.7rem; font-weight: 600;">
+                                    {{ defi.categorie|default:"général" }}
+                                </span>
+                                {% if defi.priorite == 1 %}
+                                <span style="font-size: 0.9rem;">🔥</span>
+                                {% endif %}
+                                {% if defi.est_termine %}
+                                <span style="font-size: 0.9rem;" title="Terminé">✅</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.5); border-radius: 6px; text-align: center;">
+                        <p style="color: #78350f; font-size: 0.8rem; margin: 0;">
+                            💡 Ces défis ont été générés automatiquement pour vous aider à progresser
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+                
                 <button class="action-btn" onclick="toggleFullStory('story-{{ histoire.id }}')">
                     ⬆️ Réduire
                 </button>

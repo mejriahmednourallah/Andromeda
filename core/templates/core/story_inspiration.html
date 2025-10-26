@@ -230,28 +230,103 @@
         <a href="{% url 'core:story_history' %}" class="history-btn">📚 View my history</a>
     </div>
 
-    <!-- Story Result -->
+    <!-- MindTrack Coach Result -->
     {% if story_data %}
+    <!-- Emotion Detected -->
+    <div class="card" style="background: #dbeafe; border-color: #3b82f6; margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span style="font-size: 2rem;">💙</span>
+            <div>
+                <div style="font-size: 0.9rem; color: #1e40af; font-weight: bold; text-transform: uppercase;">Émotion détectée</div>
+                <div style="font-size: 1.3rem; font-weight: bold; color: #1e3a8a;">{{ story_data.emotion_detected|default:"Réflexion" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Story Card -->
     <div class="story-card">
         <div class="story-header">
-            <div class="story-celebrity">{{ story_data.celebrity }}</div>
-            <div class="story-subtitle">A story to inspire you</div>
+            <div class="story-celebrity">{{ story_data.story_title|default:"Une histoire inspirante" }}</div>
+            <div class="story-subtitle">Une histoire pour vous inspirer</div>
         </div>
         
-        <div class="story-content">{{ story_data.story }}</div>
+        <div class="story-content">{{ story_data.story_content|default:"" }}</div>
         
         <div class="story-footer">
             {% if story_data.simulated %}
-            <span class="story-badge">💡 Inspiring Mode</span>
+            <span class="story-badge">💡 Mode Inspirant</span>
             {% else %}
-            <span class="story-badge">🤖 AI Generated</span>
+            <span class="story-badge">🤖 Généré par IA</span>
             {% endif %}
         </div>
     </div>
 
+    <!-- Défis Section with Calendar -->
+    {% if histoire_saved %}
+    <div class="defis-section" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 3px solid #f59e0b; padding: 2rem; margin-bottom: 1.5rem; border-radius: 12px;">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+            <span style="font-size: 2.5rem;">🎯</span>
+            <div>
+                <h2 style="font-size: 1.8rem; font-weight: bold; color: #78350f; margin: 0;">Tes Défis sur 7 Jours</h2>
+                <p style="color: #92400e; margin: 0.5rem 0 0 0;">Des actions concrètes pour avancer chaque jour</p>
+            </div>
+        </div>
+        
+        <div class="calendar-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            {% for defi in histoire_saved.defis.all %}
+            <div class="defi-card" style="background: white; border: 2px solid #f59e0b; border-radius: 8px; padding: 1rem; transition: all 0.3s ease;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <span style="background: #f59e0b; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: bold;">
+                        Jour {{ forloop.counter }}
+                    </span>
+                    <span style="font-size: 0.85rem; color: #92400e;">
+                        ⏱️ {{ defi.duree_estimee }}min
+                    </span>
+                </div>
+                
+                <h3 style="font-size: 1.1rem; font-weight: bold; color: #78350f; margin-bottom: 0.5rem;">
+                    {{ defi.titre }}
+                </h3>
+                
+                <p style="font-size: 0.9rem; color: #92400e; line-height: 1.5; margin-bottom: 0.75rem;">
+                    {{ defi.description }}
+                </p>
+                
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <span style="background: rgba(245, 158, 11, 0.2); color: #92400e; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
+                        {{ defi.categorie|default:"général" }}
+                    </span>
+                    {% if defi.priorite == 1 %}
+                    <span style="color: #dc2626;">🔥</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(255, 255, 255, 0.5); border-radius: 8px; text-align: center;">
+            <p style="color: #78350f; font-size: 0.95rem; margin: 0;">
+                💡 <strong>Astuce :</strong> Coche chaque défi au fur et à mesure dans ton calendrier personnel pour suivre ta progression !
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Motivation Quote -->
+    {% if story_data.motivation_quote %}
+    <div class="card" style="background: linear-gradient(135deg, #e0f2fe 0%, #ddd6fe 100%); border-color: #8b5cf6; margin-bottom: 1.5rem;">
+        <div style="text-align: center; padding: 1rem;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">✨</div>
+            <div style="font-size: 1.2rem; font-style: italic; color: #5b21b6; font-weight: 500; line-height: 1.8;">
+                "{{ story_data.motivation_quote }}"
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- New Reflection Button -->
     <form method="get" action="{% url 'core:story_inspiration' %}">
-        <button type="submit" class="new-reflection-btn">✍️ New Reflection</button>
+        <button type="submit" class="new-reflection-btn">✍️ Nouvelle Réflexion</button>
     </form>
     {% endif %}
 

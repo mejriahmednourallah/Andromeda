@@ -694,6 +694,14 @@ class HistoireInspirante(models.Model):
     histoire_generee = models.TextField(help_text="Histoire inspirante générée")
     celebrite = models.CharField(max_length=200, help_text="Nom de la célébrité mentionnée dans l'histoire")
     
+    # MindTrack Coach - Format structuré
+    emotion_detected = models.CharField(max_length=100, blank=True, default='', help_text="Émotion principale détectée")
+    story_title = models.CharField(max_length=300, blank=True, default='', help_text="Titre de l'histoire (ex: L'histoire de J.K. Rowling)")
+    story_content = models.TextField(blank=True, default='', help_text="Contenu de l'histoire inspirante")
+    challenge_title = models.CharField(max_length=300, blank=True, default='', help_text="Titre du défi quotidien")
+    challenge_description = models.TextField(blank=True, default='', help_text="Description du défi concret à réaliser")
+    motivation_quote = models.TextField(blank=True, default='', help_text="Citation motivante")
+    
     # Métadonnées de génération
     est_simulee = models.BooleanField(default=True, help_text="True si histoire simulée, False si générée par IA")
     modele_utilise = models.CharField(max_length=100, blank=True, default='', help_text="Modèle IA utilisé (ex: gpt-4o-mini)")
@@ -750,3 +758,64 @@ class MoodRecommendation(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+# --- Défis Quotidiens (Daily Challenges) ---
+class DefiQuotidien(models.Model):
+    """
+    Modèle pour les défis quotidiens générés par l'IA
+    Lié à une histoire inspirante pour créer un plan d'action concret
+    """
+    STATUS_CHOICES = [
+        ('pending', 'À faire'),
+        ('in_progress', 'En cours'),
+        ('completed', 'Terminé'),
+        ('skipped', 'Ignoré'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    utilisateur = models.ForeignKey('User', on_delete=models.CASCADE, related_name='defis_quotidiens')
+    histoire_inspirante = models.ForeignKey(HistoireInspirante, on_delete=models.CASCADE, related_name='defis', null=True, blank=True)
+    
+    # Contenu du défi
+    titre = models.CharField(max_length=300, help_text="Titre du défi (ex: Médite 10 minutes)")
+    description = models.TextField(help_text="Description détaillée du défi")
+    categorie = models.CharField(max_length=100, blank=True, default='', help_text="Catégorie (ex: bien-être, productivité, social)")
+    
+    # Planning
+    date_defi = models.DateField(help_text="Date prévue pour ce défi")
+    duree_estimee = models.IntegerField(default=15, help_text="Durée estimée en minutes")
+    priorite = models.IntegerField(default=1, help_text="Priorité (1=haute, 2=moyenne, 3=basse)")
+    
+    # État
+    statut = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    date_completion = models.DateTimeField(null=True, blank=True, help_text="Date de complétion")
+    notes_utilisateur = models.TextField(blank=True, default='', help_text="Notes de l'utilisateur après complétion")
+    
+    # Métadonnées
+    est_genere_par_ia = models.BooleanField(default=True, help_text="True si généré par IA")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['date_defi', 'priorite']
+        verbose_name = 'Défi Quotidien'
+        verbose_name_plural = 'Défis Quotidiens'
+        indexes = [
+            models.Index(fields=['utilisateur', 'date_defi']),
+            models.Index(fields=['statut']),
+        ]
+    
+    def __str__(self):
+        return f"{self.titre} - {self.date_defi.strftime('%d/%m/%Y')}"
+    
+    @property
+    def est_termine(self):
+        """Vérifie si le défi est terminé"""
+        return self.statut == 'completed'
+    
+    @property
+    def est_en_retard(self):
+        """Vérifie si le défi est en retard"""
+        from django.utils import timezone
+        return self.date_defi < timezone.now().date() and self.statut == 'pending'

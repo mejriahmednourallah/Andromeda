@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Mood Chart</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f9f9f9;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        canvas {
+            max-height: 400px;
+        }
+        #debug {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Chart.js avec vos données</h1>
+    
+    <div id="debug"></div>
+    
+    <div class="card">
+        <h2>📊 Weekly Positivity Trend (Test)</h2>
+        <canvas id="testChart"></canvas>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Your actual data from debug script
+        const dailyData = [
+            {"date": "Sun", "positivity": null},
+            {"date": "Mon", "positivity": null},
+            {"date": "Tue", "positivity": null},
+            {"date": "Wed", "positivity": null},
+            {"date": "Thu", "positivity": null},
+            {"date": "Fri", "positivity": null},
+            {"date": "Sat", "positivity": null},
+            {"date": "Sun", "positivity": null},
+            {"date": "Mon", "positivity": 0.7},
+            {"date": "Tue", "positivity": 0.85},
+            {"date": "Wed", "positivity": 0.1},
+            {"date": "Thu", "positivity": -0.6},
+            {"date": "Fri", "positivity": 0.8},
+            {"date": "Sat", "positivity": 0.65}
+        ];
+
+        const dailyLabels = dailyData.map(item => item.date);
+        const dailyPositivity = dailyData.map(item => item.positivity);
+
+        // Debug info
+        const debugEl = document.getElementById('debug');
+        debugEl.textContent = `
+📊 Debug Info:
+--------------
+Labels: ${JSON.stringify(dailyLabels)}
+Data:   ${JSON.stringify(dailyPositivity)}
+
+Has Data: ${dailyPositivity.some(value => value !== null)}
+Non-null values: ${dailyPositivity.filter(v => v !== null).length}
+        `;
+
+        console.log('Daily Labels:', dailyLabels);
+        console.log('Daily Positivity:', dailyPositivity);
+
+        // Check if there's any data
+        const hasData = dailyPositivity.some(value => value !== null);
+        console.log('Has data:', hasData);
+
+        if (!hasData) {
+            console.warn('⚠️ No data found!');
+        }
+
+        // Create Chart
+        try {
+            const ctx = document.getElementById('testChart').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dailyLabels,
+                    datasets: [{
+                        label: 'Positivity Score',
+                        data: dailyPositivity,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 8,
+                        spanGaps: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.parsed.y === null) {
+                                        return 'No data';
+                                    }
+                                    return 'Score: ' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            suggestedMin: -1,
+                            suggestedMax: 1,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                font: {
+                                    family: "'Inter', sans-serif"
+                                },
+                                callback: function(value) {
+                                    return value.toFixed(1);
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    family: "'Inter', sans-serif"
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            console.log('✅ Chart created successfully!', chart);
+        } catch (error) {
+            console.error('❌ Error creating chart:', error);
+            debugEl.textContent += '\n\n❌ ERROR: ' + error.message;
+        }
+    </script>
+</body>
+</html>

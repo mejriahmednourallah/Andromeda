@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Preview - Music Recommendation Section</title>
+    <style>
+        :root {
+            --text-dark: #2d3748;
+            --text-gray: #4a5568;
+            --accent-orange: #ff6b35;
+            --separator-color: #e2e8f0;
+            --panel-bg: #fafafa;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f7fafc;
+        }
+        
+        h1 {
+            text-align: center;
+            color: var(--text-dark);
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 Preview: Music Recommendation Section</h1>
+    
+    <div class="card">
+        <h2 style="margin-top: 0; margin-bottom: 20px; color: var(--text-dark);">
+            🎭 Analysis Result - Positif
+        </h2>
+        
+        <!-- Personalized Recommendation -->
+        <div style="background: rgba(212, 197, 185, 0.1); padding: 1.5rem; border-radius: 12px; border: 2px solid var(--separator-color); margin-bottom: 1.5rem;">
+            <p style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--text-dark); font-weight: bold; display: flex; align-items: center; gap: 0.5rem;">
+                <span>💡</span> Personalized Recommendation:
+            </p>
+            <p style="font-size: 1rem; line-height: 1.6; color: var(--text-gray); margin: 0;">
+                Garde cette énergie: note 3 gratitudes et planifie une petite action qui te fait plaisir.
+            </p>
+        </div>
+        
+        <!-- Music Recommendation -->
+        <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%); padding: 1.5rem; border-radius: 12px; border: 2px solid rgba(102, 126, 234, 0.2); position: relative; overflow: hidden;">
+            <!-- Musical note decoration -->
+            <div style="position: absolute; top: -10px; right: -10px; font-size: 80px; opacity: 0.05; transform: rotate(15deg);">🎵</div>
+            
+            <div style="position: relative; z-index: 1;">
+                <p style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--text-dark); font-weight: bold; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>🎵</span> Recommended Music for Your Mood:
+                </p>
+                
+                <div style="background: white; padding: 1.25rem; border-radius: 8px; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <p style="font-size: 0.85rem; color: var(--text-gray); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <span style="display: inline-block; width: 8px; height: 8px; background: #667eea; border-radius: 50%; margin-right: 6px;"></span>
+                        JOIE ET POSITIVITÉ
+                    </p>
+                    <p style="font-size: 1.25rem; font-weight: bold; color: #667eea; margin: 0.5rem 0;">
+                        Happy - Pharrell Williams
+                    </p>
+                    <p style="font-size: 0.95rem; line-height: 1.5; color: var(--text-gray); margin: 0;">
+                        Cette chanson célèbre le bonheur et l'enthousiasme, parfaitement en phase avec votre état d'esprit positif. Sa mélodie entraînante et ses paroles inspirantes encouragent à savourer les succès et à partager la joie.
+                    </p>
+                </div>
+                
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <a href="https://www.youtube.com/results?search_query=Happy%20-%20Pharrell%20Williams" 
+                       target="_blank"
+                       style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: #FF0000; color: white; text-decoration: none; border-radius: 8px; font-size: 0.9rem; font-weight: 500; transition: transform 0.2s ease, box-shadow 0.2s ease;"
+                       onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(255,0,0,0.3)';"
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        <span style="font-size: 1.1rem;">▶️</span> Listen on YouTube
+                    </a>
+                    
+                    <a href="https://open.spotify.com/search/Happy%20-%20Pharrell%20Williams" 
+                       target="_blank"
+                       style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: #1DB954; color: white; text-decoration: none; border-radius: 8px; font-size: 0.9rem; font-weight: 500; transition: transform 0.2s ease, box-shadow 0.2s ease;"
+                       onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(29,185,84,0.3)';"
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        <span style="font-size: 1.1rem;">🎧</span> Listen on Spotify
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px; color: var(--text-gray);">
+        <p>✨ This is a preview of the music recommendation section</p>
+        <p>It will appear after mood analysis on the actual page</p>
+    </div>
+</body>
+</html>

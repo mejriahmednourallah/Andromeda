@@ -37,11 +37,55 @@
         </div>
         
         {% if recommendation %}
-        <div style="background: rgba(212, 197, 185, 0.1); padding: 1.5rem; border-radius: 12px; border: 2px solid var(--separator-color);">
+        <div style="background: rgba(212, 197, 185, 0.1); padding: 1.5rem; border-radius: 12px; border: 2px solid var(--separator-color); margin-bottom: 1.5rem;">
             <p style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--text-dark); font-weight: bold; display: flex; align-items: center; gap: 0.5rem;">
                 <span>💡</span> Personalized Recommendation:
             </p>
             <p style="font-size: 1rem; line-height: 1.6; color: var(--text-gray); margin: 0;">{{ recommendation }}</p>
+        </div>
+        {% endif %}
+        
+        {% if music_recommendation %}
+        <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%); padding: 1.5rem; border-radius: 12px; border: 2px solid rgba(102, 126, 234, 0.2); position: relative; overflow: hidden;">
+            <!-- Musical note decoration -->
+            <div style="position: absolute; top: -10px; right: -10px; font-size: 80px; opacity: 0.05; transform: rotate(15deg);">🎵</div>
+            
+            <div style="position: relative; z-index: 1;">
+                <p style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--text-dark); font-weight: bold; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>🎵</span> Recommended Music for Your Mood:
+                </p>
+                
+                <div style="background: white; padding: 1.25rem; border-radius: 8px; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <p style="font-size: 0.85rem; color: var(--text-gray); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <span style="display: inline-block; width: 8px; height: 8px; background: #667eea; border-radius: 50%; margin-right: 6px;"></span>
+                        {{ music_recommendation.emotion }}
+                    </p>
+                    <p style="font-size: 1.25rem; font-weight: bold; color: #667eea; margin: 0.5rem 0;">
+                        {{ music_recommendation.suggestion }}
+                    </p>
+                    <p style="font-size: 0.95rem; line-height: 1.5; color: var(--text-gray); margin: 0;">
+                        {{ music_recommendation.description }}
+                    </p>
+                </div>
+                
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <a href="https://www.youtube.com/results?search_query={{ music_recommendation.suggestion|urlencode }}" 
+                       target="_blank"
+                       style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: #FF0000; color: white; text-decoration: none; border-radius: 8px; font-size: 0.9rem; font-weight: 500; transition: transform 0.2s ease, box-shadow 0.2s ease;"
+                       onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(255,0,0,0.3)';"
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        <span style="font-size: 1.1rem;">▶️</span> Listen on YouTube
+                    </a>
+                    
+                    <a href="https://open.spotify.com/search/{{ music_recommendation.suggestion|urlencode }}" 
+                       target="_blank"
+                       style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: #1DB954; color: white; text-decoration: none; border-radius: 8px; font-size: 0.9rem; font-weight: 500; transition: transform 0.2s ease, box-shadow 0.2s ease;"
+                       onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(29,185,84,0.3)';"
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        <span style="font-size: 1.1rem;">🎧</span> Listen on Spotify
+                    </a>
+                </div>
+            </div>
         </div>
         {% endif %}
         
@@ -65,11 +109,11 @@
 {% endif %}
 
 <!-- Statistics Section -->
-{% if mood_stats or daily_moods %}
+{% if mood_stats_json or daily_moods_json %}
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
     
     <!-- Mood Distribution Chart -->
-    {% if mood_stats %}
+    {% if mood_stats_json %}
     <div class="card">
         <h2 class="card-title">📈 Mood Distribution (Last 30 Days)</h2>
         <canvas id="moodDistributionChart" style="max-height: 300px;"></canvas>
@@ -77,10 +121,16 @@
     {% endif %}
     
     <!-- Weekly Trend Chart -->
-    {% if daily_moods %}
+    {% if daily_moods_json %}
     <div class="card">
-        <h2 class="card-title">📊 Weekly Positivity Trend</h2>
-        <canvas id="weeklyTrendChart" style="max-height: 300px;"></canvas>
+        <h2 class="card-title">📊 Weekly Positivity Trend (Last 14 Days)</h2>
+        <div style="position: relative;">
+            <canvas id="weeklyTrendChart" style="max-height: 300px;"></canvas>
+            <div id="noDataMessage" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--text-gray); display: none;">
+                <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">📊 No mood data in the last 14 days</p>
+                <p style="font-size: 0.9rem;">Analyze your mood above to see trends!</p>
+            </div>
+        </div>
     </div>
     {% endif %}
 </div>
@@ -116,8 +166,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 // Mood Distribution Chart
-{% if mood_stats %}
-const moodData = {{ mood_stats|safe }};
+{% if mood_stats_json %}
+const moodData = {{ mood_stats_json|safe }};
 const moodLabels = moodData.map(item => item.top.charAt(0).toUpperCase() + item.top.slice(1));
 const moodCounts = moodData.map(item => item.count);
 
@@ -169,12 +219,31 @@ new Chart(document.getElementById('moodDistributionChart'), {
 {% endif %}
 
 // Weekly Trend Chart
-{% if daily_moods %}
-const dailyData = {{ daily_moods|safe }};
+{% if daily_moods_json %}
+console.log('🟦 Weekly Trend Chart - Starting');
+const dailyData = {{ daily_moods_json|safe }};
+console.log('📊 dailyData:', dailyData);
+
 const dailyLabels = dailyData.map(item => item.date);
 const dailyPositivity = dailyData.map(item => item.positivity);
 
-new Chart(document.getElementById('weeklyTrendChart'), {
+console.log('🏷️  dailyLabels:', dailyLabels);
+console.log('📈 dailyPositivity:', dailyPositivity);
+
+// Check if there's any data
+const hasData = dailyPositivity.some(value => value !== null);
+console.log('✅ hasData:', hasData);
+
+if (!hasData) {
+    console.log('⚠️ No data found - showing message');
+    document.getElementById('noDataMessage').style.display = 'block';
+    document.getElementById('weeklyTrendChart').style.opacity = '0.3';
+} else {
+    console.log('✅ Data found - creating chart');
+}
+
+try {
+    const chart = new Chart(document.getElementById('weeklyTrendChart'), {
     type: 'line',
     data: {
         labels: dailyLabels,
@@ -186,10 +255,12 @@ new Chart(document.getElementById('weeklyTrendChart'), {
             borderWidth: 3,
             fill: true,
             tension: 0.4,
-            pointRadius: 5,
+            pointRadius: 6,
             pointBackgroundColor: '#667eea',
             pointBorderColor: '#fff',
-            pointBorderWidth: 2
+            pointBorderWidth: 2,
+            pointHoverRadius: 8,
+            spanGaps: true
         }]
     },
     options: {
@@ -209,13 +280,17 @@ new Chart(document.getElementById('weeklyTrendChart'), {
         },
         scales: {
             y: {
-                beginAtZero: true,
+                suggestedMin: -1,
+                suggestedMax: 1,
                 grid: {
                     color: 'rgba(0, 0, 0, 0.05)'
                 },
                 ticks: {
                     font: {
                         family: "'Inter', sans-serif"
+                    },
+                    callback: function(value) {
+                        return value.toFixed(1);
                     }
                 }
             },
@@ -232,6 +307,12 @@ new Chart(document.getElementById('weeklyTrendChart'), {
         }
     }
 });
+    console.log('✅ Chart created successfully!');
+} catch (error) {
+    console.error('❌ Error creating chart:', error);
+    document.getElementById('noDataMessage').innerHTML = '<p style="font-size: 1.1rem; color: red;">❌ Error creating chart</p><p style="font-size: 0.9rem;">' + error.message + '</p>';
+    document.getElementById('noDataMessage').style.display = 'block';
+}
 {% endif %}
 </script>
 {% endblock %}

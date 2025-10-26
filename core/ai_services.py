@@ -1079,3 +1079,223 @@ Réponds uniquement avec l'histoire, rien d'autre."""
             'celebrity': selected_story['celebrity'],
             'simulated': True
         }
+    
+    @staticmethod
+    def generate_mindtrack_response(story_text):
+        """
+        Generate a structured wellness response with emotion, story, and challenge
+        Format: MindTrack Coach - comprehensive wellness assistance
+        Returns JSON with emotion_detected, story, challenge, and quote
+        """
+        if not story_text or not story_text.strip():
+            return {
+                'emotion_detected': 'incertitude',
+                'story_title': "L'histoire de Michael Jordan",
+                'story_content': "Avant de devenir une légende, Michael Jordan a été rejeté de l'équipe de basket de son lycée. Cette déception aurait pu tout arrêter. Mais il a choisi d'en faire sa force. Il s'est entraîné encore plus, chaque jour, avec une détermination inébranlable.",
+                'challenge_title': 'Un pas vers ta force',
+                'challenge_description': "Identifie aujourd'hui une petite action concrète que tu peux faire pour avancer, même si tu doutes. Écris-la et fais-la.",
+                'motivation_quote': "Chaque échec est une opportunité déguisée. Ta force grandit dans les moments difficiles.",
+                'simulated': True
+            }
+        
+        if OPENAI_AVAILABLE and settings.OPENAI_API_KEY:
+            try:
+                client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+                
+                prompt = f"""Tu es un assistant de bien-être intelligent nommé "MindTrack Coach".
+L'utilisateur vient d'écrire une réflexion personnelle.  
+Ton rôle est de :
+1. Comprendre ce qu'il ressent (émotion principale).  
+2. Lui raconter une courte histoire vraie ou inspirée d'une personnalité connue ayant vécu une situation similaire.  
+3. Lui proposer un petit défi concret à faire aujourd'hui pour aller mieux.
+
+Garde un ton calme, bienveillant, sincère et minimaliste.
+
+---
+
+### Contexte de la réflexion :
+{story_text}
+
+---
+
+### Format de réponse JSON :
+{{
+  "emotion_detected": "doute",
+  "story_title": "L'histoire de J.K. Rowling",
+  "story_content": "Avant Harry Potter, Rowling a été rejetée par plusieurs éditeurs. Mais elle a continué à écrire, même dans les moments les plus sombres.",
+  "challenge_title": "Crois en ton idée",
+  "challenge_description": "Écris aujourd'hui une seule chose que tu veux accomplir, même si tu doutes encore.",
+  "motivation_quote": "Les plus belles réussites naissent dans les moments d'incertitude."
+}}
+
+Réponds UNIQUEMENT avec le JSON valide, sans texte avant ou après."""
+
+                response = client.chat.completions.create(
+                    model=settings.AI_TEXT_MODEL,
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=600,
+                    temperature=0.7,
+                    response_format={"type": "json_object"}
+                )
+                
+                result = response.choices[0].message.content.strip()
+                
+                # Parse JSON response
+                import json
+                data = json.loads(result)
+                
+                # Add metadata
+                data['simulated'] = False
+                data['model'] = settings.AI_TEXT_MODEL
+                
+                return data
+                
+            except Exception as e:
+                logger.error(f"Error generating MindTrack response: {str(e)}")
+                # Fallback to simulated
+        
+        # Simulated responses with structured format
+        simulated_responses = [
+            {
+                'emotion_detected': 'doute',
+                'story_title': "L'histoire de J.K. Rowling",
+                'story_content': "J.K. Rowling vivait des moments très difficiles. Mère célibataire au chômage, elle écrivait dans des cafés pour économiser le chauffage. Douze éditeurs ont refusé Harry Potter. Douze fois, elle a essuyé un 'non'. Mais elle n'a jamais abandonné. Elle croyait en son histoire, en sa plume, en elle-même. Le treizième éditeur a dit oui.",
+                'challenge_title': 'Écris ton "oui"',
+                'challenge_description': "Identifie aujourd'hui une chose en laquelle tu crois profondément. Écris-la sur papier et fais un petit pas vers elle, même minuscule.",
+                'motivation_quote': "Chaque refus te rapproche du 'oui' qui changera tout. Continue d'avancer."
+            },
+            {
+                'emotion_detected': 'découragement',
+                'story_title': "L'histoire de Walt Disney",
+                'story_content': "Walt Disney a été licencié d'un journal parce qu'on lui disait qu'il manquait d'imagination. Sa première entreprise a fait faillite. Il a été rejeté plus de 300 fois avant de trouver un financement pour Disneyland. Mais il continuait de dessiner, de rêver, de créer. Il croyait en sa vision même quand personne d'autre n'y croyait.",
+                'challenge_title': 'Dessine ton rêve',
+                'challenge_description': "Prends 10 minutes aujourd'hui pour visualiser ou dessiner (même simplement) ce que tu veux vraiment accomplir. Rends-le réel dans ton esprit.",
+                'motivation_quote': "Les échecs ne sont que des détours vers le succès. Continue de croire en tes rêves."
+            },
+            {
+                'emotion_detected': 'solitude',
+                'story_title': "L'histoire de Lady Gaga",
+                'story_content': "Lady Gaga a été harcelée à l'école pour sa différence. On se moquait d'elle, on la rejetait. Elle se sentait seule et incomprise. Mais elle a transformé sa différence en force. Elle a embrassé qui elle était vraiment, sans s'excuser. Elle a créé sa propre voie, son propre style. Aujourd'hui, elle inspire des millions de personnes à être authentiques.",
+                'challenge_title': 'Célèbre ta différence',
+                'challenge_description': "Identifie une chose qui te rend unique et que tu as tendance à cacher. Aujourd'hui, assume-la fièrement, même juste pour toi.",
+                'motivation_quote': "Ta différence n'est pas une faiblesse, c'est ta plus grande force. Le monde a besoin de ta lumière unique."
+            },
+            {
+                'emotion_detected': 'peur',
+                'story_title': "L'histoire d'Oprah Winfrey",
+                'story_content': "Oprah Winfrey a grandi dans la pauvreté extrême. Elle a connu l'abandon, les abus, le rejet. À 17 ans, tout semblait perdu. Mais elle avait une voix. Une histoire. Une force intérieure qu'elle refusait de laisser se briser. Elle a transformé sa douleur en pouvoir. Elle a commencé à parler, à partager, à inspirer.",
+                'challenge_title': 'Partage ta voix',
+                'challenge_description': "Aujourd'hui, exprime à voix haute (même seul) une vérité sur toi que tu gardes d'habitude pour toi. Libère cette voix intérieure.",
+                'motivation_quote': "Tes épreuves ne te définissent pas. Elles te façonnent. Tu es plus fort que tu ne le penses."
+            },
+            {
+                'emotion_detected': 'anxiété',
+                'story_title': "L'histoire d'Emma Stone",
+                'story_content': "Emma Stone a souffert d'attaques de panique sévères dès l'enfance. L'anxiété l'empêchait de vivre normalement. Mais elle a appris à la comprendre, à l'apprivoiser. Elle a découvert que le théâtre l'aidait à canaliser cette énergie. Elle n'a pas laissé l'anxiété définir sa vie. Elle en a fait une alliée dans sa créativité.",
+                'challenge_title': 'Respire et ancre-toi',
+                'challenge_description': "Quand tu sens l'anxiété monter aujourd'hui, prends 5 respirations profondes conscientes. Compte-les. Sens tes pieds sur le sol.",
+                'motivation_quote': "L'anxiété n'est pas ton ennemie. C'est un signal. Écoute-le, respire, et avance doucement."
+            }
+        ]
+        
+        import random
+        selected = random.choice(simulated_responses)
+        selected['simulated'] = True
+        
+        return selected
+    
+    @staticmethod
+    def generate_daily_challenges(emotion, story_title, reflexion_text, num_days=7):
+        """
+        Generate multiple daily challenges (7 days) based on the user's reflection and emotion
+        Returns a list of challenges with titles, descriptions, categories, and durations
+        """
+        if OPENAI_AVAILABLE and settings.OPENAI_API_KEY:
+            try:
+                client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+                
+                prompt = f"""Tu es MindTrack Coach, un assistant de bien-être.
+L'utilisateur a partagé une réflexion personnelle et a reçu une histoire inspirante.
+Tu dois maintenant créer {num_days} défis concrets et progressifs pour l'aider à avancer.
+
+### Contexte :
+- Émotion détectée : {emotion}
+- Histoire : {story_title}
+- Réflexion : "{reflexion_text}"
+
+### Instructions :
+Génère {num_days} défis quotidiens CONCRETS, RÉALISABLES et PROGRESSIFS.
+- Jour 1-2 : Défis simples et doux (10-15 min)
+- Jour 3-5 : Défis intermédiaires (15-30 min)
+- Jour 6-7 : Défis plus engageants (30-45 min)
+
+Catégories possibles : bien-être, productivité, social, créativité, physique, mental
+
+### Format JSON attendu :
+{{
+  "challenges": [
+    {{
+      "day": 1,
+      "title": "Respire en pleine conscience",
+      "description": "Prends 10 minutes pour faire une session de respiration profonde. Concentre-toi sur l'instant présent.",
+      "category": "bien-être",
+      "duration": 10,
+      "priority": 1
+    }},
+    ...
+  ]
+}}
+
+Réponds UNIQUEMENT avec le JSON valide."""
+
+                response = client.chat.completions.create(
+                    model=settings.AI_TEXT_MODEL,
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=1000,
+                    temperature=0.7,
+                    response_format={"type": "json_object"}
+                )
+                
+                result = response.choices[0].message.content.strip()
+                import json
+                data = json.loads(result)
+                
+                return data.get('challenges', [])
+                
+            except Exception as e:
+                logger.error(f"Error generating challenges: {str(e)}")
+                # Fallback to simulated
+        
+        # Simulated challenges based on emotion
+        simulated_challenges = {
+            'doute': [
+                {"day": 1, "title": "Écris tes réussites passées", "description": "Liste 3 moments où tu as réussi quelque chose dont tu es fier.", "category": "productivité", "duration": 15, "priority": 1},
+                {"day": 2, "title": "Parle à quelqu'un de confiance", "description": "Partage tes doutes avec une personne qui te soutient.", "category": "social", "duration": 30, "priority": 2},
+                {"day": 3, "title": "Apprends quelque chose de nouveau", "description": "Consacre 20 minutes à apprendre une compétence que tu veux développer.", "category": "productivité", "duration": 20, "priority": 1},
+                {"day": 4, "title": "Méditation de confiance", "description": "Fais une méditation guidée sur la confiance en soi.", "category": "bien-être", "duration": 15, "priority": 2},
+                {"day": 5, "title": "Relève un petit défi", "description": "Choisis une tâche que tu reportes et fais-la aujourd'hui.", "category": "productivité", "duration": 30, "priority": 1},
+                {"day": 6, "title": "Journal de gratitude", "description": "Écris 5 choses pour lesquelles tu es reconnaissant dans ta vie.", "category": "bien-être", "duration": 10, "priority": 2},
+                {"day": 7, "title": "Célèbre tes progrès", "description": "Regarde tout ce que tu as accompli cette semaine et célèbre-le.", "category": "bien-être", "duration": 15, "priority": 1},
+            ],
+            'anxiété': [
+                {"day": 1, "title": "Respiration 4-7-8", "description": "Pratique la technique de respiration 4-7-8 pendant 5 minutes.", "category": "bien-être", "duration": 10, "priority": 1},
+                {"day": 2, "title": "Marche en pleine nature", "description": "Fais une promenade de 20 minutes en observant ton environnement.", "category": "physique", "duration": 20, "priority": 2},
+                {"day": 3, "title": "Limite les écrans", "description": "Réduis ton temps d'écran de 30 minutes aujourd'hui.", "category": "bien-être", "duration": 30, "priority": 1},
+                {"day": 4, "title": "Yoga doux", "description": "Fais une session de yoga doux de 15 minutes.", "category": "physique", "duration": 15, "priority": 2},
+                {"day": 5, "title": "Écris tes inquiétudes", "description": "Note tes inquiétudes et demande-toi si elles sont rationnelles.", "category": "mental", "duration": 20, "priority": 1},
+                {"day": 6, "title": "Musique relaxante", "description": "Écoute 30 minutes de musique apaisante sans distraction.", "category": "bien-être", "duration": 30, "priority": 2},
+                {"day": 7, "title": "Routine du soir", "description": "Crée et suis une routine apaisante avant le coucher.", "category": "bien-être", "duration": 30, "priority": 1},
+            ],
+            'découragement': [
+                {"day": 1, "title": "Petit pas en avant", "description": "Choisis UNE petite action concrète vers ton objectif.", "category": "productivité", "duration": 15, "priority": 1},
+                {"day": 2, "title": "Lis une histoire inspirante", "description": "Lis sur quelqu'un qui a surmonté des obstacles similaires.", "category": "mental", "duration": 20, "priority": 2},
+                {"day": 3, "title": "Visualise ta réussite", "description": "Passe 10 minutes à visualiser ton objectif atteint.", "category": "mental", "duration": 10, "priority": 1},
+                {"day": 4, "title": "Élimine une distraction", "description": "Identifie et supprime une distraction qui te freine.", "category": "productivité", "duration": 15, "priority": 2},
+                {"day": 5, "title": "Demande du feedback", "description": "Demande à quelqu'un son avis constructif sur ton projet.", "category": "social", "duration": 30, "priority": 1},
+                {"day": 6, "title": "Révise tes objectifs", "description": "Ajuste tes objectifs pour les rendre plus réalistes.", "category": "productivité", "duration": 25, "priority": 2},
+                {"day": 7, "title": "Célèbre chaque étape", "description": "Reconnais et célèbre chaque progrès, même minime.", "category": "bien-être", "duration": 15, "priority": 1},
+            ],
+        }
+        
+        # Return challenges based on emotion or default
+        return simulated_challenges.get(emotion, simulated_challenges['doute'])
