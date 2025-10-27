@@ -210,4 +210,83 @@ document.addEventListener('DOMContentLoaded', function () {
     if(!confirm('Convert this note from Markdown to plain text using AI? The editor will be updated and autosaved.')) return;
     aiConvertToPlain();
   });
+
+  // AI convert plain text -> markdown
+  const aiToMdBtn = document.getElementById('aiToMdBtn');
+  async function aiConvertToMarkdown(){
+    if(!contentEl) return;
+    aiToMdBtn.disabled = true;
+    const originalLabel = aiToMdBtn.title;
+    aiToMdBtn.title = 'Converting...';
+    try{
+      if(!noteId){ await createNote(); }
+      const csrftoken = getCookie('csrftoken');
+      const res = await fetch('/notes/api/notes/' + noteId + '/convert/', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {'Content-Type':'application/json','X-CSRFToken': csrftoken},
+        body: JSON.stringify({ mode: 'to_markdown', save: false })
+      });
+      const data = await res.json();
+      if(!data || !data.converted){ throw new Error(data && data.error ? data.error : 'Conversion failed'); }
+      const converted = data.converted;
+      // For markdown results we usually want it directly in the editor
+      contentEl.value = converted;
+      // autosave
+      if(typeof saveDraft === 'function'){ saveDraft(); }
+    }catch(err){
+      console.error('AI to MD error', err);
+      alert('AI conversion to Markdown failed: ' + (err.message || 'unknown'));
+    } finally {
+      aiToMdBtn.disabled = false;
+      aiToMdBtn.title = originalLabel;
+    }
+  }
+  aiToMdBtn && aiToMdBtn.addEventListener('click', function(){
+    if(!confirm('Convert this note from plain text to Markdown using AI? The editor will be updated and autosaved.')) return;
+    aiConvertToMarkdown();
+  });
+
+  // Preview / Compile Markdown button
+  const previewBtn = document.getElementById('previewMdBtn');
+  const previewPane = document.getElementById('previewPane');
+  const previewContent = document.getElementById('previewContent');
+  let markedLoaded = false;
+
+  function loadMarked(){
+    return new Promise((resolve, reject)=>{
+      if(window.marked){ markedLoaded = true; return resolve(); }
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+      s.onload = function(){ markedLoaded = true; resolve(); };
+      s.onerror = function(){ reject(new Error('Failed to load markdown renderer')); };
+      document.head.appendChild(s);
+    });
+  }
+
+  async function togglePreview(){
+    if(!previewPane || !previewContent) return;
+    if(previewPane.style.display === 'flex' || previewPane.style.display === 'block'){
+      // hide
+      previewPane.style.display = 'none';
+      previewBtn.textContent = 'Preview MD';
+      return;
+    }
+
+    // show and render
+    try{
+      await loadMarked();
+      const md = contentEl ? contentEl.value : '';
+      // Use marked to render markdown -> HTML
+      const html = window.marked ? window.marked.parse(md) : ('<pre>' + md.replace(/</g,'&lt;') + '</pre>');
+      previewContent.innerHTML = html;
+      previewPane.style.display = 'block';
+      previewBtn.textContent = 'Hide Preview';
+    }catch(err){
+      console.error('Markdown preview error', err);
+      alert('Could not load markdown preview library.');
+    }
+  }
+
+  previewBtn && previewBtn.addEventListener('click', function(){ togglePreview(); });
 });
