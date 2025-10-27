@@ -144,4 +144,70 @@ document.addEventListener('DOMContentLoaded', function () {
       body: JSON.stringify({ title: titleEl.value, content: contentEl.value })
     }).then(r=>r.json()).then(data=>{ autoSaveStatus.textContent = 'Saved'; setTimeout(()=>autoSaveStatus.textContent = '',1500); });
   });
+
+  // AI convert button: convert markdown to plain text via AI and retype into editor
+  const aiBtn = document.getElementById('aiConvertBtn');
+  async function aiConvertToPlain(){
+    if(!contentEl) return;
+    aiBtn.disabled = true;
+    const originalLabel = aiBtn.title;
+    aiBtn.title = 'Converting...';
+
+    try{
+      // ensure the note exists
+      if(!noteId){
+        await createNote();
+      }
+
+      const csrftoken = getCookie('csrftoken');
+      const res = await fetch('/notes/api/notes/' + noteId + '/convert/', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {'Content-Type':'application/json','X-CSRFToken': csrftoken},
+        body: JSON.stringify({ mode: 'to_plain', save: false })
+      });
+      const data = await res.json();
+      if(!data || !data.converted){
+        throw new Error(data && data.error ? data.error : 'Conversion failed');
+      }
+
+      const converted = data.converted;
+      // If very long text, replace directly; otherwise animate typing for UX
+      const MAX_ANIMATE = 3000;
+      contentEl.focus();
+      if(converted.length > MAX_ANIMATE){
+        contentEl.value = converted;
+      } else {
+        contentEl.value = '';
+        let i = 0;
+        const speed = 2; // ms per character (fast)
+        await new Promise((resolve)=>{
+          const iv = setInterval(()=>{
+            contentEl.value += converted.charAt(i);
+            i++;
+            // maintain caret at end
+            contentEl.selectionStart = contentEl.selectionEnd = contentEl.value.length;
+            if(i >= converted.length){ clearInterval(iv); resolve(); }
+          }, speed);
+        });
+      }
+
+      // trigger autosave (saveDraft defined above)
+      if(typeof saveDraft === 'function'){
+        saveDraft();
+      }
+
+    }catch(err){
+      console.error('AI convert error', err);
+      alert('AI conversion failed: ' + (err.message || 'unknown'));
+    } finally {
+      aiBtn.disabled = false;
+      aiBtn.title = originalLabel;
+    }
+  }
+
+  aiBtn && aiBtn.addEventListener('click', function(){
+    if(!confirm('Convert this note from Markdown to plain text using AI? The editor will be updated and autosaved.')) return;
+    aiConvertToPlain();
+  });
 });

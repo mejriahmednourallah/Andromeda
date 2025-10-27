@@ -7,6 +7,7 @@ from django.utils import timezone
 import json
 from .models import Note, Tag, NoteLink
 from .utils import parse_note_links
+from django.views.decorators.csrf import csrf_exempt
 
 
 # ============================================
@@ -276,3 +277,43 @@ def api_note_detail(request, note_id):
         print("Error in api_note_detail:", str(e))
         print(traceback.format_exc())
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_note_convert(request, note_id):
+    """POST /api/notes/{id}/convert/ - Convert note content between markdown and plaintext
+
+    Body JSON: {"mode": "to_plain" | "to_markdown", "save": true|false}
+    """
+    note = get_object_or_404(Note, id=note_id, user=request.user, is_deleted=False)
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    mode = data.get('mode', 'to_plain')
+    save = data.get('save', False)
+
+    # Lazy import to avoid potential import cycles at startup
+    try:
+        from core.services.ai_service import AhmedGroqAIService
+    except Exception as e:
+        print('Failed to import AhmedGroqAIService:', e)
+        return JsonResponse({'error': 'AI service not available'}, status=500)
+
+    try:
+        service = AhmedGroqAIService()
+    except Exception as e:
+        print('Failed to initialize AhmedGroqAIService:', e)
+        return JsonResponse({'error': 'AI service initialization failed'}, status=500)
+
+    converted = service.convert_note(note.content, mode=mode)
+    if converted is None:
+        return JsonResponse({'error': 'Conversion failed'}, status=500)
+
+    if save:
+        note.content = converted
+        note.save()
+
+    return JsonResponse({'success': True, 'converted': converted})

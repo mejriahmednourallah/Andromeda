@@ -21,4 +21,5 @@ urlpatterns = [
     path('api/notes/<int:note_id>/archive/', views.api_note_archive, name='api_archive'),
     path('api/notes/<int:note_id>/autosave/', views.api_note_autosave, name='api_autosave'),
     path('api/tags/', views.api_tags_list, name='api_tags'),
+    path('api/notes/<int:note_id>/convert/', views.api_note_convert, name='api_convert'),
 ]

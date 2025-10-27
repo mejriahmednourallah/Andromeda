@@ -66,7 +66,14 @@ function initCytoscape() {
 
     // Interaction handlers
     cy.on('tap', 'node', function(evt) { const node = evt.target; openNotePanel(node.id()); });
-    cy.on('dbltap', 'node', function(evt) { const node = evt.target; window.location.href = `/notes/${node.id()}/`; });
+    // Double-tap now opens the note edit page instead of the detail view
+    // Double-tap opens the notes app edit page when available (uses notes_app_id),
+    // otherwise falls back to the node id.
+    cy.on('dbltap', 'node', function(evt) {
+        const node = evt.target;
+        const appId = node.data('notes_app_id') || node.id();
+        window.location.href = `/notes/${appId}/edit/`;
+    });
 
     // Hover / neighbor highlight
     cy.on('mouseover', 'node', function(evt) {
@@ -133,8 +140,27 @@ async function openNotePanel(noteId) {
         document.getElementById('noteUpdated').textContent = `Updated: ${updated.toLocaleDateString()}`;
         const preview = note.content.substring(0,300) + (note.content.length>300? '...' : '');
         document.getElementById('noteContent').textContent = preview;
+    // Prefer the notes-app integer id when available (stored on the cytoscape node data)
+    let notesAppId = null;
+    try {
+        if (cy) {
+            const cyNode = cy.getElementById(noteId);
+            notesAppId = cyNode && cyNode.data && cyNode.data('notes_app_id');
+        }
+    } catch (e) {
+        console.warn('Could not read notes_app_id from cy node', e);
+    }
+
+    if (notesAppId) {
+        // Node corresponds to a Note in the notes app (integer PK) — open editor there
+        document.getElementById('openNoteBtn').href = `/notes/${notesAppId}/edit/`;
+        document.getElementById('editNoteBtn').href = `/notes/${notesAppId}/edit/`;
+    } else {
+        // No notes-app mapping: fall back to the core detail page for the UUID note
         document.getElementById('openNoteBtn').href = `/notes/${noteId}/`;
-        document.getElementById('editNoteBtn').href = `/notes/${noteId}/edit/`;
+        // Editing not available for core UUID notes via notes app; point EDIT to the detail page as well
+        document.getElementById('editNoteBtn').href = `/notes/${noteId}/`;
+    }
         const panel = document.getElementById('notePanel'); panel.style.display = 'flex'; setTimeout(() => panel.classList.add('active'), 10);
     } catch (error) { console.error('Error loading note:', error); alert('Failed to load note details'); }
 }

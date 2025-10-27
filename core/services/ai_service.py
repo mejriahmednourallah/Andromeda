@@ -229,6 +229,73 @@ class GroqAIService:
                 return self._get_default_insights()
         
         return self._get_default_insights()
+
+
+class AhmedGroqAIService(GroqAIService):
+    """
+    Alternative Groq service that prefers the `Ahmed_key` env var.
+    Falls back to `GROQ_API_KEY` if `Ahmed_key` is not present.
+    Provides a simple convert_note method for markdown <-> plaintext conversions.
+    """
+    def __init__(self):
+        # Use Ahmed_key first, then GROQ_API_KEY
+        self.api_key = os.getenv('Ahmed_key') or os.getenv('GROQ_API_KEY')
+        if not self.api_key:
+            raise ValueError("Ahmed_key/GROQ_API_KEY not found in environment variables")
+
+        self.client = Groq(api_key=self.api_key)
+        # reuse same model as parent
+        self.model = getattr(self, 'model', 'llama-3.3-70b-versatile')
+
+    def convert_note(self, content: str, mode: str = 'to_plain') -> Optional[str]:
+        """
+        Convert a note between markdown and plaintext using Groq.
+
+        Args:
+            content: input text
+            mode: 'to_plain' (strip markdown) or 'to_markdown' (generate markdown from plaintext)
+
+        Returns:
+            Converted text or None on error
+        """
+        if mode not in ('to_plain', 'to_markdown'):
+            raise ValueError("mode must be 'to_plain' or 'to_markdown'")
+
+        if mode == 'to_plain':
+            system = "You are a helpful assistant that converts markdown to readable plain text. Remove all markdown markup but preserve the content, paragraphs and lists as plain text. Do not add commentary do not remove any content or anything with [[text]]."
+            user = f"Convert the following markdown to plain text:\n\n{content}"
+        else:
+            system = "You are a helpful assistant that converts plain text into well-structured Markdown. Use headings, lists and emphasis where appropriate. Keep it concise and maintain original meaning. Do not add commentary."
+            user = f"Convert the following plain text to Markdown:\n\n{content}"
+
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user}
+        ]
+
+        try:
+            chat_completion = self.client.chat.completions.create(
+                messages=messages,
+                model=self.model,
+                temperature=0.2,
+                max_tokens=1200,
+            )
+            resp = chat_completion.choices[0].message.content
+            if resp:
+                # strip ``` wrappers if present
+                resp = resp.strip()
+                if resp.startswith('```'):
+                    # remove code fence and optional language
+                    parts = resp.split('\n')
+                    if parts[0].startswith('```'):
+                        parts = parts[1:]
+                    if parts and parts[-1].startswith('```'):
+                        parts = parts[:-1]
+                    resp = '\n'.join(parts).strip()
+                return resp
+        except Exception as e:
+            print(f"AhmedGroqAIService error: {e}")
+        return None
     
     def analyser_tendances(self, entrees_textes: List[str]) -> Dict:
         """

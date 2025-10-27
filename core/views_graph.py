@@ -31,7 +31,23 @@ def graph_data_api(request):
     for note in notes:
         outgoing = note.outgoing_links.count()
         incoming = note.incoming_links.count()
-        nodes.append({'id': str(note.id), 'title': note.title, 'connections': outgoing + incoming, 'created_at': note.created_at.isoformat()})
+        # Try to find a matching Note object from the notes app (by title + user)
+        notes_app_id = None
+        if NotesAppNote is not None:
+            try:
+                match = NotesAppNote.objects.filter(user=user, title=note.title).first()
+                if match is not None:
+                    notes_app_id = getattr(match, 'id', None)
+            except Exception:
+                notes_app_id = None
+
+        nodes.append({
+            'id': str(note.id),
+            'notes_app_id': notes_app_id,
+            'title': note.title,
+            'connections': outgoing + incoming,
+            'created_at': note.created_at.isoformat()
+        })
 
     edges = []
     for link in links:
