@@ -63,6 +63,14 @@
         </div>
     `;
 
+    // initial visibility based on persisted user preference
+    if (!isChaseVisible()) {
+        widget.style.display = 'none';
+    } else {
+        widget.style.display = 'flex';
+        setCollapsed(true);
+    }
+
     let collapseTimer = null;
 
     function setCollapsed(v) {
@@ -120,10 +128,15 @@
                 stateEl.textContent = 'Ready';
             }
         } else {
-            // no active pomodoro; hide widget entirely
+            // no active pomodoro; keep widget visible if user asked for it (collapsed), otherwise hide
             timerEl.textContent = '';
             stateEl.textContent = 'Idle';
-            widget.style.display = 'none';
+            if (isChaseVisible()) {
+                widget.style.display = 'flex';
+                setCollapsed(true);
+            } else {
+                widget.style.display = 'none';
+            }
         }
     }
 
