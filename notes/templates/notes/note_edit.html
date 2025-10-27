@@ -19,7 +19,7 @@
             <button id="saveDraftBtn" class="btn-secondary">SAVE DRAFT</button>
             <button id="aiConvertBtn" class="btn-secondary" title="AI: Convert MD → Plain Text">AI: MD→Text</button>
             <button id="aiToMdBtn" class="btn-secondary" title="AI: Convert Plain Text → Markdown">AI: Text→MD</button>
-            <button id="previewMdBtn" class="btn-secondary" title="Preview compiled Markdown">Preview MD</button>
+            <button id="previewMdBtn" class="btn-secondary" title="Download PDF of rendered Markdown">Download PDF</button>
             <span id="autoSaveStatus" class="autosave-status"></span>
         </div>
         
@@ -79,12 +79,6 @@
             class="note-content-editor"
             placeholder="Start writing... Use [[Note Title]] to link to other notes"
         >{% if note %}{{ note.content }}{% endif %}</textarea>
-        
-        <!-- PREVIEW PANE (Split view) -->
-        <div id="previewPane" class="preview-pane" style="display:none;">
-            <h3 class="preview-title">PREVIEW</h3>
-            <div id="previewContent" class="preview-content"></div>
-        </div>
     </div>
     
     <!-- SIDE PANEL: Backlinks & Suggestions -->

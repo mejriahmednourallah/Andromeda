@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function () {
     aiConvertToMarkdown();
   });
 
-  // Preview / Compile Markdown button
+  // PDF Download button
   const previewBtn = document.getElementById('previewMdBtn');
   const previewPane = document.getElementById('previewPane');
   const previewContent = document.getElementById('previewContent');
@@ -264,29 +264,64 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  async function togglePreview(){
-    if(!previewPane || !previewContent) return;
-    if(previewPane.style.display === 'flex' || previewPane.style.display === 'block'){
-      // hide
-      previewPane.style.display = 'none';
-      previewBtn.textContent = 'Preview MD';
-      return;
-    }
-
-    // show and render
+  async function downloadPDF(){
     try{
+      // Load marked
       await loadMarked();
-      const md = contentEl ? contentEl.value : '';
-      // Use marked to render markdown -> HTML
+
+      // Load html2pdf if needed
+      if(!window.html2pdf){
+        await new Promise((res, rej)=>{
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+          s.onload = res;
+          s.onerror = ()=>rej(new Error('Failed to load html2pdf'));
+          document.head.appendChild(s);
+        });
+      }
+
+      let md = contentEl ? contentEl.value : '';
+      const title = titleEl ? titleEl.value || 'Untitled Note' : 'Untitled Note';
+
+      // Convert wiki-links [[Title]] into plain text
+      md = md.replace(/\[\[([^\]]+)\]\]/g, function(_, inner){
+        const linkTitle = inner.trim();
+        return linkTitle;
+      });
+
+      // Render markdown to HTML
       const html = window.marked ? window.marked.parse(md) : ('<pre>' + md.replace(/</g,'&lt;') + '</pre>');
-      previewContent.innerHTML = html;
-      previewPane.style.display = 'block';
-      previewBtn.textContent = 'Hide Preview';
+
+      // Create a temporary element for PDF generation
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = `
+        <div style="font-family: 'Courier New', monospace; padding: 40px; max-width: 800px; margin: 0 auto;">
+          <h1 style="color: #2C2C2C; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 30px;">${title.replace(/</g,'&lt;')}</h1>
+          <div style="line-height: 1.6; color: #2C2C2C;">${html}</div>
+        </div>
+      `;
+
+      // PDF options
+      const options = {
+        margin: 1,
+        filename: `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      // Generate and download PDF
+      await window.html2pdf().set(options).from(tempDiv).save();
+
     }catch(err){
-      console.error('Markdown preview error', err);
-      alert('Could not load markdown preview library.');
+      console.error('PDF generation error', err);
+      alert('Could not generate PDF. Please try again.');
     }
   }
 
-  previewBtn && previewBtn.addEventListener('click', function(){ togglePreview(); });
+  previewBtn && previewBtn.addEventListener('click', function(){ downloadPDF(); });
+
+  // small helpers for escaping attributes/values used when building wiki-link anchors
+  function escapeHtmlAttr(s){ return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function escapeHtml(s){ return (s||'').replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 });

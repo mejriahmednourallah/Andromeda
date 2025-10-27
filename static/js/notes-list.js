@@ -9,10 +9,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function fetchNotes(query=''){
     const url = '/notes/api/notes/?search=' + encodeURIComponent(query);
-    fetch(url, { credentials: 'same-origin' })
+    return fetch(url, { credentials: 'same-origin' })
       .then(r=>r.json())
       .then(data=>{
         renderNotes(data.notes || []);
+        return data.notes || [];
       });
   }
 
@@ -29,8 +30,23 @@ document.addEventListener('DOMContentLoaded', function () {
       const el = document.createElement('div');
       el.className = 'note-item';
       el.dataset.noteId = n.id;
-      el.innerHTML = `<strong>${escapeHtml(n.title)}</strong><div class="muted-text">${escapeHtml(n.content_preview)}</div>`;
-      el.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); showNoteDetail(n.id, el); });
+      el.innerHTML = `
+        <div class="note-item-content">
+          <strong>${escapeHtml(n.title)}</strong>
+          <div class="muted-text">${escapeHtml(n.content_preview)}</div>
+        </div>
+        <button class="note-delete-btn" data-note-id="${n.id}" title="Delete note" type="button">
+          <i class="fas fa-trash"></i>
+        </button>
+      `;
+      el.addEventListener('click', (e)=>{ 
+        // Only trigger if not clicking the delete button
+        if (!e.target.closest('.note-delete-btn')) {
+          e.preventDefault(); 
+          e.stopPropagation(); 
+          showNoteDetail(n.id, el); 
+        }
+      });
       // Remove any hrefs that might cause navigation (defensive)
       el.querySelectorAll('a').forEach(a=>{ a.removeAttribute('href'); a.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); }); });
       notesList.appendChild(el);
@@ -216,6 +232,77 @@ document.addEventListener('DOMContentLoaded', function () {
   createNoteBtn.addEventListener('click', function(){ createNewNote(); });
   if(emptyCreateBtn){ emptyCreateBtn.addEventListener('click', function(){ createNewNote(); }); }
 
+  // Delete functionality
+  let noteToDelete = null;
+  const deleteModal = document.getElementById('deleteModal');
+  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+  const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+
+  // Handle delete button clicks
+  notesList.addEventListener('click', function(e){
+    const deleteBtn = e.target.closest('.note-delete-btn');
+    if(deleteBtn){
+      e.stopPropagation();
+      const noteId = deleteBtn.dataset.noteId;
+      noteToDelete = noteId;
+      deleteModal.style.display = 'flex';
+      deleteModal.setAttribute('aria-hidden', 'false');
+    }
+  });
+
+  // Handle delete confirmation
+  if(confirmDeleteBtn){
+    confirmDeleteBtn.addEventListener('click', async function(){
+      if(noteToDelete){
+        try{
+          const csrftoken = getCookie('csrftoken');
+          const res = await fetch('/notes/api/notes/' + noteToDelete + '/delete/', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+              'X-CSRFToken': csrftoken
+            }
+          });
+          if(res.ok){
+            // Refresh the notes list
+            fetchNotes();
+            // Hide the note view if it was showing the deleted note
+            if(noteView.style.display !== 'none'){
+              noteView.style.display = 'none';
+              emptyState.style.display = 'block';
+            }
+          }else{
+            alert('Failed to delete note');
+          }
+        }catch(err){
+          console.error('Delete error:', err);
+          alert('Failed to delete note');
+        }
+      }
+      deleteModal.style.display = 'none';
+      deleteModal.setAttribute('aria-hidden', 'true');
+      noteToDelete = null;
+    });
+  }
+
+  // Handle delete cancellation
+  if(cancelDeleteBtn){
+    cancelDeleteBtn.addEventListener('click', function(){
+      deleteModal.style.display = 'none';
+      deleteModal.setAttribute('aria-hidden', 'true');
+      noteToDelete = null;
+    });
+  }
+
+  // Close modal on escape key
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && deleteModal.style.display === 'flex'){
+      deleteModal.style.display = 'none';
+      deleteModal.setAttribute('aria-hidden', 'true');
+      noteToDelete = null;
+    }
+  });
+
   // Keyboard shortcut: Ctrl+N to create
   document.addEventListener('keydown', function(e){
     if((e.ctrlKey || e.metaKey) && e.key === 'n'){
@@ -225,5 +312,22 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // Initial load
-  fetchNotes();
+  fetchNotes().then(()=>{
+    // If URL includes ?open=<id>, open that note in the inline view (useful when navigating from graph)
+    try{
+      const params = new URLSearchParams(window.location.search);
+      const openId = params.get('open');
+      if(openId){
+        // Try to find the element in the list and trigger show
+        const el = document.querySelector('#notesList .note-item[data-note-id="' + openId + '"]');
+        if(el){
+          // Simulate click
+          el.click();
+        } else {
+          // If not yet rendered (or not in list due to paging), directly call showNoteDetail
+          showNoteDetail(openId, null);
+        }
+      }
+    }catch(e){ console.warn('open param handling failed', e); }
+  });
 });

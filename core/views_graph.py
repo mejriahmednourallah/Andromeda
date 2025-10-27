@@ -27,6 +27,30 @@ def graph_data_api(request):
     notes = Note.objects.filter(owner=user)
     links = Link.objects.filter(src__owner=user, dst__owner=user).select_related('src', 'dst')
 
+    # Ensure notes app has entries for all core notes so they can be opened from the graph
+    if NotesAppNote is not None:
+        for note in notes:
+            # Ensure this core note exists in notes app
+            try:
+                # Try to get existing note by title
+                notes_app_note = NotesAppNote.objects.filter(user=user, title=note.title).first()
+                if notes_app_note is None:
+                    # Create new note
+                    notes_app_note = NotesAppNote.objects.create(
+                        user=user,
+                        title=note.title,
+                        content=note.body or ''
+                    )
+                else:
+                    # Update existing note content if different
+                    if notes_app_note.content != (note.body or ''):
+                        notes_app_note.content = note.body or ''
+                        notes_app_note.save()
+            except Exception as e:
+                # If there are issues with duplicates, skip this note
+                print(f"Warning: Could not sync note '{note.title}': {e}")
+                continue
+
     nodes = []
     for note in notes:
         outgoing = note.outgoing_links.count()

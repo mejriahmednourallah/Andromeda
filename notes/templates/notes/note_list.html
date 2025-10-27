@@ -13,10 +13,16 @@
     <aside class="notes-sidebar" aria-label="Notes sidebar">
         <div class="sidebar-header">
             <h2 class="sidebar-title">NOTES</h2>
-            <button id="createNoteBtn" class="btn-icon" title="New Note (Ctrl+N)" type="button" data-create-url="{% url 'notes:create' %}">
-                <i class="fas fa-plus" aria-hidden="true"></i>
-                <span class="sr-only">Create note</span>
-            </button>
+            <div class="sidebar-actions">
+                <button id="createNoteBtn" class="btn-icon" title="New Note (Ctrl+N)" type="button" data-create-url="{% url 'notes:create' %}">
+                    <i class="fas fa-plus" aria-hidden="true"></i>
+                    <span class="sr-only">Create note</span>
+                </button>
+                <a href="/graph/" class="btn-icon" title="Universe Graph" type="button">
+                    <i class="fas fa-project-diagram" aria-hidden="true"></i>
+                    <span class="sr-only">Universe Graph</span>
+                </a>
+            </div>
         </div>
 
         <!-- SEARCH -->

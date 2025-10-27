@@ -47,6 +47,101 @@
   font-family: monospace;
 }
 
+/* Preview Pane Styling */
+.preview-pane {
+  display: none;
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--bg-beige);
+  border: 2px solid var(--border-black);
+  border-top: none;
+}
+
+.preview-title {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  color: var(--text-dark);
+}
+
+.preview-content {
+  font-family: 'Courier New', monospace;
+  line-height: 1.6;
+  color: var(--text-dark);
+}
+
+/* Enhanced Markdown Preview Styles */
+.preview-content h1,
+.preview-content h2,
+.preview-content h3,
+.preview-content h4,
+.preview-content h5,
+.preview-content h6 {
+  font-weight: 700;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  color: var(--text-dark);
+  border-bottom: 1px solid var(--border-black);
+  padding-bottom: 4px;
+}
+
+.preview-content h1 { font-size: 28px; }
+.preview-content h2 { font-size: 24px; }
+.preview-content h3 { font-size: 20px; }
+.preview-content h4 { font-size: 18px; }
+.preview-content h5 { font-size: 16px; }
+.preview-content h6 { font-size: 14px; }
+
+.preview-content p {
+  margin-bottom: 12px;
+}
+
+.preview-content ul,
+.preview-content ol {
+  margin-bottom: 12px;
+  padding-left: 24px;
+}
+
+.preview-content li {
+  margin-bottom: 4px;
+}
+
+.preview-content code {
+  background: var(--card-white);
+  border: 1px solid var(--border-black);
+  padding: 2px 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+.preview-content pre {
+  background: var(--card-white);
+  border: 2px solid var(--border-black);
+  padding: 12px;
+  margin: 12px 0;
+  overflow-x: auto;
+}
+
+.preview-content blockquote {
+  border-left: 4px solid var(--primary-orange);
+  padding-left: 12px;
+  margin: 12px 0;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.preview-content .wikilink {
+  color: var(--primary-orange);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.preview-content .wikilink:hover {
+  text-decoration: underline;
+}
+
 .editor-sidebar { background: var(--card-white); border:2px solid var(--border-black); padding:12px; }
 
 .section-title { text-transform:uppercase; letter-spacing:1px; font-weight:700; }

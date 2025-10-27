@@ -152,14 +152,16 @@ async function openNotePanel(noteId) {
     }
 
     if (notesAppId) {
-        // Node corresponds to a Note in the notes app (integer PK) — open editor there
-        document.getElementById('openNoteBtn').href = `/notes/${notesAppId}/edit/`;
+        // Node corresponds to a Note in the notes app (integer PK)
+        // OPEN goes to notes list and opens the specific note inline
+        document.getElementById('openNoteBtn').href = `/notes/?open=${notesAppId}`;
+        // EDIT goes directly to the editor
         document.getElementById('editNoteBtn').href = `/notes/${notesAppId}/edit/`;
     } else {
-        // No notes-app mapping: fall back to the core detail page for the UUID note
-        document.getElementById('openNoteBtn').href = `/notes/${noteId}/`;
-        // Editing not available for core UUID notes via notes app; point EDIT to the detail page as well
-        document.getElementById('editNoteBtn').href = `/notes/${noteId}/`;
+        // Fallback: try to open in notes interface anyway (shouldn't happen with sync)
+        document.getElementById('openNoteBtn').href = `/notes/`;
+        // Editing not available for core UUID notes via notes app
+        document.getElementById('editNoteBtn').href = `/notes/`;
     }
         const panel = document.getElementById('notePanel'); panel.style.display = 'flex'; setTimeout(() => panel.classList.add('active'), 10);
     } catch (error) { console.error('Error loading note:', error); alert('Failed to load note details'); }
