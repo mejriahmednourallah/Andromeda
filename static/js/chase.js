@@ -58,9 +58,7 @@
             <div class="state" id="chase-state">Idle</div>
             <div class="chase-actions">
                 <button id="chase-pause">Pause</button>
-                <button id="chase-resume" class="secondary">Resume</button>
-                <button id="chase-skip" class="secondary">Skip</button>
-                <button id="chase-open" class="secondary">Open Focus</button>
+                <button id="chase-complete" class="secondary">Complete</button>
             </div>
         </div>
     `;
@@ -137,9 +135,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         // attach handlers (use event delegation-safe query)
         document.getElementById('chase-pause')?.addEventListener('click', function(e){ e.stopPropagation(); sendAction('pause'); this.textContent = 'Sent'; setTimeout(()=>this.textContent='Pause',800); });
-        document.getElementById('chase-resume')?.addEventListener('click', function(e){ e.stopPropagation(); sendAction('resume'); this.textContent = 'Sent'; setTimeout(()=>this.textContent='Resume',800); });
-        document.getElementById('chase-skip')?.addEventListener('click', function(e){ e.stopPropagation(); sendAction('complete'); this.textContent = 'Sent'; setTimeout(()=>this.textContent='Skip',800); });
-        document.getElementById('chase-open')?.addEventListener('click', function(e){ e.stopPropagation(); window.location.href = '/focus/'; });
+        document.getElementById('chase-complete')?.addEventListener('click', function(e){ e.stopPropagation(); sendAction('complete'); this.textContent = 'Sent'; setTimeout(()=>this.textContent='Complete',800); });
     });
 
     if (document.readyState === 'loading') {

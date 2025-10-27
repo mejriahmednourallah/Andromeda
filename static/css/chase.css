@@ -1,11 +1,11 @@
 /* Chase widget styles */
 #chase-widget {
   position: fixed;
-  top: 40%;
-  right: -48px; /* mostly off-screen so only a sliver shows */
+  top: 80px;
+  left: 16px;
   width: 76px;
   height: 56px;
-  border-radius: 12px;
+  border-radius: 0;
   background: linear-gradient(135deg,#ff6b35 0%,#ff9a5a 100%);
   display: flex;
   align-items: center;
@@ -15,7 +15,7 @@
   box-shadow: 0 8px 24px rgba(0,0,0,0.2);
   pointer-events: auto; /* allow interaction */
   z-index: 99999;
-  transition: right 0.22s ease, width 0.22s ease, height 0.22s ease, padding 0.22s ease;
+  transition: left 0.22s ease, width 0.22s ease, height 0.22s ease, padding 0.22s ease;
   overflow: visible;
 }
 

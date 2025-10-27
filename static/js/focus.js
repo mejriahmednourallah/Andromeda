@@ -445,6 +445,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }, 1000);
                     updateTimerDisplay();
+                    // Update UI to show active session controls
+                    document.getElementById('startBtn').style.display = 'none';
+                    document.getElementById('pauseBtn').style.display = 'inline-block';
+                    document.getElementById('completeBtn').style.display = 'inline-block';
+                    document.getElementById('categorySelect').disabled = true;
                 } else {
                     // timer expired while away, reset to idle
                     pomodoro.state = 'idle';
