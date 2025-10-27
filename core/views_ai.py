@@ -186,6 +186,11 @@ def appliquer_tags_suggeres(request, pk):
             'message': f'{len(tags_noms)} tag(s) ajouté(s)'
         })
         
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Données JSON invalides'
+        }, status=400)
     except Exception as e:
         return JsonResponse({
             'success': False,
@@ -254,6 +259,11 @@ def chatbot_message(request):
             'reponse': reponse
         })
         
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Données JSON invalides'
+        }, status=400)
     except ValueError as e:
         return JsonResponse({
             'success': False,

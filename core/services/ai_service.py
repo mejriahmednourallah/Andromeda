@@ -568,5 +568,5 @@ def get_ai_service() -> GroqAIService:
     """
     global _ai_service_instance
     if _ai_service_instance is None:
-        _ai_service_instance = GroqAIService()
+        _ai_service_instance = AhmedGroqAIService()
     return _ai_service_instance
