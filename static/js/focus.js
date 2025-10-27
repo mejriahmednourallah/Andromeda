@@ -22,7 +22,8 @@ let pomodoro = {
 window.__ANDROMEDA_POMODORO = {
     enabled: false,
     state: pomodoro.state,
-    timerRemaining: pomodoro.timerRemaining
+    timerRemaining: pomodoro.timerRemaining,
+    isPaused: false
 };
 
 function initWebSocket() {
@@ -142,6 +143,7 @@ async function startWorkInterval() {
         // update global state each tick
         window.__ANDROMEDA_POMODORO.timerRemaining = pomodoro.timerRemaining;
         window.__ANDROMEDA_POMODORO.state = pomodoro.state;
+        window.__ANDROMEDA_POMODORO.isPaused = isPaused;
         localStorage.setItem('andromeda_pomodoro', JSON.stringify(window.__ANDROMEDA_POMODORO));
         updateTimerDisplay();
         if (pomodoro.timerRemaining <= 0) {
@@ -192,6 +194,7 @@ async function startBreakInterval(minutes, isLong) {
             if (isPaused) return;
             pomodoro.timerRemaining = Math.max(0, Math.round((window.__ANDROMEDA_POMODORO.expectedEnd - Date.now()) / 1000));
             window.__ANDROMEDA_POMODORO.timerRemaining = pomodoro.timerRemaining;
+            window.__ANDROMEDA_POMODORO.isPaused = isPaused;
             localStorage.setItem('andromeda_pomodoro', JSON.stringify(window.__ANDROMEDA_POMODORO));
             updateTimerDisplay();
             if (pomodoro.timerRemaining <= 0) {
@@ -226,6 +229,8 @@ document.getElementById('startBtn')?.addEventListener('click', async function() 
 
 document.getElementById('pauseBtn')?.addEventListener('click', async function() {
     isPaused = true;
+    window.__ANDROMEDA_POMODORO.isPaused = true;
+    localStorage.setItem('andromeda_pomodoro', JSON.stringify(window.__ANDROMEDA_POMODORO));
     // If in pomodoro work interval, pause server session as well
     if (pomodoro.enabled && pomodoro.state === 'work' && currentSessionId) {
         try { await fetch(`/focus/api/sessions/${currentSessionId}/pause/`, { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } }); } catch(e){console.error(e);}    
@@ -236,6 +241,8 @@ document.getElementById('pauseBtn')?.addEventListener('click', async function() 
 
 document.getElementById('resumeBtn')?.addEventListener('click', async function() {
     isPaused = false;
+    window.__ANDROMEDA_POMODORO.isPaused = false;
+    localStorage.setItem('andromeda_pomodoro', JSON.stringify(window.__ANDROMEDA_POMODORO));
     if (pomodoro.enabled && pomodoro.state === 'work' && currentSessionId) {
         try { await fetch(`/focus/api/sessions/${currentSessionId}/resume/`, { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } }); } catch(e){console.error(e);}    
     }
@@ -270,7 +277,22 @@ document.getElementById('skipReflection')?.addEventListener('click', async funct
 });
 
 function resetTimer() {
-    elapsedSeconds = 0; isPaused = false; currentSessionId = null; updateTimerDisplay();
+    // stop any running interval and clear session state
+    clearExistingInterval();
+    elapsedSeconds = 0; isPaused = false; currentSessionId = null;
+    // ensure global pomodoro state reflects idle/reset so other pages/widgets update
+    pomodoro.enabled = false;
+    pomodoro.state = 'idle';
+    pomodoro.timerRemaining = 0;
+    window.__ANDROMEDA_POMODORO = {
+        enabled: false,
+        state: 'idle',
+        timerRemaining: 0,
+        expectedEnd: null,
+        isPaused: false
+    };
+    localStorage.setItem('andromeda_pomodoro', JSON.stringify(window.__ANDROMEDA_POMODORO));
+    updateTimerDisplay();
     document.getElementById('startBtn').style.display = 'inline-block';
     document.getElementById('pauseBtn').style.display = 'none';
     document.getElementById('resumeBtn').style.display = 'none';
@@ -352,6 +374,8 @@ function handlePomodoroActionObj(obj) {
                 if (currentSessionId) {
                     await fetch(`/focus/api/sessions/${currentSessionId}/pause/`, { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } });
                     isPaused = true;
+                    window.__ANDROMEDA_POMODORO.isPaused = true;
+                    localStorage.setItem('andromeda_pomodoro', JSON.stringify(window.__ANDROMEDA_POMODORO));
                     document.getElementById('pauseBtn').style.display = 'none';
                     document.getElementById('resumeBtn').style.display = 'inline-block';
                 }
@@ -359,18 +383,42 @@ function handlePomodoroActionObj(obj) {
                 if (currentSessionId) {
                     await fetch(`/focus/api/sessions/${currentSessionId}/resume/`, { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } });
                     isPaused = false;
+                    window.__ANDROMEDA_POMODORO.isPaused = false;
+                    localStorage.setItem('andromeda_pomodoro', JSON.stringify(window.__ANDROMEDA_POMODORO));
                     document.getElementById('resumeBtn').style.display = 'none';
                     document.getElementById('pauseBtn').style.display = 'inline-block';
                 }
             } else if (action === 'complete') {
                 if (currentSessionId) {
                     await fetch(`/focus/api/sessions/${currentSessionId}/complete/`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') }, body: JSON.stringify({ notes: '' }) });
-                    resetTimer(); document.getElementById('reflectionModal').style.display = 'none'; loadStats(); loadSessions('today');
+                    // Reset pomodoro state
+                    pomodoro.state = 'idle';
+                    pomodoro.timerRemaining = 0;
+                    window.__ANDROMEDA_POMODORO.state = 'idle';
+                    window.__ANDROMEDA_POMODORO.timerRemaining = 0;
+                    window.__ANDROMEDA_POMODORO.expectedEnd = null;
+                    isPaused = false;
+                    window.__ANDROMEDA_POMODORO.isPaused = false;
+                    localStorage.setItem('andromeda_pomodoro', JSON.stringify(window.__ANDROMEDA_POMODORO));
+                    clearExistingInterval();
+                    // Update UI
+                    document.getElementById('startBtn').style.display = 'inline-block';
+                    document.getElementById('pauseBtn').style.display = 'none';
+                    document.getElementById('resumeBtn').style.display = 'none';
+                    document.getElementById('completeBtn').style.display = 'none';
+                    document.getElementById('categorySelect').disabled = false;
+                    updateTimerDisplay();
+                    setPomodoroStatus('Session completed');
+                    document.getElementById('reflectionModal').style.display = 'none';
+                    loadStats(); loadSessions('today');
                 }
             }
         } catch (err) { console.error('Error handling external action', err); }
     })();
 }
+
+// expose handler so embedded widgets on the same page can call it directly
+window.handlePomodoroActionObj = handlePomodoroActionObj;
 
 // Listen for storage events from other tabs (chase widget places actions here)
 window.addEventListener('storage', function(e) {
@@ -415,6 +463,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (stored && stored.enabled) {
             window.__ANDROMEDA_POMODORO = stored;
             pomodoro = { ...pomodoro, ...stored }; // sync local pomodoro object
+            if (stored.isPaused !== undefined) isPaused = stored.isPaused;
             // reflect enabled toggle if present
             const t = document.getElementById('pomodoroToggle');
             if (t) { t.checked = true; pomodoro.enabled = true; setPomodoroStatus('Pomodoro resumed'); }
@@ -432,6 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         pomodoro.timerRemaining = Math.max(0, Math.round((window.__ANDROMEDA_POMODORO.expectedEnd - Date.now()) / 1000));
                         window.__ANDROMEDA_POMODORO.timerRemaining = pomodoro.timerRemaining;
                         window.__ANDROMEDA_POMODORO.state = pomodoro.state;
+                        window.__ANDROMEDA_POMODORO.isPaused = isPaused;
                         localStorage.setItem('andromeda_pomodoro', JSON.stringify(window.__ANDROMEDA_POMODORO));
                         updateTimerDisplay();
                         if (pomodoro.timerRemaining <= 0) {

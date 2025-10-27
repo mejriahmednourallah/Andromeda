@@ -129,14 +129,21 @@
 
     // action buttons: write an action to localStorage so focus page (if open) processes it
     function sendAction(action) {
-        try { localStorage.setItem('andromeda_pomodoro_action', JSON.stringify({ action: action, ts: Date.now() })); } catch (e) { console.error(e); }
+        const obj = (typeof action === 'string') ? { action: action, ts: Date.now() } : action;
+        try { localStorage.setItem('andromeda_pomodoro_action', JSON.stringify(obj)); } catch (e) { console.error(e); }
+        // Also call same-window handler if present (storage events don't fire in same window)
+        try { if (window.handlePomodoroActionObj) window.handlePomodoroActionObj(obj); } catch (e) { /* ignore */ }
+    }
+    // Attach handlers immediately (innerHTML already set) and keep DOMContentLoaded as fallback
+    function attachActionHandlers() {
+        const pauseBtn = document.getElementById('chase-pause');
+        const completeBtn = document.getElementById('chase-complete');
+        if (pauseBtn) pauseBtn.addEventListener('click', function(e){ e.stopPropagation(); sendAction('pause'); this.textContent = 'Sent'; setTimeout(()=>this.textContent='Pause',800); });
+        if (completeBtn) completeBtn.addEventListener('click', function(e){ e.stopPropagation(); sendAction('complete'); this.textContent = 'Sent'; setTimeout(()=>this.textContent='Complete',800); });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        // attach handlers (use event delegation-safe query)
-        document.getElementById('chase-pause')?.addEventListener('click', function(e){ e.stopPropagation(); sendAction('pause'); this.textContent = 'Sent'; setTimeout(()=>this.textContent='Pause',800); });
-        document.getElementById('chase-complete')?.addEventListener('click', function(e){ e.stopPropagation(); sendAction('complete'); this.textContent = 'Sent'; setTimeout(()=>this.textContent='Complete',800); });
-    });
+    attachActionHandlers();
+    document.addEventListener('DOMContentLoaded', attachActionHandlers);
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => { positionWidget(); requestAnimationFrame(animate); setInterval(updateLabel, 800); });
