@@ -7,8 +7,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
   let debounceTimer = null;
 
-  function fetchNotes(query=''){
-    const url = '/notes/api/notes/?search=' + encodeURIComponent(query);
+  function fetchNotes(query='', filter='all'){
+    let url = '/notes/api/notes/?search=' + encodeURIComponent(query);
+    if(filter === 'pinned'){
+      url += '&pinned=true';
+    }else if(filter === 'archived'){
+      url += '&archived=true';
+    }
     return fetch(url, { credentials: 'same-origin' })
       .then(r=>r.json())
       .then(data=>{
@@ -30,23 +35,8 @@ document.addEventListener('DOMContentLoaded', function () {
       const el = document.createElement('div');
       el.className = 'note-item';
       el.dataset.noteId = n.id;
-      el.innerHTML = `
-        <div class="note-item-content">
-          <strong>${escapeHtml(n.title)}</strong>
-          <div class="muted-text">${escapeHtml(n.content_preview)}</div>
-        </div>
-        <button class="note-delete-btn" data-note-id="${n.id}" title="Delete note" type="button">
-          <i class="fas fa-trash"></i>
-        </button>
-      `;
-      el.addEventListener('click', (e)=>{ 
-        // Only trigger if not clicking the delete button
-        if (!e.target.closest('.note-delete-btn')) {
-          e.preventDefault(); 
-          e.stopPropagation(); 
-          showNoteDetail(n.id, el); 
-        }
-      });
+      el.innerHTML = `<strong>${escapeHtml(n.title)}</strong><div class="muted-text">${escapeHtml(n.content_preview)}</div>`;
+      el.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); showNoteDetail(n.id, el); });
       // Remove any hrefs that might cause navigation (defensive)
       el.querySelectorAll('a').forEach(a=>{ a.removeAttribute('href'); a.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); }); });
       notesList.appendChild(el);
@@ -98,6 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <h2 class="note-title">${escapeHtml(note.title || 'Untitled')}</h2>
           <div class="note-actions">
             <button id="editNoteBtn" class="btn-primary">KEEP WRITING</button>
+            <button id="deleteNoteBtn" class="btn-danger" data-note-id="${note.id}">DELETE</button>
             <button id="backToListBtn" class="btn-secondary">BACK</button>
           </div>
         </div>
@@ -109,8 +100,16 @@ document.addEventListener('DOMContentLoaded', function () {
     `;
 
     // Attach handlers
-  const editBtn = document.getElementById('editNoteBtn');
-  if(editBtn) editBtn.addEventListener('click', ()=>{ window.location.href = '/notes/' + note.id + '/edit/'; });
+    const editBtn = document.getElementById('editNoteBtn');
+    if(editBtn) editBtn.addEventListener('click', ()=>{ window.location.href = '/notes/' + note.id + '/edit/'; });
+    
+    const deleteBtn = document.getElementById('deleteNoteBtn');
+    if(deleteBtn) deleteBtn.addEventListener('click', ()=>{
+      noteToDelete = note.id;
+      deleteModal.style.display = 'flex';
+      deleteModal.setAttribute('aria-hidden', 'false');
+    });
+    
     const backBtn = document.getElementById('backToListBtn');
     if(backBtn) backBtn.addEventListener('click', ()=>{ noteView.style.display='none'; emptyState.style.display='block'; document.querySelectorAll('#notesList .note-item').forEach(el=>el.classList.remove('active')); });
     // backlinks links navigate to inline view
@@ -199,7 +198,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
   searchInput.addEventListener('input', function(){
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(()=>{ fetchNotes(searchInput.value.trim()); }, 200);
+    debounceTimer = setTimeout(()=>{ fetchNotes(searchInput.value.trim(), currentFilter); }, 200);
+  });
+
+  // Filter functionality
+  let currentFilter = 'all';
+  const filterTabs = document.querySelectorAll('.filter-tab');
+  filterTabs.forEach(tab => {
+    tab.addEventListener('click', function(){
+      // Update active tab
+      filterTabs.forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      
+      // Update current filter and fetch notes
+      currentFilter = this.dataset.filter;
+      fetchNotes(searchInput.value.trim(), currentFilter);
+    });
   });
 
   // Redirect to the 'create note' page instead of creating via API
@@ -265,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function () {
           });
           if(res.ok){
             // Refresh the notes list
-            fetchNotes();
+            fetchNotes('', currentFilter);
             // Hide the note view if it was showing the deleted note
             if(noteView.style.display !== 'none'){
               noteView.style.display = 'none';
@@ -312,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // Initial load
-  fetchNotes().then(()=>{
+  fetchNotes('', currentFilter).then(()=>{
     // If URL includes ?open=<id>, open that note in the inline view (useful when navigating from graph)
     try{
       const params = new URLSearchParams(window.location.search);
