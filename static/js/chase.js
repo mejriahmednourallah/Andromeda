@@ -8,24 +8,21 @@
         document.body.appendChild(widget);
     }
 
-    // Anchor close to the right edge; widget chases cursor vertically but stays on right
-    let targetY = window.innerHeight / 2;
-    let y = targetY;
-    const anchorRight = 48; // px from right edge
-    const ease = 0.16; // lower = more lag
+    // Position fixed in top left corner under nav bar
+    const navHeight = 80; // approximate nav height
+    const margin = 20; // margin from edges
 
-    function onMove(e) {
-        // only track vertical movement; horizontal anchor remains at right edge
-        targetY = e.clientY;
+    function positionWidget() {
+        widget.style.position = 'fixed';
+        widget.style.left = margin + 'px';
+        widget.style.top = navHeight + margin + 'px';
+        widget.style.zIndex = '1000';
     }
 
+    // No mouse following needed
     function animate() {
-        const dy = targetY - y;
-        y += dy * ease;
-        // compute anchored x
-        const x = window.innerWidth - anchorRight;
-        widget.style.left = x + 'px';
-        widget.style.top = y + 'px';
+        // Just ensure position is correct
+        positionWidget();
         requestAnimationFrame(animate);
     }
 
@@ -38,6 +35,10 @@
         // also check window variable if set
         if (window.__ANDROMEDA_POMODORO && window.__ANDROMEDA_POMODORO.enabled) return window.__ANDROMEDA_POMODORO;
         return null;
+    }
+
+    function isChaseVisible() {
+        return localStorage.getItem('andromeda_chase_visible') !== 'false'; // default true
     }
 
     function formatTimeSeconds(s) {
@@ -79,25 +80,34 @@
     function cancelCollapse() { if (collapseTimer) { clearTimeout(collapseTimer); collapseTimer = null; } }
 
     function updateLabel() {
+        if (!isChaseVisible()) {
+            widget.style.display = 'none';
+            return;
+        }
         const state = readPomodoroFromStorage();
         const timerEl = document.getElementById('chase-timer');
         const stateEl = document.getElementById('chase-state');
         if (!timerEl) return;
-        if (state && state.enabled && (state.state === 'work' || state.state === 'break')) {
-            // compute remaining from expectedEnd if present
-            if (state.expectedEnd) {
-                state.timerRemaining = Math.max(0, Math.round((state.expectedEnd - Date.now()) / 1000));
-            }
-            if (state.timerRemaining <= 0) {
-                // hide widget when timer finished and no active state
-                timerEl.textContent = '';
-                stateEl.textContent = 'Idle';
-                widget.style.display = 'none';
-                return;
-            }
+        if (state && state.enabled) {
             widget.style.display = 'flex';
-            timerEl.textContent = formatTimeSeconds(state.timerRemaining);
-            stateEl.textContent = state.state === 'work' ? 'Work' : 'Break';
+            if (state.state === 'work' || state.state === 'break') {
+                // compute remaining from expectedEnd if present
+                if (state.expectedEnd) {
+                    state.timerRemaining = Math.max(0, Math.round((state.expectedEnd - Date.now()) / 1000));
+                }
+                if (state.timerRemaining <= 0) {
+                    // timer finished
+                    timerEl.textContent = '';
+                    stateEl.textContent = 'Idle';
+                    return;
+                }
+                timerEl.textContent = formatTimeSeconds(state.timerRemaining);
+                stateEl.textContent = state.state === 'work' ? 'Work' : 'Break';
+            } else {
+                // pomodoro enabled but idle
+                timerEl.textContent = '';
+                stateEl.textContent = 'Ready';
+            }
         } else {
             // no active pomodoro; hide widget entirely
             timerEl.textContent = '';
@@ -133,10 +143,23 @@
     });
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => { document.addEventListener('mousemove', onMove); requestAnimationFrame(animate); setInterval(updateLabel, 800); });
+        document.addEventListener('DOMContentLoaded', () => { positionWidget(); requestAnimationFrame(animate); setInterval(updateLabel, 800); });
     } else {
-        document.addEventListener('mousemove', onMove);
+        positionWidget();
         requestAnimationFrame(animate);
         setInterval(updateLabel, 800);
     }
+
+    // Listen for visibility changes from focus page
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'andromeda_chase_action') {
+            try {
+                const action = JSON.parse(e.newValue);
+                if (action.action === 'visibility_change') {
+                    updateLabel(); // re-check visibility
+                }
+                localStorage.removeItem('andromeda_chase_action');
+            } catch (err) {}
+        }
+    });
 })();

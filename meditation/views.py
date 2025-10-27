@@ -16,7 +16,20 @@ def focus_timer_page(request):
 @login_required
 def get_categories(request):
     categories = FocusCategory.objects.all().values('id', 'name', 'color')
-    return JsonResponse({'categories': list(categories)})
+    categories_list = list(categories)
+    if not categories_list:
+        # Create default categories if none exist
+        defaults = [
+            {'name': 'Work', 'color': '#FF6B35'},
+            {'name': 'Study', 'color': '#4CAF50'},
+            {'name': 'Exercise', 'color': '#2196F3'},
+            {'name': 'Reading', 'color': '#9C27B0'},
+            {'name': 'Meditation', 'color': '#FF9800'},
+        ]
+        for cat_data in defaults:
+            cat = FocusCategory.objects.create(**cat_data)
+            categories_list.append({'id': cat.id, 'name': cat.name, 'color': cat.color})
+    return JsonResponse({'categories': categories_list})
 
 
 @login_required

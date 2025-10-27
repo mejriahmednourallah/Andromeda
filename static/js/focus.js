@@ -326,6 +326,19 @@ document.addEventListener('DOMContentLoaded', function() {
             setPomodoroStatus(pomodoro.enabled ? 'Pomodoro ready' : 'Pomodoro disabled');
         });
     }
+
+    const chaseToggle = document.getElementById('chaseWidgetToggle');
+    if (chaseToggle) {
+        // load initial state
+        const chaseVisible = localStorage.getItem('andromeda_chase_visible') !== 'false'; // default true
+        chaseToggle.checked = chaseVisible;
+        // save on change
+        chaseToggle.addEventListener('change', function(e) {
+            localStorage.setItem('andromeda_chase_visible', e.target.checked);
+            // notify chase widget to update
+            localStorage.setItem('andromeda_chase_action', JSON.stringify({ action: 'visibility_change', visible: e.target.checked, ts: Date.now() }));
+        });
+    }
 });
 
 // Handle actions from the chase widget via localStorage communication
@@ -401,9 +414,48 @@ document.addEventListener('DOMContentLoaded', function() {
         const stored = JSON.parse(localStorage.getItem('andromeda_pomodoro'));
         if (stored && stored.enabled) {
             window.__ANDROMEDA_POMODORO = stored;
+            pomodoro = { ...pomodoro, ...stored }; // sync local pomodoro object
             // reflect enabled toggle if present
             const t = document.getElementById('pomodoroToggle');
             if (t) { t.checked = true; pomodoro.enabled = true; setPomodoroStatus('Pomodoro resumed'); }
+            // if there's an active timer, restart the interval
+            if (stored.state && (stored.state === 'work' || stored.state === 'break') && stored.expectedEnd) {
+                const now = Date.now();
+                if (now < stored.expectedEnd) {
+                    // timer still active, restart interval
+                    pomodoro.state = stored.state;
+                    pomodoro.timerRemaining = Math.max(0, Math.round((stored.expectedEnd - now) / 1000));
+                    window.__ANDROMEDA_POMODORO.timerRemaining = pomodoro.timerRemaining;
+                    clearExistingInterval();
+                    timerInterval = setInterval(async () => {
+                        if (isPaused) return;
+                        pomodoro.timerRemaining = Math.max(0, Math.round((window.__ANDROMEDA_POMODORO.expectedEnd - Date.now()) / 1000));
+                        window.__ANDROMEDA_POMODORO.timerRemaining = pomodoro.timerRemaining;
+                        window.__ANDROMEDA_POMODORO.state = pomodoro.state;
+                        localStorage.setItem('andromeda_pomodoro', JSON.stringify(window.__ANDROMEDA_POMODORO));
+                        updateTimerDisplay();
+                        if (pomodoro.timerRemaining <= 0) {
+                            // timer finished while page was away, handle completion
+                            clearExistingInterval();
+                            if (pomodoro.state === 'work') {
+                                await handleWorkComplete();
+                            } else {
+                                await handleBreakComplete();
+                            }
+                        }
+                    }, 1000);
+                    updateTimerDisplay();
+                } else {
+                    // timer expired while away, reset to idle
+                    pomodoro.state = 'idle';
+                    pomodoro.timerRemaining = 0;
+                    window.__ANDROMEDA_POMODORO.state = 'idle';
+                    window.__ANDROMEDA_POMODORO.timerRemaining = 0;
+                    localStorage.setItem('andromeda_pomodoro', JSON.stringify(window.__ANDROMEDA_POMODORO));
+                    setPomodoroStatus('Timer completed while away');
+                    updateTimerDisplay();
+                }
+            }
         }
     } catch (e) { /* ignore parse errors */ }
 });
