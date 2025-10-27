@@ -228,8 +228,22 @@ document.getElementById('startBtn')?.addEventListener('click', async function() 
 });
 
 document.getElementById('pauseBtn')?.addEventListener('click', async function() {
+    // compute and persist remaining time so other contexts show a frozen remaining
     isPaused = true;
+    // if we have an expectedEnd, compute remaining from it; otherwise use existing pomodoro.timerRemaining or elapsedSeconds
+    try {
+        if (window.__ANDROMEDA_POMODORO && window.__ANDROMEDA_POMODORO.expectedEnd) {
+            pomodoro.timerRemaining = Math.max(0, Math.round((window.__ANDROMEDA_POMODORO.expectedEnd - Date.now()) / 1000));
+        } else if (pomodoro.timerRemaining !== undefined) {
+            // keep existing
+        } else {
+            pomodoro.timerRemaining = elapsedSeconds;
+        }
+    } catch (e) { pomodoro.timerRemaining = elapsedSeconds; }
+    // clear expectedEnd so other pages don't keep counting down
     window.__ANDROMEDA_POMODORO.isPaused = true;
+    window.__ANDROMEDA_POMODORO.timerRemaining = pomodoro.timerRemaining;
+    window.__ANDROMEDA_POMODORO.expectedEnd = null;
     localStorage.setItem('andromeda_pomodoro', JSON.stringify(window.__ANDROMEDA_POMODORO));
     // If in pomodoro work interval, pause server session as well
     if (pomodoro.enabled && pomodoro.state === 'work' && currentSessionId) {
@@ -240,7 +254,15 @@ document.getElementById('pauseBtn')?.addEventListener('click', async function() 
 });
 
 document.getElementById('resumeBtn')?.addEventListener('click', async function() {
+    // restore expectedEnd from stored remaining so timer continues from where it left
     isPaused = false;
+    if (pomodoro.timerRemaining === undefined) {
+        // attempt to read from global stored state
+        try { const stored = JSON.parse(localStorage.getItem('andromeda_pomodoro')); if (stored && stored.timerRemaining !== undefined) pomodoro.timerRemaining = stored.timerRemaining; } catch (e) {}
+    }
+    const expectedEnd = Date.now() + (pomodoro.timerRemaining || 0) * 1000;
+    window.__ANDROMEDA_POMODORO.expectedEnd = expectedEnd;
+    window.__ANDROMEDA_POMODORO.timerRemaining = pomodoro.timerRemaining || 0;
     window.__ANDROMEDA_POMODORO.isPaused = false;
     localStorage.setItem('andromeda_pomodoro', JSON.stringify(window.__ANDROMEDA_POMODORO));
     if (pomodoro.enabled && pomodoro.state === 'work' && currentSessionId) {
@@ -373,8 +395,16 @@ function handlePomodoroActionObj(obj) {
             if (action === 'pause') {
                 if (currentSessionId) {
                     await fetch(`/focus/api/sessions/${currentSessionId}/pause/`, { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } });
+                    // compute remaining and freeze expectedEnd for other contexts
+                    try {
+                        if (window.__ANDROMEDA_POMODORO && window.__ANDROMEDA_POMODORO.expectedEnd) {
+                            pomodoro.timerRemaining = Math.max(0, Math.round((window.__ANDROMEDA_POMODORO.expectedEnd - Date.now()) / 1000));
+                        }
+                    } catch (e) { /* ignore */ }
                     isPaused = true;
                     window.__ANDROMEDA_POMODORO.isPaused = true;
+                    window.__ANDROMEDA_POMODORO.timerRemaining = pomodoro.timerRemaining || 0;
+                    window.__ANDROMEDA_POMODORO.expectedEnd = null;
                     localStorage.setItem('andromeda_pomodoro', JSON.stringify(window.__ANDROMEDA_POMODORO));
                     document.getElementById('pauseBtn').style.display = 'none';
                     document.getElementById('resumeBtn').style.display = 'inline-block';
@@ -382,8 +412,15 @@ function handlePomodoroActionObj(obj) {
             } else if (action === 'resume') {
                 if (currentSessionId) {
                     await fetch(`/focus/api/sessions/${currentSessionId}/resume/`, { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } });
+                    // rebuild expectedEnd from stored remaining so countdown resumes correctly
+                    if (pomodoro.timerRemaining === undefined) {
+                        try { const stored = JSON.parse(localStorage.getItem('andromeda_pomodoro')); if (stored && stored.timerRemaining !== undefined) pomodoro.timerRemaining = stored.timerRemaining; } catch (e) {}
+                    }
+                    const expectedEnd = Date.now() + (pomodoro.timerRemaining || 0) * 1000;
                     isPaused = false;
                     window.__ANDROMEDA_POMODORO.isPaused = false;
+                    window.__ANDROMEDA_POMODORO.timerRemaining = pomodoro.timerRemaining || 0;
+                    window.__ANDROMEDA_POMODORO.expectedEnd = expectedEnd;
                     localStorage.setItem('andromeda_pomodoro', JSON.stringify(window.__ANDROMEDA_POMODORO));
                     document.getElementById('resumeBtn').style.display = 'none';
                     document.getElementById('pauseBtn').style.display = 'inline-block';

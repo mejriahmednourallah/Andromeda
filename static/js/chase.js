@@ -89,18 +89,31 @@
         if (state && state.enabled) {
             widget.style.display = 'flex';
             if (state.state === 'work' || state.state === 'break') {
-                // compute remaining from expectedEnd if present
-                if (state.expectedEnd) {
-                    state.timerRemaining = Math.max(0, Math.round((state.expectedEnd - Date.now()) / 1000));
+                // If paused, do not recompute remaining from expectedEnd — show frozen remaining
+                if (state.isPaused) {
+                    // use timerRemaining as persisted (fallback to 0)
+                    const rem = state.timerRemaining || 0;
+                    if (rem <= 0) {
+                        timerEl.textContent = '';
+                        stateEl.textContent = 'Idle';
+                        return;
+                    }
+                    timerEl.textContent = formatTimeSeconds(rem);
+                    stateEl.textContent = 'Paused';
+                } else {
+                    // compute remaining from expectedEnd if present, otherwise use timerRemaining
+                    if (state.expectedEnd) {
+                        state.timerRemaining = Math.max(0, Math.round((state.expectedEnd - Date.now()) / 1000));
+                    }
+                    if ((state.timerRemaining || 0) <= 0) {
+                        // timer finished
+                        timerEl.textContent = '';
+                        stateEl.textContent = 'Idle';
+                        return;
+                    }
+                    timerEl.textContent = formatTimeSeconds(state.timerRemaining);
+                    stateEl.textContent = state.state === 'work' ? 'Work' : 'Break';
                 }
-                if (state.timerRemaining <= 0) {
-                    // timer finished
-                    timerEl.textContent = '';
-                    stateEl.textContent = 'Idle';
-                    return;
-                }
-                timerEl.textContent = formatTimeSeconds(state.timerRemaining);
-                stateEl.textContent = state.state === 'work' ? 'Work' : 'Break';
             } else {
                 // pomodoro enabled but idle
                 timerEl.textContent = '';
