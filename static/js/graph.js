@@ -28,6 +28,14 @@ function initCytoscape() {
                 'text-wrap': 'ellipsis',
                 'text-max-width': 140
             } },
+                // Orphaned / unlinked notes - show as small muted dots without label
+                { selector: 'node.orphan', style: {
+                    'width': 8,
+                    'height': 8,
+                    'label': '',
+                    'background-color': '#BDBDBD',
+                    'opacity': 0.6
+                } },
             { selector: 'node:hover', style: {
                 'border-width': 0,
                 'label': 'data(title)',
@@ -99,11 +107,16 @@ async function loadGraphData() {
         // Prepare nodes with sizes for white-background black-dot look
         const maxConn = Math.max(1, ...data.nodes.map(n => n.connections));
         const nodes = data.nodes.map(n => {
-            const size = Math.max(12, Math.min(56, 12 + Math.round((n.connections / maxConn) * 44)));
-            return { data: { id: n.id, title: n.title, connections: n.connections, created_at: n.created_at, size: size } };
+            const isOrphan = (n.connections === 0);
+            const size = isOrphan ? 8 : Math.max(12, Math.min(56, 12 + Math.round((n.connections / maxConn) * 44)));
+            return { data: { id: n.id, title: n.title, connections: n.connections, created_at: n.created_at, size: size, orphan: isOrphan } };
         });
         const edges = data.edges.map(e => ({ data: { id: `${e.source}-${e.target}`, source: e.source, target: e.target, strength: e.strength } }));
         cy.add(nodes); cy.add(edges);
+        // Mark orphan nodes with a class so the style (small dot, no label) applies
+        cy.nodes().forEach(node => {
+            if (node.data('orphan')) node.addClass('orphan');
+        });
         cy.layout({ name: 'cose', animate: true, randomize: false, idealEdgeLength: 80 }).run();
         setTimeout(() => { document.getElementById('loadingOverlay').style.display = 'none'; }, 800);
     } catch (error) { console.error('Error loading graph:', error); document.getElementById('loadingOverlay').innerHTML = `<i class="fas fa-exclamation-triangle fa-3x" style="color:#FF8C42;"></i><p style="color:#FF8C42;">Failed to load graph. Please refresh.</p>`; }

@@ -21,6 +21,27 @@
                     <option value="">Select category...</option>
                 </select>
             </div>
+            <div class="pomodoro-panel" style="margin-top:1rem;">
+                <label style="display:block;margin-bottom:0.5rem;font-weight:700;">Pomodoro Mode</label>
+                <div style="display:flex;gap:0.5rem;align-items:center;">
+                    <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;"><input type="checkbox" id="pomodoroToggle"> Enable Pomodoro</label>
+                        <div style="display:flex;gap:0.5rem;align-items:center;margin-left:1rem;">
+                            <label style="display:flex;align-items:center;gap:0.5rem;">Preset
+                                <select id="pomPreset" style="margin-left:6px;padding:4px;">
+                                    <option value="classic">Classic (25/5)</option>
+                                    <option value="short">Short (15/3)</option>
+                                    <option value="long">Long (50/10)</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </label>
+                            <label>Work <input id="pomWorkMinutes" type="number" value="25" min="1" style="width:64px;padding:4px;margin-left:6px;">m</label>
+                            <label>Short <input id="pomShortBreak" type="number" value="5" min="0" style="width:64px;padding:4px;margin-left:6px;">m</label>
+                            <label>Long <input id="pomLongBreak" type="number" value="15" min="0" style="width:64px;padding:4px;margin-left:6px;">m</label>
+                            <label>Cycles <input id="pomCycles" type="number" value="4" min="1" style="width:64px;padding:4px;margin-left:6px;"> </label>
+                        </div>
+                </div>
+                <div id="pomStatus" style="margin-top:0.5rem;color:#444;font-size:0.95rem;">Pomodoro idle</div>
+            </div>
             <div class="timer-controls">
                 <button id="startBtn" class="btn-primary">START</button>
                 <button id="pauseBtn" class="btn-secondary" style="display:none;">PAUSE</button>

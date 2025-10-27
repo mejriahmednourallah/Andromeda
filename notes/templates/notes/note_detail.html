@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ note.title }} - Note - Andromeda{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/notes-editor.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="note-detail-container card">
+    <div class="note-detail-header">
+        <h1 class="note-title">{{ note.title }}</h1>
+        <div class="note-actions">
+            <a href="{% url 'notes:edit' note.id %}" class="btn-primary">CONTINUE WRITING</a>
+            <a href="{% url 'notes:list' %}" class="btn-secondary">BACK TO LIST</a>
+        </div>
+    </div>
+
+    <div class="note-meta muted-text">
+        <span>Created: {{ note.created_at }}</span>
+        <span>Updated: {{ note.updated_at }}</span>
+        {% if note.tags.all %}
+            <div>Tags: {% for t in note.tags.all %}<span class="tag">{{ t.name }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+        {% endif %}
+    </div>
+
+    <div class="note-content">
+        {{ note.content|linebreaks }}
+    </div>
+
+    <aside class="note-backlinks">
+        <h3>Backlinks</h3>
+        {% if backlinks %}
+            <ul>
+            {% for b in backlinks %}
+                <li><a href="{% url 'notes:detail' b.id %}">{{ b.title }}</a></li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p class="muted-text">No backlinks yet.</p>
+        {% endif %}
+    </aside>
+</div>
+
+{% endblock %}

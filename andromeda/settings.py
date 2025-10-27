@@ -27,6 +27,8 @@ INSTALLED_APPS = [
     'core',
     # New apps
     'meditation',
+    # Notes app
+    'notes',
 ]
 
 MIDDLEWARE = [

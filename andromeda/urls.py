@@ -8,6 +8,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
     path('', include('core.urls')),
+    # Notes app
+    path('notes/', include('notes.urls')),
     # New modules
     path('focus/', include('meditation.urls')),
     path('graph/', views_graph.universe_graph_page, name='universe_graph'),

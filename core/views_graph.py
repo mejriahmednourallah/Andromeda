@@ -2,6 +2,10 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from .models import Note, Link
+try:
+    from notes.models import Note as NotesAppNote
+except Exception:
+    NotesAppNote = None
 
 
 @login_required
@@ -12,6 +16,14 @@ def universe_graph_page(request):
 @login_required
 def graph_data_api(request):
     user = request.user
+    # Ensure core.Note entries exist for notes created in the notes app so orphan
+    # (unlinked) notes appear in the Universe Graph. This is a best-effort sync
+    # and will create minimal Core Note records for any NotesAppNote missing in core.
+    if NotesAppNote is not None:
+        for n in NotesAppNote.objects.filter(user=user):
+            # try to find by title and owner; create if missing
+            Note.objects.get_or_create(owner=user, title=n.title, defaults={'body': getattr(n, 'content', '')})
+
     notes = Note.objects.filter(owner=user)
     links = Link.objects.filter(src__owner=user, dst__owner=user).select_related('src', 'dst')
 

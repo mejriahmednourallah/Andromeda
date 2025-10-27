@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notes - Andromeda{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/notes.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="notes-container" role="application" aria-label="Notes">
+    <!-- SIDEBAR -->
+    <aside class="notes-sidebar" aria-label="Notes sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">NOTES</h2>
+            <button id="createNoteBtn" class="btn-icon" title="New Note (Ctrl+N)" type="button" data-create-url="{% url 'notes:create' %}">
+                <i class="fas fa-plus" aria-hidden="true"></i>
+                <span class="sr-only">Create note</span>
+            </button>
+        </div>
+
+        <!-- SEARCH -->
+        <div class="search-box" role="search">
+            <input
+                type="search"
+                id="searchInput"
+                placeholder="Search notes..."
+                class="search-input"
+                aria-label="Search notes"
+            />
+            <i class="fas fa-search search-icon" aria-hidden="true"></i>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="filter-tabs" role="tablist" aria-label="Note filters">
+            <button class="filter-tab active" data-filter="all" type="button">ALL</button>
+            <button class="filter-tab" data-filter="pinned" type="button">PINNED</button>
+            <button class="filter-tab" data-filter="archived" type="button">ARCHIVED</button>
+        </div>
+
+        <!-- TAGS -->
+        <div class="tags-section">
+            <h3 class="section-label">TAGS</h3>
+            <div id="tagsList" class="tags-list" aria-live="polite">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- NOTES LIST -->
+        <div id="notesList" class="notes-list" role="list" aria-label="Notes list">
+            <!-- Populated by JS -->
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="notes-main" role="main">
+        <!-- Empty state shown when no note is selected -->
+        <div id="emptyState" class="empty-state" aria-hidden="false">
+            <i class="fas fa-file-alt fa-4x" aria-hidden="true"></i>
+            <h2>NO NOTE SELECTED</h2>
+            <p>Select a note from the sidebar or create a new one</p>
+            <button id="emptyCreateBtn" class="btn-primary" type="button" data-create-url="{% url 'notes:create' %}">
+                CREATE NOTE
+            </button>
+        </div>
+
+        <!-- Active note view: hidden by default, toggled by JS -->
+        <div id="noteView" class="note-view" aria-hidden="true">
+            <!-- Note content loaded here by notes-editor.js -->
+        </div>
+    </main>
+</div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div id="deleteModal" class="modal" aria-hidden="true" style="display:none;">
+    <div class="modal-content card" role="dialog" aria-modal="true" aria-labelledby="deleteTitle">
+        <h2 id="deleteTitle" class="modal-title">⚠️ DELETE NOTE?</h2>
+        <p>Are you sure you want to delete this note? It will be moved to trash.</p>
+        <div class="modal-actions">
+            <button id="confirmDeleteBtn" class="btn-danger" type="button">DELETE</button>
+            <button id="cancelDeleteBtn" class="btn-secondary" type="button">CANCEL</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/notes-list.js' %}"></script>
+{% endblock %}

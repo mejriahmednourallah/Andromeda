@@ -1,0 +1,51 @@
+/* Chase widget styles */
+#chase-widget {
+  position: fixed;
+  top: 40%;
+  right: -48px; /* mostly off-screen so only a sliver shows */
+  width: 76px;
+  height: 56px;
+  border-radius: 12px;
+  background: linear-gradient(135deg,#ff6b35 0%,#ff9a5a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  pointer-events: auto; /* allow interaction */
+  z-index: 99999;
+  transition: right 0.22s ease, width 0.22s ease, height 0.22s ease, padding 0.22s ease;
+  overflow: visible;
+}
+
+#chase-widget.collapsed { right: -48px; width: 76px; height: 56px; padding: 6px; }
+#chase-widget.open { right: 16px; width: 280px; height: auto; padding: 12px; border-radius: 12px; }
+
+#chase-widget .timer {
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+#chase-widget .details {
+  display: none;
+  width: 100%;
+}
+#chase-widget.open .details { display: block; }
+
+#chase-widget .title { font-size: 0.95rem; font-weight:700; margin-bottom:6px; }
+#chase-widget .state { font-size: 0.85rem; color: rgba(255,255,255,0.95); margin-bottom:8px; }
+
+.chase-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.chase-actions button { background: white; color: #ff6b35; border: none; padding:6px 8px; border-radius:6px; cursor:pointer; font-weight:700; }
+.chase-actions button.secondary { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.18); }
+
+/* When collapsed, make only the timer label fully visible */
+#chase-widget.collapsed .details { display: none; }
+#chase-widget.collapsed .timer { display: block; }
+
+#chase-widget .label {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+}

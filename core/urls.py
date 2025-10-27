@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 from django.contrib.auth import views as auth_views
 from . import views_journal
@@ -10,6 +10,8 @@ urlpatterns = [
     # Home & Dashboard
     path('', views.index, name='index'),
     path('dashboard/', views.dashboard, name='dashboard'),
+    # Dashboard-scoped notes route (maps to notes app)
+    path('dashboard/notes/', include('notes.urls')),
     path('story/', views.story_inspiration, name='story_inspiration'),
     path('story/history/', views.story_history, name='story_history'),
     path('story/<uuid:histoire_id>/favorite/', views.toggle_histoire_favorite, name='toggle_histoire_favorite'),

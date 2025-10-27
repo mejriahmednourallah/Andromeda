@@ -220,6 +220,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="{% static 'css/chase.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -235,7 +236,7 @@
         <ul class="navbar-menu" id="navbarMenu">
             <li><a href="{% url 'core:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a></li>
             <li><a href="{% url 'core:story_inspiration' %}" class="{% if request.resolver_match.url_name == 'story_inspiration' %}active{% endif %}">Story</a></li>
-            <li><a href="{% url 'core:index' %}" class="{% if request.resolver_match.url_name == 'index' %}active{% endif %}">Notes</a></li>
+            <li><a href="{% url 'notes:list' %}" class="{% if '/dashboard/notes/' in request.path %}active{% endif %}">Notes</a></li>
             <li><a href="{% url 'core:memories_dashboard' %}" class="{% if request.resolver_match.url_name == 'memories_dashboard' %}active{% endif %}">Souvenirs</a></li>
             <li><a href="{% url 'core:mood' %}" class="{% if request.resolver_match.url_name == 'mood' %}active{% endif %}">Mood</a></li>
             <!-- Focus Timer & Universe Graph accessible only from Dashboard navigation -->
@@ -587,5 +588,6 @@
     </style>
     
     {% block extra_js %}{% endblock %}
+    <script src="{% static 'js/chase.js' %}"></script>
 </body>
 </html>

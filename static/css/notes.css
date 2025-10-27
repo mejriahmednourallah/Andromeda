@@ -1,0 +1,162 @@
+/* Cleaned notes CSS - brutalist system with clear outer/inner border variables */
+:root {
+  --bg-beige: #F5F1E8;
+  --card-white: #FFFFFF;
+  --border-black: #000000;
+  --primary-orange: #FF8C42;
+  --text-dark: #2C2C2C;
+  --text-muted: #666666;
+  /* Outer contour should be noticeably thicker than the inner divider */
+  --border-outer: 4px;
+  --border-inner: 2px;
+}
+
+/* Layout */
+.notes-container {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 0;
+  height: calc(100vh - 80px); /* keeps it inside dashboard padding/header */
+  background: var(--bg-beige);
+}
+
+/* SIDEBAR: full contour on left/top/bottom (outer thick), slim inner divider on right */
+.notes-sidebar {
+  background: var(--card-white);
+  border-top: var(--border-outer) solid var(--border-black);
+  border-left: var(--border-outer) solid var(--border-black);
+  border-bottom: var(--border-outer) solid var(--border-black);
+  border-right: var(--border-inner) solid var(--border-black);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0; /* allow internal scroll */
+}
+
+.sidebar-header {
+  padding: 20px;
+  background: var(--bg-beige);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 2px solid var(--border-black);
+}
+
+.sidebar-title {
+  font-size: 18px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.btn-icon {
+  background: var(--primary-orange);
+  border: 2px solid var(--border-black);
+  color: #000;
+  padding: 8px 10px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.search-box {
+  padding: 12px 16px;
+  border-bottom: 2px solid var(--border-black);
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px;
+  border: 2px solid var(--border-black);
+  background: transparent;
+  outline: none;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.filter-tab {
+  background: var(--card-white);
+  border: 2px solid var(--border-black);
+  padding: 6px 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.tags-section {
+  padding: 12px 16px;
+  border-top: 1px dashed rgba(0,0,0,0.06);
+}
+
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.notes-list {
+  padding: 12px;
+  overflow: auto;
+  min-height: 0; /* allow scrolling within the column */
+}
+
+.note-item {
+  background: var(--card-white);
+  border: 3px solid var(--border-black);
+  padding: 12px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.note-item:hover { box-shadow: 4px 4px 0px var(--border-black); }
+
+/* MAIN: outer contour on top/right/bottom, inner slim divider on left */
+.notes-main {
+  padding: 24px;
+  background: var(--card-white);
+  border-top: var(--border-outer) solid var(--border-black);
+  border-right: var(--border-outer) solid var(--border-black);
+  border-bottom: var(--border-outer) solid var(--border-black);
+  border-left: var(--border-inner) solid var(--border-black);
+  overflow: auto;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+}
+
+.btn-primary, .btn-secondary, .btn-danger {
+  border: 2px solid var(--border-black);
+  background: var(--card-white);
+  padding: 8px 12px;
+  text-transform: uppercase;
+}
+
+.btn-primary { background: var(--primary-orange); }
+
+/* Modal */
+.modal { position: fixed; inset:0; display:flex; align-items:center; justify-content:center; }
+.modal-content { background:var(--card-white); border:3px solid var(--border-black); padding:20px; }
+
+.note-view { background: var(--card-white); border: 3px solid var(--border-black); padding: 16px; }
+
+/* Responsive: stack columns on small screens */
+@media (max-width: 800px) {
+  .notes-container { grid-template-columns: 1fr; }
+  .notes-sidebar { order: 2; border-right: var(--border-outer) solid var(--border-black); border-left: none; }
+  .notes-main { order: 1; border-left: none; }
+}
+
